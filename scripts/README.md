@@ -491,6 +491,6 @@ MIT License - See LICENSE file
 
 ---
 
-**Created for RAPTOR Project**
+**RAPTOR Project**
 **Author**: Ayeh Bolouki
-**Organization**: GIGA Center, University of Liège
+**Organization**: 
