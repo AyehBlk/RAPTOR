@@ -9,9 +9,10 @@
 
 > **Making RNA-seq pipeline selection evidence-based, not guesswork.**
 
-**Created by **Ayeh Bolouki**  
+Created by **Ayeh Bolouki**  
 📧 ayehbolouki1988@gmail.com | ayehgeek@gmail.com  
-🏛️ Postdoctoral Researcher
+🏛️ Postdoctoral Researcher, University of Namur, Belgium
+
 ---
 
 ## 📖 Table of Contents
