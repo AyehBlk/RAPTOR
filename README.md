@@ -11,8 +11,7 @@
 
 Created by **Ayeh Bolouki**  
 📧 ayehbolouki1988@gmail.com | ayehgeek@gmail.com  
-🏛️ Postdoctoral Researcher, GIGA Center, University of Liège, Belgium
-
+🏛️ Postdoctoral Researcher
 ---
 
 ## 📖 Table of Contents
