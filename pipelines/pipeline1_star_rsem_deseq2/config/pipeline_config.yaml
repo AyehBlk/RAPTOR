@@ -1,0 +1,274 @@
+# Pipeline 1: STAR-RSEM-DESeq2 Configuration
+
+pipeline:
+  id: 1
+  name: "STAR-RSEM-DESeq2"
+  version: "1.0.0"
+  description: "Gold standard RNA-seq pipeline with STAR alignment, RSEM quantification, and DESeq2 statistical analysis"
+  
+  # Pipeline characteristics
+  characteristics:
+    accuracy: "high"
+    speed: "medium"
+    memory: "high"
+    complexity: "medium"
+    
+  # Best use cases
+  recommended_for:
+    - "High-quality reference genome available"
+    - "Sample size >= 6"
+    - "Standard experimental design"
+    - "Gene-level differential expression"
+    - "Publication-quality results"
+    
+  not_recommended_for:
+    - "No replicates"
+    - "Limited memory (<16GB)"
+    - "Ultra-fast turnaround needed"
+
+# Input/Output Configuration
+io:
+  # Input directories and files
+  input_dir: "/path/to/fastq/files"
+  sample_sheet: "/path/to/samples.csv"
+  
+  # Reference files
+  reference_genome: "/path/to/genome.fa"
+  annotation_gtf: "/path/to/annotation.gtf"
+  
+  # Output directory
+  output_dir: "/path/to/output"
+  
+  # Read configuration
+  read_type: "paired"  # paired or single
+  stranded: "no"       # no, yes, or reverse
+
+# Sample Information
+samples:
+  # Experimental design
+  conditions:
+    - control
+    - treatment
+  
+  # Batch information (optional)
+  batch_column: "batch"  # null if no batch effect
+  
+  # Covariates (optional)
+  covariates: []  # e.g., ["age", "sex"]
+
+# Computational Resources
+resources:
+  threads: 8
+  memory_gb: 32
+  disk_space_gb: 500  # Estimated required space
+  
+  # Job scheduler (optional)
+  scheduler: null  # null, slurm, pbs, sge
+  queue: "default"
+  walltime: "24:00:00"
+
+# STAR Alignment Parameters
+star:
+  # Index generation
+  index_dir: "/path/to/star_index"
+  sjdbOverhang: 100  # ReadLength - 1
+  genomeSAindexNbases: 14
+  
+  # Alignment parameters
+  alignIntronMin: 20
+  alignIntronMax: 1000000
+  alignMatesGapMax: 1000000
+  outFilterType: "BySJout"
+  outFilterMultimapNmax: 20
+  outFilterMismatchNmax: 999
+  outFilterMismatchNoverReadLmax: 0.04
+  alignSJoverhangMin: 8
+  alignSJDBoverhangMin: 1
+  
+  # Output options
+  outSAMtype: "BAM SortedByCoordinate"
+  outSAMunmapped: "Within"
+  outSAMattributes: "NH HI AS NM MD"
+  
+  # Quantification mode for RSEM
+  quantMode: "TranscriptomeSAM"
+  
+  # Additional options
+  limitBAMsortRAM: 30000000000  # 30GB
+
+# RSEM Quantification Parameters
+rsem:
+  # Index directory
+  reference_dir: "/path/to/rsem_reference"
+  reference_name: "rsem_ref"
+  
+  # Quantification options
+  estimate_rspd: true
+  append_names: false
+  single_cell_prior: false
+  
+  # Fragment length (for single-end only)
+  fragment_length_mean: 200
+  fragment_length_sd: 80
+  
+  # Calculation options
+  calc_pme: false
+  calc_ci: false
+  ci_memory: 1024
+  
+  # Output options
+  output_genome_bam: true
+  sort_bam_by_coordinate: true
+
+# DESeq2 Statistical Analysis Parameters
+deseq2:
+  # Design formula
+  design_formula: "~ condition"  # Can include batch: "~ batch + condition"
+  
+  # Contrast (for pairwise comparison)
+  contrast:
+    factor: "condition"
+    numerator: "treatment"
+    denominator: "control"
+  
+  # Filtering
+  min_count: 10          # Minimum total count across all samples
+  min_samples: 3         # Minimum number of samples with count > 0
+  
+  # Normalization
+  normalization: "median_of_ratios"  # DESeq2 default
+  
+  # Statistical testing
+  test: "Wald"           # Wald or LRT
+  fitType: "parametric"  # parametric, local, or mean
+  
+  # Multiple testing correction
+  alpha: 0.05
+  pAdjustMethod: "BH"    # BH (Benjamini-Hochberg) or bonferroni
+  
+  # Shrinkage estimation (for LFC)
+  lfcShrink: true
+  shrinkageType: "apeglm"  # apeglm, ashr, or normal
+  
+  # Significance thresholds for reporting
+  padj_threshold: 0.05
+  lfc_threshold: 1.0     # log2 fold change threshold
+  
+  # Independent filtering
+  independentFiltering: true
+  
+  # Outlier detection
+  cooksCutoff: true
+
+# Quality Control Parameters
+qc:
+  # FastQC
+  run_fastqc: true
+  fastqc_threads: 4
+  
+  # RSeQC (RNA-seq specific QC)
+  run_rseqc: true
+  
+  # MultiQC (aggregate reports)
+  run_multiqc: true
+  
+  # Custom QC metrics
+  check_alignment_rate: true
+  min_alignment_rate: 70  # Percentage
+  
+  check_gene_detection: true
+  min_genes_detected: 10000
+  
+  check_library_size: true
+  min_library_size: 1000000  # 1M reads
+
+# Visualization Parameters
+visualization:
+  # PCA plot
+  pca:
+    ntop: 500           # Top variable genes
+    intgroup: ["condition"]
+    
+  # Sample distance heatmap
+  sample_heatmap:
+    show_row_names: true
+    show_col_names: true
+    
+  # MA plot
+  ma_plot:
+    ylim: [-5, 5]
+    
+  # Volcano plot
+  volcano:
+    xlim: [-10, 10]
+    ylim: [0, 50]
+    
+  # Gene expression heatmap (top DEGs)
+  deg_heatmap:
+    top_n: 50
+    cluster_rows: true
+    cluster_cols: true
+    scale: "row"
+
+# Output Files
+output:
+  # Alignment outputs
+  save_bam: true
+  save_transcriptome_bam: true
+  
+  # Quantification outputs
+  save_counts: true
+  counts_format: ["csv", "tsv", "rds"]
+  
+  # Statistical results
+  save_full_results: true
+  save_significant_only: true
+  results_format: ["csv", "tsv", "xlsx"]
+  
+  # Normalized counts
+  save_normalized_counts: true
+  normalization_methods: ["rlog", "vst"]
+  
+  # Plots
+  save_plots: true
+  plot_format: ["pdf", "png"]
+  plot_dpi: 300
+
+# Pipeline Execution Options
+execution:
+  # Step control
+  skip_indexing: false    # Use pre-built indices
+  skip_alignment: false
+  skip_quantification: false
+  skip_statistics: false
+  skip_qc: false
+  
+  # Resume capability
+  resume: false           # Resume from last successful step
+  force_rerun: false      # Force rerun even if outputs exist
+  
+  # Logging
+  verbose: true
+  log_level: "INFO"       # DEBUG, INFO, WARNING, ERROR
+  save_logs: true
+  
+  # Cleanup
+  cleanup_intermediates: false
+  keep_sam_files: false
+
+# Tool versions (for reproducibility)
+tool_versions:
+  star: "2.7.10a"
+  rsem: "1.3.3"
+  deseq2: "1.38.0"
+  samtools: "1.15"
+  fastqc: "0.11.9"
+  multiqc: "1.13"
+  python: "3.10"
+  r: "4.2.0"
+
+# Citations
+citations:
+  star: "Dobin A, et al. STAR: ultrafast universal RNA-seq aligner. Bioinformatics. 2013;29(1):15-21."
+  rsem: "Li B, Dewey CN. RSEM: accurate transcript quantification from RNA-Seq data with or without a reference genome. BMC Bioinformatics. 2011;12:323."
+  deseq2: "Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014;15(12):550."

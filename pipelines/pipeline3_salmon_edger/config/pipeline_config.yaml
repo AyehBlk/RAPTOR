@@ -1,0 +1,41 @@
+# Pipeline 3: Salmon-edgeR Configuration
+
+pipeline:
+  id: 3
+  name: "Salmon-edgeR"
+  version: "1.0.0"
+  description: "Fast alignment-free pipeline with Salmon quantification and edgeR statistical analysis"
+
+io:
+  input_dir: "/path/to/fastq/files"
+  sample_sheet: "/path/to/samples.csv"
+  transcriptome_fasta: "/path/to/transcriptome.fa"
+  tx2gene_file: "/path/to/tx2gene.csv"
+  output_dir: "/path/to/output"
+  read_type: "paired"
+  library_type: "A"
+
+resources:
+  threads: 8
+  memory_gb: 8
+
+salmon:
+  index_dir: "/path/to/salmon_index"
+  kmer_length: 31
+  validate_mappings: true
+  gc_bias: true
+  num_bootstraps: 30
+  
+edger:
+  design_formula: "~ condition"
+  normalization: "TMM"
+  robust: true
+  min_count: 10
+  fdr_threshold: 0.05
+  lfc_threshold: 1.0
+  test_method: "glmQLFTest"
+
+tool_versions:
+  salmon: "1.9.0"
+  edger: "3.40.0"
+  tximport: "1.26.0"

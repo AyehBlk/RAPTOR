@@ -1,0 +1,35 @@
+# Pipeline 7: Bowtie2-RSEM-EBSeq Configuration
+
+pipeline:
+  id: 7
+  name: "Bowtie2-RSEM-EBSeq"
+  version: "1.0.0"
+  description: "Empirical Bayesian pipeline for small sample sizes"
+
+io:
+  input_dir: "/path/to/fastq/files"
+  sample_sheet: "/path/to/samples.csv"
+  reference_genome: "/path/to/genome.fa"
+  annotation_gtf: "/path/to/annotation.gtf"
+  output_dir: "/path/to/output"
+
+resources:
+  threads: 8
+  memory_gb: 16
+
+bowtie2:
+  index_prefix: "/path/to/bowtie2_index"
+  preset: "sensitive"
+  
+rsem:
+  reference_dir: "/path/to/rsem_reference"
+  
+ebseq:
+  norm_method: "median"
+  fdr_threshold: 0.05
+  fc_threshold: 2.0
+
+tool_versions:
+  bowtie2: "2.4.5"
+  rsem: "1.3.3"
+  ebseq: "1.38.0"

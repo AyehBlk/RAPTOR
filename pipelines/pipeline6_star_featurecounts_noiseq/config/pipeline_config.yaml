@@ -1,0 +1,37 @@
+# Pipeline 6: STAR-featureCounts-NOISeq Configuration
+
+pipeline:
+  id: 6
+  name: "STAR-featureCounts-NOISeq"
+  version: "1.0.0"
+  description: "Non-parametric pipeline for limited replicates"
+
+io:
+  input_dir: "/path/to/fastq/files"
+  sample_sheet: "/path/to/samples.csv"
+  reference_genome: "/path/to/genome.fa"
+  annotation_gtf: "/path/to/annotation.gtf"
+  output_dir: "/path/to/output"
+
+resources:
+  threads: 8
+  memory_gb: 32
+
+star:
+  index_dir: "/path/to/star_index"
+  sjdbOverhang: 100
+  
+featureCounts:
+  feature_type: "exon"
+  attribute_type: "gene_id"
+  
+noiseq:
+  replicates: "technical"
+  norm: "rpkm"
+  q_threshold: 0.8
+  M_threshold: 1
+
+tool_versions:
+  star: "2.7.10a"
+  subread: "2.0.3"
+  noiseq: "2.42.0"

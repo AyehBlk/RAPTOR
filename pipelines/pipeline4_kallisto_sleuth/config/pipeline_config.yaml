@@ -1,0 +1,82 @@
+# Pipeline 5: Kallisto-sleuth Configuration
+
+pipeline:
+  id: 5
+  name: "Kallisto-sleuth"
+  version: "1.0.0"
+  description: "Ultra-fast alignment-free pipeline with bootstrap-based uncertainty estimation"
+  
+  characteristics:
+    accuracy: "high"
+    speed: "ultra fast"
+    memory: "very low"
+    
+  recommended_for:
+    - "Ultra-fast analysis"
+    - "Bootstrap uncertainty estimation"
+    - "Isoform-level differential expression"
+    - "Minimal computational resources"
+
+io:
+  input_dir: "/path/to/fastq/files"
+  sample_sheet: "/path/to/samples.csv"
+  transcriptome_fasta: "/path/to/transcriptome.fa"
+  output_dir: "/path/to/output"
+  read_type: "paired"
+  stranded: false
+
+resources:
+  threads: 8
+  memory_gb: 4
+
+kallisto:
+  index_file: "/path/to/kallisto_index"
+  kmer_length: 31
+  
+  # Quantification parameters
+  num_bootstraps: 100
+  fragment_length: 200  # For single-end only
+  fragment_sd: 80       # For single-end only
+  bias: true
+  plaintext: false
+  fusion: false
+  rf_stranded: false
+  fr_stranded: false
+  
+  # Advanced options
+  seed: 42
+  pseudobam: false
+
+sleuth:
+  # Model specification
+  full_model: "~ condition"
+  reduced_model: "~ 1"
+  
+  # Test type
+  test_type: "lrt"  # lrt or wt (Wald test)
+  
+  # Filtering
+  filter_target_id: null
+  filter_fun: "basic_filter"  # Remove low-count transcripts
+  norm_fun: "tmm"  # TMM normalization
+  
+  # Aggregation to gene level
+  aggregation_column: "ens_gene"
+  gene_mode: true
+  
+  # Significance thresholds
+  qval_threshold: 0.05
+  beta_threshold: 1.0  # log2 FC threshold
+  
+  # Technical variance
+  num_cores: 8
+  gene_column: "ens_gene"
+
+qc:
+  run_fastqc: true
+  run_multiqc: true
+
+tool_versions:
+  kallisto: "0.48.0"
+  sleuth: "0.30.0"
+  r: "4.2.0"
