@@ -1,8 +1,8 @@
 # RAPTOR 🦖
 
 **RNA-seq Analysis Pipeline Testing and Optimization Resource**
-
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
+ 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17607161.svg)](https://doi.org/10.5281/zenodo.17607161)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![GitHub Stars](https://img.shields.io/github/stars/AyehBlk/RAPTOR?style=social)](https://github.com/AyehBlk/RAPTOR)
@@ -771,7 +771,7 @@ If you use RAPTOR in your research, please cite:
   year = {2025},
   publisher = {GitHub},
   url = {https://github.com/AyehBlk/RAPTOR},
-  doi = {10.5281/zenodo.XXXXXXX}
+  doi = {10.5281/zenodo.17607161}
 }
 ```
 
