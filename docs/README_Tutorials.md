@@ -4,7 +4,7 @@ Welcome to the RAPTOR tutorial series! These hands-on guides will help you learn
 
 ---
 
-## 📚 Tutorial Overview
+##  Tutorial Overview
 
 ### Tutorial 1: Getting Started with RAPTOR
 **File**: [tutorial_01_getting_started.md](tutorial_01_getting_started.md)  
@@ -54,7 +54,7 @@ Welcome to the RAPTOR tutorial series! These hands-on guides will help you learn
 
 ---
 
-## 🎯 Learning Paths
+##  Learning Paths
 
 ### Path 1: Quick Start (1 hour)
 For users who want to get started immediately:
@@ -75,7 +75,7 @@ For users with data ready:
 
 ---
 
-## 💡 Tutorial Features
+##  Tutorial Features
 
 Each tutorial includes:
 - ✅ **Clear learning objectives**
@@ -87,7 +87,7 @@ Each tutorial includes:
 
 ---
 
-## 🔧 Before You Start
+##  Before You Start
 
 ### System Requirements
 
@@ -128,7 +128,7 @@ See [INSTALLATION.md](../INSTALLATION.md) for detailed instructions.
 
 ---
 
-## 📖 Additional Resources
+##  Additional Resources
 
 ### Documentation
 
@@ -149,7 +149,7 @@ See [INSTALLATION.md](../INSTALLATION.md) for detailed instructions.
 
 ---
 
-## 🚀 Quick Reference
+##  Quick Reference
 
 ### Common Commands
 
@@ -193,7 +193,7 @@ Sample3,Treatment,1
 
 ---
 
-## 📜 Citation
+##  Citation
 
 If you use these tutorials in your research or teaching:
 
@@ -209,7 +209,7 @@ If you use these tutorials in your research or teaching:
 
 ---
 
-## 🎉 Ready to Start?
+##  Ready to Start?
 
 Jump into **[Tutorial 1: Getting Started](tutorial_01_getting_started.md)** now!
 
