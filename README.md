@@ -10,12 +10,12 @@
 > **Making RNA-seq pipeline selection evidence-based, not guesswork.**
 
 Created by **Ayeh Bolouki**  
-📧 ayehbolouki1988@gmail.com | ayehgeek@gmail.com  
-🏛️ Postdoctoral Researcher, University of Namur, Belgium
+ ayehbolouki1988@gmail.com | ayehgeek@gmail.com  
+ Postdoctoral Researcher, University of Namur, Belgium
 
 ---
 
-## 📖 Table of Contents
+##  Table of Contents
 
 - [The Challenge](#-the-challenge)
 - [The RAPTOR Solution](#-the-raptor-solution)
@@ -32,7 +32,7 @@ Created by **Ayeh Bolouki**
 
 ---
 
-## 🔬 The Challenge
+##  The Challenge
 
 Over **50+ bioinformatics tools** exist for RNA-seq differential expression analysis, and choosing the right combination is overwhelming:
 
@@ -732,15 +732,15 @@ raptor profile --counts data.csv --config my_config.yaml --output report.html
 
 ---
 
-## 📖 Documentation
+##  Documentation
 
 ### Complete Guides
 
-- 📘 **[Profile & Recommend Guide](docs/PROFILE_RECOMMEND.md)** - Detailed documentation of recommendation system
-- 📗 **[Benchmarking Guide](docs/BENCHMARKING.md)** - How to compare pipelines systematically
-- 📙 **[Installation Guide](docs/INSTALLATION.md)** - Detailed setup for different systems
-- 📕 **[Pipeline Details](docs/PIPELINES.md)** - In-depth description of each pipeline
-- 📔 **[API Reference](docs/API.md)** - Python API documentation
+-  **[Profile & Recommend Guide](docs/PROFILE_RECOMMEND.md)** - Detailed documentation of recommendation system
+-  **[Benchmarking Guide](docs/BENCHMARKING.md)** - How to compare pipelines systematically
+-  **[Installation Guide](docs/INSTALLATION.md)** - Detailed setup for different systems
+-  **[Pipeline Details](docs/PIPELINES.md)** - In-depth description of each pipeline
+-  **[API Reference](docs/API.md)** - Python API documentation
 
 ### Quick References
 
@@ -928,11 +928,11 @@ See **[LICENSE](LICENSE)** file for complete text.
 
 ---
 
-## 📈 Project Status
+##  Project Status
 
-- ✅ **v2.0**: Current release with intelligent recommendation system
-- 🚧 **v2.1**: Machine learning-enhanced recommendations (In progress)
-- 🔜 **v3.0**: Single-cell RNA-seq support (Planned)
+-  **v2.0**: Current release with intelligent recommendation system
+-  **v2.1**: Machine learning-enhanced recommendations (In progress)
+-  **v3.0**: Single-cell RNA-seq support (Planned)
 
 ---
 
