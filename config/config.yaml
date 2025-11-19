@@ -1,0 +1,679 @@
+# ============================================================================
+# RAPTOR v2.1.0 Configuration File
+# RNA-seq Analysis Pipeline Testing and Optimization Resource
+# ============================================================================
+# 
+# Author: Ayeh Bolouki
+# Affiliation: University of Namur, Belgium
+# Email: ayehbolouki1988@gmail.com
+# License: MIT
+#
+# This file contains all configuration parameters for RAPTOR v2.1.0
+# including ML recommendations, quality assessment, resource monitoring,
+# ensemble analysis, dashboard, parameter optimization, and cloud integration
+# ============================================================================
+
+# ============================================================================
+# GENERAL SETTINGS
+# ============================================================================
+general:
+  version: "2.1.0"
+  verbose: true
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  log_file: "raptor.log"
+  temp_dir: "./temp"
+  output_dir: "./raptor_output"
+  random_seed: 42
+  
+# ============================================================================
+# COMPUTATIONAL RESOURCES
+# ============================================================================
+resources:
+  # Default resource allocation
+  default_threads: 8
+  default_memory_gb: 32
+  max_threads: 16
+  max_memory_gb: 64
+  
+  # Resource limits per analysis type
+  profiling:
+    threads: 4
+    memory_gb: 8
+  
+  benchmarking:
+    threads: 8
+    memory_gb: 32
+  
+  ml_training:
+    threads: 8
+    memory_gb: 16
+  
+  ensemble_analysis:
+    threads: 12
+    memory_gb: 48
+  
+  # GPU settings (if available)
+  gpu:
+    enabled: false
+    device_id: 0
+    memory_fraction: 0.8
+
+# ============================================================================
+# DATA PROFILING SETTINGS
+# ============================================================================
+profiling:
+  # Biological Coefficient of Variation (BCV) thresholds
+  bcv_thresholds:
+    very_low: 0.2
+    low: 0.4
+    moderate: 0.6
+    high: 0.8
+  
+  # Sequencing depth categories (in millions of reads)
+  depth_categories:
+    low: 10
+    moderate: 30
+    high: 50
+  
+  # Sample size categories
+  sample_size:
+    small: 6
+    medium: 12
+    large: 20
+  
+  # Replicate analysis
+  min_replicates: 3
+  check_batch_effects: true
+  
+  # Quality filters
+  min_counts_per_gene: 10
+  min_samples_per_gene: 3
+  filter_low_counts: true
+  
+  # Output options
+  generate_plots: true
+  save_profile: true
+  profile_format: "json"  # json, yaml, csv
+
+# ============================================================================
+# ML-BASED PIPELINE RECOMMENDATION (NEW in v2.1.0)
+# ============================================================================
+ml_recommendation:
+  # Model settings
+  enabled: true
+  model_type: "random_forest"  # random_forest, gradient_boosting, neural_network, ensemble
+  model_path: "./models/raptor_rf_model.pkl"
+  scaler_path: "./models/raptor_scaler.pkl"
+  
+  # Feature engineering
+  features:
+    - "bcv"
+    - "sequencing_depth"
+    - "num_samples"
+    - "num_replicates"
+    - "dispersion"
+    - "library_size_cv"
+    - "zero_inflation"
+    - "batch_effect_score"
+  
+  # Training parameters
+  training:
+    test_size: 0.2
+    cross_validation_folds: 5
+    hyperparameter_tuning: true
+    tuning_method: "grid_search"  # grid_search, random_search, bayesian
+    n_iter: 100  # for random/bayesian search
+  
+  # Random Forest specific
+  random_forest:
+    n_estimators: 200
+    max_depth: 15
+    min_samples_split: 5
+    min_samples_leaf: 2
+    max_features: "sqrt"
+    bootstrap: true
+  
+  # Gradient Boosting specific
+  gradient_boosting:
+    n_estimators: 150
+    learning_rate: 0.1
+    max_depth: 10
+    subsample: 0.8
+  
+  # Neural Network specific
+  neural_network:
+    hidden_layers: [128, 64, 32]
+    activation: "relu"
+    dropout_rate: 0.3
+    learning_rate: 0.001
+    epochs: 100
+    batch_size: 32
+  
+  # Prediction settings
+  prediction:
+    confidence_threshold: 0.7
+    top_n_recommendations: 3
+    explain_predictions: true
+    feature_importance: true
+  
+  # Model performance tracking
+  performance:
+    track_metrics: true
+    metrics:
+      - "accuracy"
+      - "f1_score"
+      - "precision"
+      - "recall"
+      - "confusion_matrix"
+    save_metrics: true
+    metrics_file: "ml_performance.json"
+
+# ============================================================================
+# ADVANCED DATA QUALITY ASSESSMENT (NEW in v2.1.0)
+# ============================================================================
+quality_assessment:
+  enabled: true
+  
+  # Quality metrics to compute
+  metrics:
+    - "library_size"
+    - "detected_genes"
+    - "mitochondrial_content"
+    - "ribosomal_content"
+    - "duplicate_rate"
+    - "mapping_rate"
+    - "contamination"
+  
+  # Quality thresholds
+  thresholds:
+    min_library_size: 1e6
+    max_library_size: 1e8
+    min_detected_genes: 5000
+    max_mitochondrial_pct: 10
+    max_ribosomal_pct: 30
+    min_mapping_rate: 70
+    max_duplicate_rate: 50
+  
+  # Batch effect detection
+  batch_detection:
+    enabled: true
+    method: "pca"  # pca, pvca, rle, combat
+    p_value_threshold: 0.01
+    variance_threshold: 0.1
+  
+  # Outlier detection
+  outlier_detection:
+    enabled: true
+    method: "isolation_forest"  # isolation_forest, lof, mahalanobis
+    contamination: 0.05
+    n_neighbors: 20
+  
+  # Normalization assessment
+  normalization:
+    check_methods: ["CPM", "TMM", "DESeq2", "TPM"]
+    evaluate_performance: true
+  
+  # Output
+  generate_qc_report: true
+  qc_report_format: "html"  # html, pdf, both
+  plot_diagnostics: true
+
+# ============================================================================
+# REAL-TIME RESOURCE MONITORING (NEW in v2.1.0)
+# ============================================================================
+resource_monitoring:
+  enabled: true
+  
+  # Monitoring settings
+  sampling_interval: 1.0  # seconds
+  track_metrics:
+    - "cpu_percent"
+    - "memory_percent"
+    - "disk_io"
+    - "network_io"
+    - "gpu_utilization"
+  
+  # Alert thresholds
+  alerts:
+    enabled: true
+    cpu_threshold: 90
+    memory_threshold: 85
+    disk_threshold: 90
+    alert_method: "log"  # log, email, slack
+  
+  # Resource limits
+  limits:
+    max_cpu_percent: 95
+    max_memory_percent: 90
+    max_execution_time: 86400  # 24 hours in seconds
+    kill_on_limit: false
+  
+  # Logging
+  log_interval: 60  # log summary every N seconds
+  save_metrics: true
+  metrics_file: "resource_usage.csv"
+  plot_realtime: false
+
+# ============================================================================
+# ENSEMBLE PIPELINE STRATEGY (NEW in v2.1.0)
+# ============================================================================
+ensemble:
+  enabled: false  # Enable manually for ensemble analysis
+  
+  # Ensemble methods
+  methods:
+    - "rank_aggregation"  # Combine rankings
+    - "vote_counting"     # Majority vote
+    - "weighted_average"  # Weighted by performance
+    - "meta_analysis"     # Statistical meta-analysis
+  
+  # Pipeline selection for ensemble
+  auto_select: true
+  manual_pipelines: []  # e.g., [1, 3, 5] for specific pipelines
+  min_pipelines: 2
+  max_pipelines: 5
+  
+  # Weighting strategy
+  weighting:
+    method: "performance_based"  # equal, performance_based, ml_confidence
+    performance_metric: "f1_score"
+  
+  # Consensus thresholds
+  consensus:
+    min_agreement: 0.6  # 60% of pipelines must agree
+    strict_mode: false
+  
+  # Meta-analysis settings
+  meta_analysis:
+    method: "fishers"  # fishers, stouffers, weighted_z
+    p_value_threshold: 0.05
+    adjust_method: "BH"  # BH, bonferroni, holm
+  
+  # Output
+  generate_ensemble_report: true
+  compare_methods: true
+  plot_comparisons: true
+
+# ============================================================================
+# INTERACTIVE WEB DASHBOARD (NEW in v2.1.0)
+# ============================================================================
+dashboard:
+  enabled: false  # Launch separately with streamlit
+  
+  # Server settings
+  host: "0.0.0.0"
+  port: 8501
+  browser: true
+  
+  # Features to enable
+  features:
+    - "pipeline_recommendation"
+    - "quality_assessment"
+    - "resource_monitoring"
+    - "ensemble_analysis"
+    - "benchmark_comparison"
+    - "result_visualization"
+  
+  # Data refresh
+  auto_refresh: true
+  refresh_interval: 5  # seconds
+  
+  # Visualization settings
+  plots:
+    theme: "plotly"  # plotly, seaborn, matplotlib
+    color_scheme: "viridis"
+    interactive: true
+    export_formats: ["png", "svg", "pdf"]
+  
+  # Authentication (optional)
+  authentication:
+    enabled: false
+    username: "admin"
+    password_hash: null  # Set securely
+
+# ============================================================================
+# AUTOMATED PARAMETER OPTIMIZATION (NEW in v2.1.0)
+# ============================================================================
+parameter_optimization:
+  enabled: false  # Enable when needed
+  
+  # Optimization method
+  method: "bayesian"  # grid_search, random_search, bayesian, adaptive
+  
+  # Search space definition
+  parameters:
+    # DESeq2 parameters
+    deseq2:
+      alpha: [0.01, 0.05, 0.1]
+      lfcThreshold: [0, 0.5, 1.0]
+      cooksCutoff: [true, false]
+    
+    # edgeR parameters
+    edger:
+      fdr: [0.01, 0.05, 0.1]
+      lfc: [0, 0.5, 1.0]
+      prior_count: [1, 2, 5]
+    
+    # limma parameters
+    limma:
+      p_value: [0.01, 0.05, 0.1]
+      lfc: [0, 0.5, 1.0]
+      trend: [true, false]
+  
+  # Optimization settings
+  grid_search:
+    exhaustive: false
+    n_combinations: 100
+  
+  random_search:
+    n_iter: 50
+    random_state: 42
+  
+  bayesian:
+    n_iterations: 30
+    n_initial_points: 10
+    acquisition_function: "EI"  # EI, PI, UCB
+    kappa: 2.576
+    xi: 0.01
+  
+  adaptive:
+    initial_grid_size: 10
+    refinement_rounds: 5
+    convergence_threshold: 0.01
+  
+  # Objective function
+  objective:
+    metric: "f1_score"  # accuracy, precision, recall, f1_score
+    direction: "maximize"
+  
+  # Output
+  save_results: true
+  results_file: "optimization_results.json"
+  plot_optimization: true
+
+# ============================================================================
+# AUTOMATED REPORTING WITH INTERPRETATION (NEW in v2.1.0)
+# ============================================================================
+automated_reporting:
+  enabled: true
+  
+  # Report formats
+  formats:
+    - "html"
+    - "pdf"
+  
+  # Report sections
+  sections:
+    - "executive_summary"
+    - "data_profiling"
+    - "quality_assessment"
+    - "pipeline_recommendation"
+    - "differential_expression"
+    - "enrichment_analysis"
+    - "resource_usage"
+    - "conclusions"
+  
+  # Biological interpretation
+  interpretation:
+    enabled: true
+    databases:
+      - "GO"           # Gene Ontology
+      - "KEGG"         # KEGG Pathways
+      - "Reactome"     # Reactome Pathways
+      - "WikiPathways"
+      - "DisGeNET"     # Disease associations
+    
+    # Enrichment settings
+    enrichment:
+      method: "hypergeometric"  # hypergeometric, fisher, gsea
+      p_value_cutoff: 0.05
+      q_value_cutoff: 0.1
+      min_genes: 5
+      max_genes: 500
+    
+    # Network analysis
+    network:
+      enabled: true
+      method: "string"  # string, biogrid, intact
+      confidence_threshold: 0.7
+  
+  # Visualization
+  plots:
+    volcano: true
+    ma_plot: true
+    heatmap: true
+    pca: true
+    enrichment_bar: true
+    enrichment_dot: true
+    network_graph: true
+  
+  # Report customization
+  template: "default"  # default, minimal, detailed, publication
+  logo: null  # Path to institution logo
+  author_info: true
+  timestamp: true
+
+# ============================================================================
+# CLOUD INTEGRATION & SCALABILITY (NEW in v2.1.0)
+# ============================================================================
+cloud:
+  enabled: false
+  provider: "aws"  # aws, gcp, azure, local
+  
+  # AWS settings
+  aws:
+    region: "us-east-1"
+    bucket: "raptor-analyses"
+    instance_type: "m5.2xlarge"
+    spot_instances: true
+    max_spot_price: 0.5
+    
+    # Batch processing
+    batch:
+      job_queue: "raptor-queue"
+      job_definition: "raptor-job"
+      vcpus: 8
+      memory: 32768
+  
+  # GCP settings
+  gcp:
+    project_id: "your-project-id"
+    region: "us-central1"
+    bucket: "raptor-analyses"
+    machine_type: "n1-standard-8"
+    preemptible: true
+  
+  # Azure settings
+  azure:
+    subscription_id: "your-subscription-id"
+    resource_group: "raptor-rg"
+    location: "eastus"
+    storage_account: "raptorstorage"
+    vm_size: "Standard_D8s_v3"
+  
+  # Container settings
+  container:
+    enabled: true
+    image: "ayehblk/raptor:2.1.0"
+    registry: "docker.io"
+    pull_policy: "IfNotPresent"
+  
+  # Kubernetes settings
+  kubernetes:
+    enabled: false
+    namespace: "raptor"
+    replicas: 1
+    resource_limits:
+      cpu: "8"
+      memory: "32Gi"
+    resource_requests:
+      cpu: "4"
+      memory: "16Gi"
+  
+  # Data transfer
+  data_transfer:
+    method: "s3"  # s3, gcs, azure_blob, rsync
+    compression: true
+    encryption: true
+    
+  # Parallelization
+  parallel:
+    enabled: true
+    max_workers: 10
+    chunk_size: 1000
+    strategy: "data_parallel"  # data_parallel, model_parallel
+
+# ============================================================================
+# BENCHMARKING SETTINGS
+# ============================================================================
+benchmarking:
+  # Benchmark modes
+  mode: "comprehensive"  # quick, standard, comprehensive
+  
+  # Metrics to track
+  metrics:
+    - "execution_time"
+    - "peak_memory"
+    - "cpu_usage"
+    - "accuracy"
+    - "sensitivity"
+    - "specificity"
+    - "f1_score"
+    - "true_positives"
+    - "false_positives"
+    - "false_negatives"
+  
+  # Ground truth
+  use_simulated_data: true
+  simulation_params:
+    n_genes: 20000
+    n_samples_per_group: 6
+    de_fraction: 0.1
+    fold_change_range: [1.5, 4.0]
+    dispersion: "moderate"
+  
+  # Comparison settings
+  compare_pipelines: true
+  statistical_tests: true
+  test_method: "wilcoxon"  # wilcoxon, t-test, anova
+  
+  # Output
+  save_benchmarks: true
+  benchmark_dir: "./benchmarks"
+  plot_comparisons: true
+
+# ============================================================================
+# STATISTICAL ANALYSIS SETTINGS
+# ============================================================================
+statistics:
+  # Differential expression thresholds
+  fdr_threshold: 0.05
+  log_fold_change_threshold: 1.0
+  p_value_threshold: 0.05
+  
+  # Multiple testing correction
+  adjustment_method: "BH"  # BH (Benjamini-Hochberg), bonferroni, holm, hochberg
+  
+  # Effect size filters
+  min_base_mean: 10
+  cook_cutoff: true
+  independent_filtering: true
+  
+  # Batch correction
+  batch_correction:
+    enabled: false
+    method: "combat"  # combat, limma, sva
+    preserve_design: true
+
+# ============================================================================
+# PIPELINE SETTINGS
+# ============================================================================
+pipelines:
+  # Pipeline selection
+  auto_select: true
+  default_pipeline: 1
+  
+  # Available pipelines (1-8)
+  available: [1, 2, 3, 4, 5, 6, 7, 8]
+  
+  # Pipeline timeout (seconds)
+  timeout: 7200  # 2 hours
+  
+  # Retry settings
+  retry_on_failure: true
+  max_retries: 2
+  retry_delay: 60  # seconds
+
+# ============================================================================
+# OUTPUT SETTINGS
+# ============================================================================
+output:
+  # Output formats
+  formats:
+    results: ["csv", "tsv", "xlsx"]
+    plots: ["png", "pdf", "svg"]
+    reports: ["html", "pdf"]
+  
+  # Compression
+  compress_outputs: true
+  compression_format: "gzip"
+  
+  # File naming
+  timestamp_files: true
+  prefix: "raptor"
+  
+  # Cleanup
+  keep_intermediate_files: false
+  cleanup_on_success: true
+  cleanup_temp: true
+
+# ============================================================================
+# NOTIFICATION SETTINGS
+# ============================================================================
+notifications:
+  enabled: false
+  
+  # Email notifications
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    username: null
+    password: null
+    recipients: []
+    notify_on: ["completion", "error"]
+  
+  # Slack notifications
+  slack:
+    enabled: false
+    webhook_url: null
+    channel: "#raptor-alerts"
+    notify_on: ["completion", "error"]
+
+# ============================================================================
+# ADVANCED SETTINGS
+# ============================================================================
+advanced:
+  # Caching
+  cache_results: true
+  cache_dir: "./.raptor_cache"
+  cache_max_size_gb: 10
+  
+  # Checkpointing
+  checkpoint_enabled: true
+  checkpoint_interval: 300  # 5 minutes
+  resume_from_checkpoint: true
+  
+  # Debugging
+  debug_mode: false
+  save_debug_info: false
+  profiling_enabled: false
+  
+  # Performance tuning
+  use_multiprocessing: true
+  chunk_size: 1000
+  buffer_size: 10000
+
+# ============================================================================
+# END OF CONFIGURATION
+# ============================================================================
