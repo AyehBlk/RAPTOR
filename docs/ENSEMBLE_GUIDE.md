@@ -800,7 +800,7 @@ Questions about ensemble analysis?
 ---
 
 **Author:** Ayeh Bolouki  
-**Affiliation:** University of Namur & GIGA-Neurosciences, University of Liège, Belgium  
+**Affiliation:** University of Namur & University of Liège, Belgium  
 **Version:** 2.1.0  
 **License:** MIT
 
