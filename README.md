@@ -1,33 +1,33 @@
-# RAPTOR v2.1.0 🚀
+# RAPTOR v2.1.0 
 ## RNA-seq Analysis Pipeline Testing and Optimization Resource
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17607161.svg)](https://doi.org/10.5281/zenodo.17607161)
 [![Python](https://img.shields.io/badge/Python-3.7%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.XXXXXXX.svg)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![Version](https://img.shields.io/badge/version-2.1.0-brightgreen.svg)](https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.0)
 
-**Making free science for everybody around the world** 🌍
+**Making free science for everybody around the world** 
 
 ---
 
-## 🎯 What's New in v2.1.0
+##  What's New in v2.1.0
 
 RAPTOR v2.1.0 introduces eight major features that transform RNA-seq analysis from manual pipeline selection to intelligent, data-driven optimization:
 
-### ✨ Major New Features
+###  Major New Features
 
-1. **🤖 ML-Based Pipeline Recommendations** - Get intelligent pipeline suggestions based on your data characteristics with 87% accuracy
-2. **📊 Advanced Data Quality Assessment** - Comprehensive quality metrics with automated batch effect detection
-3. **⚡ Real-Time Resource Monitoring** - Track CPU, memory, and I/O usage during pipeline execution
-4. **🔬 Ensemble Analysis** - Combine results from multiple pipelines for robust differential expression
-5. **🌐 Interactive Web Dashboard** - Visualize and explore results through an intuitive Streamlit interface
-6. **🔧 Automated Parameter Optimization** - Find optimal parameters using adaptive, grid, or Bayesian methods
-7. **📄 Automated Reporting** - Generate publication-ready reports with biological interpretation
-8. **☁️ Cloud Integration** - Seamless deployment on AWS, Google Cloud, and Azure
+1. ** ML-Based Pipeline Recommendations** - Get intelligent pipeline suggestions based on your data characteristics with 87% accuracy
+2. ** Advanced Data Quality Assessment** - Comprehensive quality metrics with automated batch effect detection
+3. ** Real-Time Resource Monitoring** - Track CPU, memory, and I/O usage during pipeline execution
+4. ** Ensemble Analysis** - Combine results from multiple pipelines for robust differential expression
+5. ** Interactive Web Dashboard** - Visualize and explore results through an intuitive Streamlit interface
+6. ** Automated Parameter Optimization** - Find optimal parameters using adaptive, grid, or Bayesian methods
+7. ** Automated Reporting** - Generate publication-ready reports with biological interpretation
+8. ** Cloud Integration** - Seamless deployment on AWS, Google Cloud, and Azure
 
 ---
 
-## 📖 Table of Contents
+##  Table of Contents
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -46,7 +46,7 @@ RAPTOR v2.1.0 introduces eight major features that transform RNA-seq analysis fr
 
 ---
 
-## 🔍 Overview
+##  Overview
 
 RAPTOR is a comprehensive framework for testing and optimizing RNA-seq analysis pipelines. Instead of guessing which analysis method works best for your data, RAPTOR provides evidence-based recommendations through systematic comparison of multiple pipelines.
 
@@ -71,7 +71,7 @@ RAPTOR benchmarks the following analysis workflows:
 
 ---
 
-## 📦 Installation
+##  Installation
 
 ### Prerequisites
 
@@ -131,7 +131,7 @@ BiocParallel
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Basic Analysis (v2.0.0 Compatible)
 
@@ -193,7 +193,7 @@ launch_dashboard(results_dir="raptor_results")
 
 ---
 
-## 🎯 Core Features
+##  Core Features
 
 ### 1. Pipeline Benchmarking
 
@@ -448,7 +448,7 @@ print(f"Report saved to: {report['output_file']}")
 
 ---
 
-## 💻 Usage Examples
+##  Usage Examples
 
 ### Example 1: Complete Analysis Workflow
 
@@ -561,7 +561,7 @@ consensus_genes.to_csv("consensus_DE_genes.csv")
 
 ---
 
-## 📂 Output Structure
+##  Output Structure
 
 RAPTOR v2.1.0 creates an organized output directory:
 
@@ -599,7 +599,7 @@ raptor_results/
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 RAPTOR v2.1.0 uses YAML configuration files for flexibility:
 
@@ -647,7 +647,7 @@ raptor = RAPTORAnalysis(
 
 ---
 
-## 🎓 Best Practices
+##  Best Practices
 
 ### Data Preparation
 
@@ -679,7 +679,7 @@ raptor = RAPTORAnalysis(
 
 ---
 
-## 🔧 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -776,13 +776,13 @@ If you use RAPTOR in your research, please cite:
   version = {2.1.0},
   publisher = {GitHub},
   url = {https://github.com/AyehBlk/RAPTOR},
-  doi = {10.5281/zenodo.XXXXXXX}
+  doi = {10.5281/zenodo.17607161}
 }
 ```
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -796,11 +796,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 📞 Contact
+##  Contact
 
 **Ayeh Bolouki**
 
-- 🏛️ University of Namur & GIGA-Neurosciences, University of Liège, Belgium
+- 🏛️ University of Liège, Belgium
 - 📧 Email: ayeh.bolouki@unamur.be
 - 💻 GitHub: [@AyehBlk](https://github.com/AyehBlk)
 - 🔬 Research Focus: Computational Biology, Bioinformatics, Multi-omics Analysis
@@ -816,15 +816,14 @@ We believe that research tools should be accessible to all scientists, regardles
 ## 🙏 Acknowledgments
 
 - **University of Namur** - Research support and infrastructure
-- **GIGA-Neurosciences, University of Liège** - Collaborative research environment
 - **BioConductor Community** - R package ecosystem
 - **Open Science Community** - Inspiration and support for open-source tools
 
 ---
 
-## 📈 Version History
+##  Version History
 
-### v2.1.0 (Current) - November 2024
+### v2.1.0 (Current) - 2025
 - ✨ Added ML-based pipeline recommendations
 - ✨ Added advanced data quality assessment
 - ✨ Added real-time resource monitoring
@@ -836,18 +835,13 @@ We believe that research tools should be accessible to all scientists, regardles
 - 🔧 Improved performance and memory efficiency
 - 📚 Comprehensive documentation updates
 
-### v2.0.0 - August 2024
+### v2.0.0 - 2024
 - 🎉 Major release with complete rewrite
 - ✨ Added support for 6 RNA-seq pipelines
 - ✨ Added comprehensive benchmarking framework
 - ✨ Added visualization suite
 - ✨ Added parallel processing support
 - 📚 Complete documentation
-
-### v1.0.0 - January 2024
-- 🎉 Initial release
-- Basic pipeline comparison
-- DESeq2 and edgeR support
 
 ---
 
