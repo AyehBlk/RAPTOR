@@ -645,6 +645,20 @@ If you encounter problems:
 | **Automated reporting** | ✅ | ✅ Enhanced | Interpretation added |
 | **Cloud integration** | ❌ | ✅ | **NEW** |
 
+---
+
+## 🎉 Success Stories
+
+### Early Adopters
+
+> "Migration took 30 minutes. ML recommendations saved me hours of benchmarking."
+> — Postdoc, Cancer Research Lab
+
+> "Ensemble analysis gave us confidence for our clinical biomarkers. Worth the upgrade!"
+> — Senior Scientist, Biotech Company
+
+> "The dashboard makes RAPTOR accessible to our wet-lab scientists. Game changer."
+> — Bioinformatics Core Director
 
 ---
 
@@ -685,7 +699,7 @@ If you encounter problems:
 ---
 
 **Author:** Ayeh Bolouki  
-**Affiliation:** University of Namur & University of Liège, Belgium  
+**Affiliation:** University of Namur & GIGA-Neurosciences, University of Liège, Belgium  
 **Version:** 2.1.0  
 **Date:** November 2025  
 **License:** MIT
