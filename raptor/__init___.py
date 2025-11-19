@@ -8,15 +8,15 @@ Version 2.1.0 introduces ML-based recommendations, advanced quality assessment,
 automated reporting, and parameter optimization capabilities.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
-Email: ayeh.bolouki@unamur.be
+Affiliation: University of Namur, Belgium
+Email: ayehbolouki1988@gmail.come
 License: MIT
 """
 
 # Version information
 __version__ = '2.1.0'
 __author__ = 'Ayeh Bolouki'
-__email__ = 'ayeh.bolouki@unamur.be'
+__email__ = 'ayehbolouki1988@gmail.come'
 __license__ = 'MIT'
 __url__ = 'https://github.com/AyehBlk/RAPTOR'
 
@@ -90,8 +90,7 @@ def _show_welcome():
     ║          📄 AUTOMATED REPORTING                             ║
     ║                                                              ║
     ║              Created by Ayeh Bolouki                         ║
-    ║         University of Namur & GIGA-Neurosciences            ║
-    ║            University of Liège, Belgium                      ║
+    ║         University of Namur, Belgium                         ║
     ╚══════════════════════════════════════════════════════════════╝
     
     Quick Start:
