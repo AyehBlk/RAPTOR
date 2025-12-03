@@ -5,7 +5,6 @@ A comprehensive benchmarking framework for RNA-seq differential expression analy
 pipelines with intelligent, data-driven pipeline recommendations.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayehbolouki1988@gmail.com | ayehgeek@gmail.com
 License: MIT
 """
