@@ -27,7 +27,7 @@
 
 ---
 
-## 🎯 What is RAPTOR?
+##  What is RAPTOR?
 
 **RAPTOR** is a comprehensive framework for benchmarking and optimizing RNA-seq differential expression analysis pipelines. Instead of guessing which pipeline works best for your data, RAPTOR provides **evidence-based, ML-powered recommendations** through systematic comparison of 8 popular pipelines.
 
@@ -43,25 +43,25 @@
 
 ---
 
-## ✨ What's New in v2.1.0
+##  What's New in v2.1.0
 
 <table>
 <tr>
 <td width="50%">
 
-### 🤖 ML-Based Recommendations
+###  ML-Based Recommendations
 - 87% prediction accuracy
 - Confidence scoring (0-100%)
 - Learns from 10,000+ analyses
 - Explains its reasoning
 
-### 📊 Quality Assessment
+###  Quality Assessment
 - 6-component quality scoring
 - Batch effect detection
 - Outlier identification
 - Actionable recommendations
 
-### 🎯 Ensemble Analysis
+###  Ensemble Analysis
 - 5 combination methods
 - 33% fewer false positives
 - High-confidence gene lists
@@ -70,19 +70,19 @@
 </td>
 <td width="50%">
 
-### 🎨 Interactive Dashboard
+###  Interactive Dashboard
 - Web-based interface (no coding!)
 - Real-time visualizations
 - Drag-and-drop data upload
 - One-click reports
 
-### ⚡ Resource Monitoring
+###  Resource Monitoring
 - Real-time CPU/memory tracking
 - <1% performance overhead
 - Resource predictions
 - Cost estimation for cloud
 
-### 🔧 Parameter Optimization
+###  Parameter Optimization
 - Bayesian optimization
 - Grid search
 - Adaptive tuning
@@ -94,7 +94,7 @@
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Option 1: Interactive Dashboard (Recommended)
 
@@ -141,7 +141,7 @@ print(f"Confidence: {recommendation['confidence']:.1%}")
 
 ---
 
-## 📦 Installation
+##  Installation
 
 ### Requirements
 
@@ -182,7 +182,7 @@ conda activate raptor
 
 ---
 
-## 🔬 Pipelines
+##  Pipelines
 
 RAPTOR benchmarks **8 RNA-seq analysis pipelines**:
 
@@ -201,7 +201,7 @@ RAPTOR benchmarks **8 RNA-seq analysis pipelines**:
 
 ---
 
-## 📁 Repository Structure
+##  Repository Structure
 
 ```
 RAPTOR/
@@ -228,7 +228,7 @@ RAPTOR/
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 ### Getting Started
 | Document | Description |
@@ -264,7 +264,7 @@ RAPTOR/
 
 ---
 
-## 💡 Usage Examples
+##  Usage Examples
 
 ### Example 1: Quick ML Recommendation
 
@@ -273,7 +273,7 @@ RAPTOR/
 raptor profile --counts counts.csv --use-ml
 
 # Output:
-# 🦖 RECOMMENDED: Pipeline 3 (Salmon-edgeR)
+#  RECOMMENDED: Pipeline 3 (Salmon-edgeR)
 # Confidence: 89%
 # Reason: Optimal for your sample size (n=12) and moderate BCV (0.35)
 ```
@@ -330,7 +330,7 @@ python scripts/08_automated_report.py --results results/
 
 ---
 
-## 📊 Performance
+##  Performance
 
 ### ML Recommendation Accuracy
 
@@ -351,7 +351,7 @@ python scripts/08_automated_report.py --results results/
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! RAPTOR is open-source and aims to make free science accessible to everyone.
 
@@ -372,7 +372,7 @@ See [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines.
 
 ---
 
-## 📖 Citation
+##  Citation
 
 If you use RAPTOR in your research, please cite:
 
@@ -392,7 +392,7 @@ If you use RAPTOR in your research, please cite:
 
 ---
 
-## 📄 License
+##  License
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
@@ -403,21 +403,19 @@ Copyright (c) 2025 Ayeh Bolouki
 
 ---
 
-## 📞 Contact
+##  Contact
 
 **Ayeh Bolouki**
 
-- 🏛️ University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 - 📧 Email: ayehbolouki1988@gmail.com
 - 🐙 GitHub: [@AyehBlk](https://github.com/AyehBlk)
 - 🔬 Research: Computational Biology, Bioinformatics, Multi-omics Analysis
 
 ---
 
-## 🙏 Acknowledgments
+##  Acknowledgments
 
 - University of Namur for computational resources
-- GIGA-Neurosciences, University of Liège for collaborative support
 - The Bioconductor community for the R package ecosystem
 - All contributors and users who provided feedback
 
