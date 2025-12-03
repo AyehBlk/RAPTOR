@@ -391,7 +391,7 @@ raptor report --results results/ --output report.html
 **Questions or Issues?**
 - GitHub Issues: https://github.com/AyehBlk/RAPTOR/issues
 - Email: ayehbolouki1988@gmail.com
-- Documentation: https://github.com/AyehBlk/RAPTOR/tree/main/docs
+- Documentation: https://github.com/AyehBlk/RAPTOR/tree/v2.1.0-dev/docs
 
 ---
 
