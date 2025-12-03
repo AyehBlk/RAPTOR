@@ -420,4 +420,3 @@ MIT License - See LICENSE file for details
 **Last Updated:** December 2024  
 **RAPTOR Version:** 2.1.0  
 **Author:** Ayeh Bolouki  
-**Affiliation:** University of Namur & GIGA-Neurosciences, University of Liège, Belgium
