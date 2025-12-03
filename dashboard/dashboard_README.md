@@ -4,7 +4,7 @@ Web-based interface for RAPTOR v2.1.0 ML features and analysis tools.
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Installation
 
@@ -33,15 +33,15 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 
 ---
 
-## 📊 Features
+##  Features
 
-### 1. 🏠 Home
+### 1.  Home
 - Welcome page with quick start guide
 - System status overview
 - Recent activity tracking
 - Quick links to main features
 
-### 2. 🤖 ML Recommender
+### 2.  ML Recommender
 **Get AI-powered pipeline recommendations**
 
 - **Upload Data**: CSV count matrix or generate sample data
@@ -57,7 +57,7 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 4. View recommended pipeline with confidence score
 ```
 
-### 3. 📊 Resource Monitor
+### 3.  Resource Monitor
 **Track system resources in real-time**
 
 - **CPU Usage**: Real-time CPU percentage
@@ -72,7 +72,7 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 - 🔄 Reset: Clear collected data
 - 💾 Export: Download CSV
 
-### 4. 🎯 Ensemble Analysis
+### 4.  Ensemble Analysis
 **Combine results from multiple pipelines**
 
 - **Select Pipelines**: Choose 3-6 pipelines to combine
@@ -88,7 +88,7 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
   - Top consensus genes
   - Export to CSV/TXT
 
-### 5. 📈 Benchmarks
+### 5.  Benchmarks
 **Compare pipeline performance**
 
 - Performance metrics (accuracy, precision, recall, F1)
@@ -96,7 +96,7 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 - Trade-off analysis (accuracy vs speed)
 - Detailed comparison tables
 
-### 6. ⚙️ Settings
+### 6.  Settings
 **Configure dashboard preferences**
 
 - ML model selection and paths
@@ -107,7 +107,7 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 
 ---
 
-## 📁 File Structure
+##  File Structure
 
 ```
 dashboard/
@@ -119,7 +119,7 @@ dashboard/
 
 ---
 
-## 🔧 Prerequisites
+##  Prerequisites
 
 ### Required Files
 
@@ -146,7 +146,7 @@ Before using the dashboard, ensure you have:
 
 ---
 
-## 💡 Usage Examples
+##  Usage Examples
 
 ### Example 1: Get Pipeline Recommendation
 
@@ -182,7 +182,7 @@ Before using the dashboard, ensure you have:
 
 ---
 
-## 🎨 Customization
+##  Customization
 
 ### Change Port
 
@@ -209,7 +209,7 @@ In Settings page, change "Model Directory" to your model location.
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 ### Problem: "Model not found"
 
@@ -266,7 +266,7 @@ streamlit run dashboard/dashboard.py
 
 ---
 
-## 🔐 Security Notes
+##  Security Notes
 
 ### For Production Deployment
 
@@ -288,7 +288,7 @@ streamlit run dashboard.py --server.headless true
 
 ---
 
-## 📚 Documentation
+##  Documentation
 
 - **RAPTOR Main Docs**: See `docs/` folder
 - **ML Guide**: `docs/ML_GUIDE.md`
@@ -297,7 +297,7 @@ streamlit run dashboard.py --server.headless true
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Found a bug or have a feature request?
 
@@ -310,7 +310,7 @@ Found a bug or have a feature request?
 
 ---
 
-## 📊 Performance Tips
+##  Performance Tips
 
 ### For Large Datasets
 
@@ -327,7 +327,7 @@ Found a bug or have a feature request?
 
 ---
 
-## 🎓 Tutorial
+##  Tutorial
 
 ### First-Time Users
 
@@ -355,7 +355,7 @@ Found a bug or have a feature request?
 
 ---
 
-## 📝 Citation
+##  Citation
 
 If you use RAPTOR Dashboard in your research:
 
@@ -372,7 +372,7 @@ If you use RAPTOR Dashboard in your research:
 
 ---
 
-## 📧 Support
+##  Support
 
 - **Email**: ayehbolouki1988@gmail.com
 - **GitHub Issues**: https://github.com/AyehBlk/RAPTOR/issues
@@ -380,13 +380,13 @@ If you use RAPTOR Dashboard in your research:
 
 ---
 
-## 📄 License
+##  License
 
 MIT License - see LICENSE file
 
 ---
 
-## 🌟 Acknowledgments
+##  Acknowledgments
 
 Built with:
 - [Streamlit](https://streamlit.io/) - Web framework
@@ -395,7 +395,7 @@ Built with:
 
 ---
 
-**Making free science for everybody around the world** 🌍
+**Making free science for everybody around the world** 
 
 ---
 
