@@ -372,9 +372,9 @@ raptor report --results results/ --output report.html
 ## Additional Resources
 
 ### Documentation
-- [RAPTOR Documentation](https://github.com/AyehBlk/RAPTOR/tree/main/docs)
-- [Tutorials](https://github.com/AyehBlk/RAPTOR/tree/main/docs/tutorials)
-- [API Reference](https://github.com/AyehBlk/RAPTOR/tree/main/docs/api)
+- [RAPTOR Documentation](https://github.com/AyehBlk/RAPTOR/tree/v2.1.0-dev/docs)
+- [Tutorials](https://github.com/AyehBlk/RAPTOR/tree/v2.1.0-dev/docs/tutorials)
+- [API Reference](https://github.com/AyehBlk/RAPTOR/tree/v2.1.0-dev/docs/api)
 
 ### Example Datasets
 - Small test dataset: Use `demo.sh` to generate
