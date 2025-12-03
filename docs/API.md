@@ -10,12 +10,12 @@ import raptor
 
 ## What's New in v2.1.0
 
-- 🤖 **ML-Powered Recommendations** - Machine learning models for smarter pipeline selection
-- 📊 **Interactive Dashboard** - Web-based visualization and monitoring  
-- ⚡ **Resource Monitoring** - Real-time CPU/memory tracking
-- 🎯 **Parameter Optimization** - Automated parameter tuning
-- ✅ **Quality Assessment** - Comprehensive data QC
-- 🔄 **Ensemble Analysis** - Combine results from multiple pipelines
+-  **ML-Powered Recommendations** - Machine learning models for smarter pipeline selection
+-  **Interactive Dashboard** - Web-based visualization and monitoring  
+-  **Resource Monitoring** - Real-time CPU/memory tracking
+-  **Parameter Optimization** - Automated parameter tuning
+-  **Quality Assessment** - Comprehensive data QC
+-  **Ensemble Analysis** - Combine results from multiple pipelines
 
 ---
 
@@ -874,8 +874,7 @@ dashboard.start()
 ---
 
 **RAPTOR v2.1.0**  
-**Author**: Ayeh Bolouki  
-**Affiliation**: University of Namur & GIGA-Neurosciences, University of Liège, Belgium  
+**Author**: Ayeh Bolouki   
 **License**: MIT
 
 **Upgrade today for ML-powered RNA-seq analysis!** 🤖🦖
