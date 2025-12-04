@@ -35,11 +35,11 @@
 
 | Challenge | RAPTOR Solution |
 |-----------|-----------------|
-| Which pipeline should I use? | 🤖 **ML recommendations** with 87% accuracy |
-| Is my data quality good enough? | 📊 **Quality assessment** with batch effect detection |
-| How do I know results are reliable? | 🎯 **Ensemble analysis** combining multiple pipelines |
-| What resources do I need? | ⚡ **Resource monitoring** with predictions |
-| How do I present results? | 📄 **Automated reports** publication-ready |
+| Which pipeline should I use? |  **ML recommendations** with 87% accuracy |
+| Is my data quality good enough? |  **Quality assessment** with batch effect detection |
+| How do I know results are reliable? |  **Ensemble analysis** combining multiple pipelines |
+| What resources do I need? |  **Resource monitoring** with predictions |
+| How do I present results? |  **Automated reports** publication-ready |
 
 ---
 
