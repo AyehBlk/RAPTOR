@@ -1,8 +1,9 @@
 #!/bin/bash
 # =============================================================================
-# RAPTOR Quick Profile Script
+# RAPTOR Quick Profile Script - Version 2.1.0
 # =============================================================================
-# Fast profiling and recommendation workflow for RNA-seq data
+# Fast profiling and ML-based recommendation workflow for RNA-seq data
+# Features: Quality assessment, ML recommendations, resource estimation
 # Usage: ./quick_profile.sh <counts.csv> [metadata.csv]
 # =============================================================================
 
@@ -23,7 +24,13 @@ print_warning() { echo -e "${YELLOW}⚠ $1${NC}"; }
 # Help message
 show_help() {
     cat << EOF
-RAPTOR Quick Profile - Fast RNA-seq Data Profiling
+RAPTOR Quick Profile - Fast RNA-seq Data Profiling (v2.1.0)
+
+Features:
+  • Advanced quality assessment
+  • ML-based pipeline recommendations  
+  • Resource requirement estimation
+  • Interactive HTML reports
 
 Usage:
     ./quick_profile.sh <counts.csv> [metadata.csv] [options]
@@ -120,7 +127,8 @@ fi
 # Main workflow
 echo ""
 echo "╔═══════════════════════════════════════════╗"
-echo "║      RAPTOR QUICK PROFILE WORKFLOW        ║"
+echo "║   RAPTOR QUICK PROFILE WORKFLOW v2.1.0    ║"
+echo "║   ML Recommendations & Quality Assessment ║"
 echo "╚═══════════════════════════════════════════╝"
 echo ""
 

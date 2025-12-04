@@ -1,8 +1,13 @@
 #!/bin/bash
 # =============================================================================
-# RAPTOR Demo Script
+# RAPTOR Demo Script - Version 2.1.0
 # =============================================================================
-# Comprehensive demonstration of RAPTOR's main features
+# Comprehensive demonstration of RAPTOR's main features including:
+# - ML-based pipeline recommendations
+# - Interactive dashboard
+# - Advanced quality assessment
+# - Real-time resource monitoring
+#
 # Author: Ayeh Bolouki
 # License: MIT
 # =============================================================================
@@ -93,22 +98,26 @@ demo_simulate() {
     cat simulated_small/metadata.csv
 }
 
-# Demo 2: Data profiling
+# Demo 2: Data profiling with ML recommendations
 demo_profile() {
-    print_header "Demo 2: Profiling RNA-seq Data"
+    print_header "Demo 2: Profiling RNA-seq Data with ML Recommendations"
     
-    print_info "Analyzing data characteristics..."
+    print_info "Analyzing data characteristics and getting ML-based recommendations..."
     raptor profile \
         --counts simulated_small/counts.csv \
         --metadata simulated_small/metadata.csv \
         --output profile_results/ \
+        --use-ml \
         --verbose
     
-    print_success "Profiling complete!"
+    print_success "Profiling complete with ML recommendations!"
     
     echo ""
     echo "Generated reports:"
     ls -lh profile_results/
+    
+    echo ""
+    echo "Check the recommendations.json file for ML-based pipeline suggestions"
 }
 
 # Demo 3: Python API usage
@@ -176,25 +185,34 @@ show_summary() {
     
     echo "This demo covered:"
     echo "  ✓ Data simulation"
-    echo "  ✓ Data profiling"
-    echo "  ✓ Pipeline recommendation"
+    echo "  ✓ Data profiling with ML recommendations"
+    echo "  ✓ Pipeline recommendation using machine learning"
     echo "  ✓ Python API usage"
     echo ""
     echo "All results are in: $(pwd)"
+    echo ""
+    echo "🆕 New in v2.1.0:"
+    echo "  • ML-based pipeline recommendations"
+    echo "  • Interactive dashboard (try: raptor dashboard)"
+    echo "  • Advanced quality assessment"
+    echo "  • Real-time resource monitoring"
+    echo "  • Ensemble analysis methods"
     echo ""
     echo "Next steps:"
     echo "  1. Open the HTML report to see visualizations"
     echo "  2. Try quick_profile.sh for faster profiling"
     echo "  3. Try full_benchmark.sh for comprehensive comparison"
-    echo "  4. Read tutorials: docs/tutorials/"
+    echo "  4. Run: python example_ml_workflow.py (ML demo)"
+    echo "  5. Run: python example_quality_assessment.py (QA demo)"
+    echo "  6. Read tutorials: docs/tutorials/"
     echo ""
-    print_success "Thank you for using RAPTOR! 🦖"
+    print_success "Thank you for using RAPTOR v2.1.0! 🦖"
 }
 
 # Main execution
 main() {
     echo "╔══════════════════════════════════════════════════════════╗"
-    echo "║          RAPTOR COMPREHENSIVE DEMO                       ║"
+    echo "║      RAPTOR COMPREHENSIVE DEMO - v2.1.0                  ║"
     echo "║   RNA-seq Analysis Pipeline Testing & Optimization       ║"
     echo "╚══════════════════════════════════════════════════════════╝"
     

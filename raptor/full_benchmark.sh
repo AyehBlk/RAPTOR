@@ -1,8 +1,11 @@
 #!/bin/bash
 # =============================================================================
-# RAPTOR Full Benchmark Script
+# RAPTOR Full Benchmark Script - Version 2.1.0
 # =============================================================================
-# Comprehensive pipeline benchmarking workflow
+# Comprehensive pipeline benchmarking workflow with:
+# - Real-time resource monitoring
+# - Parallel pipeline execution
+# - ML-enhanced result analysis
 # Compares multiple RNA-seq analysis pipelines on your data
 # =============================================================================
 
@@ -180,7 +183,7 @@ esac
 # Header
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║         RAPTOR FULL BENCHMARK WORKFLOW                    ║"
+echo "║      RAPTOR FULL BENCHMARK WORKFLOW v2.1.0                ║"
 echo "║      Comprehensive RNA-seq Pipeline Comparison            ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
@@ -368,7 +371,7 @@ print_success "Report generated: ${OUTPUT_DIR}/benchmark_comparison.html"
 # Step 5: Create summary
 print_info "Step 5/5: Creating benchmark summary..."
 
-python3 << 'PYEOF'
+python3 - "$OUTPUT_DIR" << 'PYEOF'
 import json
 import os
 import sys
@@ -429,7 +432,7 @@ print(f"✓ Best overall:   {best_overall.get('name', 'N/A')}")
 
 print("\n" + "="*70)
 
-PYEOF "$OUTPUT_DIR"
+PYEOF
 
 # Create text summary
 cat > "${OUTPUT_DIR}/BENCHMARK_SUMMARY.txt" << EOF

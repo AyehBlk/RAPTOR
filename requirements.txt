@@ -1,0 +1,138 @@
+# RAPTOR v2.1.0 Requirements
+# RNA-seq Analysis Pipeline Testing and Optimization Resource
+# Python 3.8+
+# Updated: December 2025
+
+# ============================================================================
+# CORE DEPENDENCIES
+# ============================================================================
+
+# Numerical computing
+numpy>=1.21.0
+pandas>=1.3.0
+scipy>=1.7.0
+
+# Machine learning
+scikit-learn>=1.0.0
+joblib>=1.1.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Configuration management
+pyyaml>=5.4.0
+
+
+# ============================================================================
+# v2.1.0 NEW FEATURES - REQUIRED DEPENDENCIES
+# ============================================================================
+
+# ---------- ML-Based Pipeline Recommendations ----------
+# (Uses: scikit-learn, joblib - already included above)
+
+
+# ---------- Advanced Data Quality Assessment ----------
+statsmodels>=0.13.0              # F-statistics for batch effect detection
+                                 # ANOVA, statistical modeling
+
+
+# ---------- Real-Time Resource Monitoring ----------
+psutil>=5.8.0                    # CPU, memory, disk I/O monitoring
+tqdm>=4.62.0                     # Progress bars
+colorlog>=6.6.0                  # Colored logging output
+
+
+# ---------- Interactive Web Dashboard ----------
+streamlit>=1.28.0                # Web application framework
+plotly>=5.14.0                   # Interactive plots and charts
+
+
+# ---------- Ensemble Analysis ----------
+# (Uses: scipy, pandas, numpy - already included above)
+
+
+# ---------- Automated Parameter Optimization ----------
+bayesian-optimization>=1.2.0     # Bayesian optimization for parameter tuning
+                                 # Grid search uses scikit-learn (already included)
+
+
+# ---------- Automated Reporting ----------
+jinja2>=3.0.0                    # HTML template engine
+markdown>=3.3.0                  # Markdown to HTML conversion
+
+
+# ---------- CLI and Utilities ----------
+click>=8.0.0                     # Command-line interface
+colorama>=0.4.4                  # Cross-platform colored output
+
+
+# ============================================================================
+# OPTIONAL DEPENDENCIES
+# ============================================================================
+
+# PDF report generation (platform-specific, see notes below)
+# weasyprint>=52.5               # HTML to PDF conversion
+
+# Cloud integration (install on-demand)
+# boto3>=1.26.0                  # AWS integration
+# google-cloud-storage>=2.0.0   # Google Cloud integration
+
+
+# ============================================================================
+# DEVELOPMENT DEPENDENCIES (uncomment if needed)
+# ============================================================================
+
+# pytest>=7.0.0
+# pytest-cov>=3.0.0
+# black>=22.0.0
+# flake8>=4.0.0
+# mypy>=0.950
+
+
+# ============================================================================
+# DOCUMENTATION (uncomment if building docs)
+# ============================================================================
+
+# sphinx>=4.0.0
+# sphinx-rtd-theme>=1.0.0
+# sphinx-click>=3.0.0
+
+
+# ============================================================================
+# PLATFORM-SPECIFIC NOTES
+# ============================================================================
+
+# WeasyPrint (PDF Generation):
+#   - macOS: brew install cairo pango gdk-pixbuf libffi
+#   - Linux: sudo apt-get install python3-dev libcairo2
+#   - Windows: Use pdfkit with wkhtmltopdf instead
+#   - Alternative: Skip PDF, use HTML reports only
+
+# Bayesian Optimization:
+#   - Requires: scipy>=1.7.0 (already included)
+#   - If installation fails, parameter optimization falls back to grid search
+
+
+# ============================================================================
+# INSTALLATION COMMANDS
+# ============================================================================
+
+# Standard installation:
+#   pip install -r requirements.txt
+
+# Minimal installation (without optional features):
+#   pip install numpy pandas scipy scikit-learn matplotlib seaborn
+
+# With dashboard:
+#   pip install -r requirements.txt
+#   pip install streamlit plotly
+
+# Upgrade from v2.0.0:
+#   pip install -r requirements.txt --upgrade
+
+# Virtual environment (recommended):
+#   python -m venv raptor_env
+#   source raptor_env/bin/activate  # Linux/Mac
+#   raptor_env\Scripts\activate     # Windows
+#   pip install -r requirements.txt

@@ -2,6 +2,9 @@
 """
 RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
 Setup configuration for PyPI distribution
+
+Author: Ayeh Bolouki
+Version: 2.1.0
 """
 
 from setuptools import setup, find_packages
@@ -20,7 +23,7 @@ def get_version():
         for line in f:
             if line.startswith('__version__'):
                 return line.split('=')[1].strip().strip('"').strip("'")
-    return '2.0.0'  # Fallback version
+    return '2.1.0'  # Fallback version
 
 # Core dependencies (minimal installation)
 INSTALL_REQUIRES = [
@@ -30,15 +33,39 @@ INSTALL_REQUIRES = [
     'matplotlib>=3.4.0',
     'seaborn>=0.11.0',
     'scikit-learn>=1.0.0',
+    'joblib>=1.1.0',
     'pyyaml>=5.4.0',
     'jinja2>=3.0.0',
     'click>=8.0.0',
     'tqdm>=4.62.0',
     'colorama>=0.4.4',
+    'statsmodels>=0.13.0',
 ]
 
-# Optional dependencies for development
+# Optional dependencies
 EXTRAS_REQUIRE = {
+    # v2.1.0: ML features (included in core now)
+    'ml': [
+        'scikit-learn>=1.0.0',
+        'joblib>=1.1.0',
+    ],
+    
+    # v2.1.0: Dashboard dependencies
+    'dashboard': [
+        'streamlit>=1.28.0',
+        'plotly>=5.14.0',
+        'psutil>=5.8.0',
+    ],
+    
+    # v2.1.0: Advanced features
+    'advanced': [
+        'bayesian-optimization>=1.2.0',
+        'markdown>=3.3.0',
+        'weasyprint>=52.5',
+        'colorlog>=6.6.0',
+    ],
+    
+    # Development dependencies
     'dev': [
         'pytest>=7.0.0',
         'pytest-cov>=3.0.0',
@@ -48,6 +75,8 @@ EXTRAS_REQUIRE = {
         'sphinx>=4.0.0',
         'sphinx_rtd_theme>=1.0.0',
     ],
+    
+    # Documentation dependencies
     'docs': [
         'sphinx>=4.0.0',
         'sphinx_rtd_theme>=1.0.0',
@@ -62,7 +91,7 @@ setup(
     # Basic package information
     name='raptor-rnaseq',
     version=get_version(),
-    description='RNA-seq Analysis Pipeline Testing and Optimization Resource',
+    description='RNA-seq Analysis Pipeline Testing and Optimization Resource with ML-powered recommendations',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
     
@@ -76,6 +105,7 @@ setup(
         'Bug Reports': 'https://github.com/AyehBlk/RAPTOR/issues',
         'Source': 'https://github.com/AyehBlk/RAPTOR',
         'Documentation': 'https://github.com/AyehBlk/RAPTOR/tree/main/docs',
+        'Changelog': 'https://github.com/AyehBlk/RAPTOR/blob/main/CHANGELOG.md',
     },
     
     # License
@@ -119,6 +149,7 @@ setup(
         
         # Topic
         'Topic :: Scientific/Engineering :: Bio-Informatics',
+        'Topic :: Scientific/Engineering :: Artificial Intelligence',
         'Topic :: Software Development :: Libraries :: Python Modules',
         
         # License
@@ -130,6 +161,7 @@ setup(
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
         
         # Operating systems
         'Operating System :: OS Independent',
@@ -151,6 +183,11 @@ setup(
         'benchmarking',
         'data-analysis',
         'genomics',
+        'machine-learning',
+        'quality-assessment',
+        'data-quality',
+        'dashboard',
+        'interactive',
     ],
     
     # Zip safe

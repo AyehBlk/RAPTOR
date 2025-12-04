@@ -12,7 +12,7 @@ Email: ayehbolouki1988@gmail.com
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 import logging
 
 logger = logging.getLogger(__name__)

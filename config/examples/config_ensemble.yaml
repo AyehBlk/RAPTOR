@@ -1,0 +1,576 @@
+# ============================================================================
+# RAPTOR v2.1.0 - ENSEMBLE ANALYSIS CONFIGURATION
+# ============================================================================
+# 
+# This configuration is optimized for ensemble analysis - combining results
+# from multiple RNA-seq pipelines for robust differential expression detection.
+#
+# Perfect for:
+# - High-stakes analyses requiring maximum confidence
+# - Discordant results between pipelines
+# - Meta-analysis across studies
+# - Identifying robust biomarkers
+# - Clinical/diagnostic applications
+#
+# Strategy: Run multiple pipelines and combine results using statistical
+# consensus methods to identify genes consistently called across methods.
+#
+# Usage: raptor ensemble --counts data.csv --config config_ensemble.yaml
+# ============================================================================
+
+# ============================================================================
+# GENERAL SETTINGS
+# ============================================================================
+general:
+  version: "2.1.0"
+  verbose: true
+  log_level: "INFO"
+  output_dir: "./ensemble_analysis"
+  random_seed: 42
+
+# ============================================================================
+# COMPUTATIONAL RESOURCES - ENSEMBLE REQUIRES MORE
+# ============================================================================
+resources:
+  # Ensemble analysis runs multiple pipelines
+  default_threads: 12
+  default_memory_gb: 48
+  max_threads: 24
+  max_memory_gb: 96
+  
+  # Resource allocation
+  ensemble_analysis:
+    threads: 16
+    memory_gb: 64
+    
+    # Parallel pipeline execution
+    parallel_pipelines: true
+    max_parallel: 4  # Run 4 pipelines simultaneously
+
+# ============================================================================
+# DATA PROFILING
+# ============================================================================
+profiling:
+  bcv_thresholds:
+    very_low: 0.2
+    low: 0.4
+    moderate: 0.6
+    high: 0.8
+  
+  depth_categories:
+    low: 10
+    moderate: 30
+    high: 50
+  
+  sample_size:
+    small: 6
+    medium: 12
+    large: 20
+  
+  # Standard filtering
+  min_counts_per_gene: 10
+  min_samples_per_gene: 3
+  filter_low_counts: true
+  
+  generate_plots: true
+  save_profile: true
+
+# ============================================================================
+# ML RECOMMENDATION - SELECT DIVERSE PIPELINES
+# ============================================================================
+ml_recommendation:
+  enabled: true
+  model_type: "random_forest"
+  
+  prediction:
+    # Get top 5 recommendations for diversity
+    top_n_recommendations: 5
+    confidence_threshold: 0.6  # Lower threshold for ensemble
+    
+    # Prioritize diversity over single best
+    diversity_mode: true
+    
+  # Document why each pipeline was selected
+  explain_predictions: true
+  feature_importance: true
+
+# ============================================================================
+# QUALITY ASSESSMENT
+# ============================================================================
+quality_assessment:
+  enabled: true
+  
+  metrics:
+    - "library_size"
+    - "detected_genes"
+    - "mitochondrial_content"
+    - "mapping_rate"
+  
+  thresholds:
+    min_library_size: 1e6
+    min_detected_genes: 5000
+    max_mitochondrial_pct: 10
+    min_mapping_rate: 70
+  
+  # Batch effect check is critical for ensemble
+  batch_detection:
+    enabled: true
+    method: "pca"
+  
+  generate_qc_report: true
+
+# ============================================================================
+# ENSEMBLE PIPELINE STRATEGY - CORE CONFIGURATION
+# ============================================================================
+ensemble:
+  enabled: true  # This is the main feature
+  
+  # ========================================================================
+  # PIPELINE SELECTION
+  # ========================================================================
+  
+  # Automatic pipeline selection
+  auto_select: true  # Use ML to select best pipelines
+  
+  # Or manually specify pipelines
+  manual_pipelines: []  # e.g., [1, 3, 5, 7] for specific combinations
+  # Pipeline reference:
+  # 1: STAR-RSEM-DESeq2
+  # 2: STAR-RSEM-edgeR
+  # 3: Salmon-edgeR
+  # 4: Salmon-DESeq2
+  # 5: kallisto-sleuth
+  # 6: HISAT2-StringTie-Ballgown
+  # 7: Salmon-limma
+  # 8: STAR-RSEM-limma
+  
+  # Pipeline diversity
+  ensure_diversity: true
+  diversity_criteria:
+    - "alignment_method"     # STAR vs Salmon vs kallisto
+    - "quantification_method"  # RSEM vs Salmon vs kallisto
+    - "de_method"           # DESeq2 vs edgeR vs limma
+  
+  # Number of pipelines to run
+  min_pipelines: 3
+  max_pipelines: 6  # Balance between robustness and computation
+  optimal_pipelines: 5  # Target number
+  
+  # ========================================================================
+  # ENSEMBLE METHODS
+  # ========================================================================
+  
+  methods:
+    # Use all methods for comprehensive analysis
+    - "rank_aggregation"      # Combine gene rankings
+    - "vote_counting"         # Majority vote (simple, robust)
+    - "weighted_average"      # Weight by pipeline performance
+    - "meta_analysis"         # Statistical combination (most rigorous)
+    - "intersection"          # Most conservative (all must agree)
+    - "union"                 # Most liberal (any can call)
+  
+  # Primary method for final calls
+  primary_method: "meta_analysis"
+  
+  # ========================================================================
+  # RANK AGGREGATION SETTINGS
+  # ========================================================================
+  rank_aggregation:
+    method: "borda"  # borda, copeland, robust_rank_aggregation
+    
+    # Borda count: Assign points by rank
+    borda:
+      scoring: "linear"  # linear, exponential, logarithmic
+    
+    # Robust Rank Aggregation (RRA)
+    rra:
+      alpha: 0.05
+      adjust_method: "BH"
+  
+  # ========================================================================
+  # VOTE COUNTING SETTINGS
+  # ========================================================================
+  vote_counting:
+    # Threshold for calling a gene DE
+    vote_threshold: 0.6  # 60% of pipelines must agree
+    
+    # Weighted voting based on pipeline performance
+    weighted: true
+    
+    # Confidence levels
+    confidence_levels:
+      high: 0.8      # 80% agreement = high confidence
+      medium: 0.6    # 60% agreement = medium confidence
+      low: 0.4       # 40% agreement = low confidence
+  
+  # ========================================================================
+  # WEIGHTED AVERAGE SETTINGS
+  # ========================================================================
+  weighting:
+    method: "performance_based"  # performance_based, ml_confidence, equal, custom
+    
+    # Performance metric for weighting
+    performance_metric: "f1_score"  # f1_score, accuracy, precision, recall
+    
+    # ML confidence weighting
+    ml_confidence:
+      use_prediction_confidence: true
+      confidence_weight: 0.3  # 30% from ML confidence
+      performance_weight: 0.7  # 70% from benchmark performance
+    
+    # Custom weights (if method="custom")
+    custom_weights: {}  # e.g., {1: 1.2, 3: 1.0, 5: 0.8}
+    
+    # Normalization
+    normalize_weights: true
+  
+  # ========================================================================
+  # META-ANALYSIS SETTINGS - MOST RIGOROUS
+  # ========================================================================
+  meta_analysis:
+    # Statistical combination method
+    method: "fishers"  # fishers, stouffers, weighted_z, random_effects
+    
+    # Fisher's method: Combine p-values
+    fishers:
+      adjust_method: "BH"
+      adjust_per_comparison: true
+    
+    # Stouffer's Z-score method
+    stouffers:
+      weighted: true
+      weights: "inverse_variance"
+    
+    # Random effects model (accounts for between-pipeline heterogeneity)
+    random_effects:
+      estimator: "DerSimonian-Laird"  # DL, REML, PM
+      heterogeneity_test: true
+      i_squared_threshold: 50  # High heterogeneity if I² > 50%
+    
+    # Effect size combination
+    combine_effect_sizes: true
+    effect_size_method: "weighted_average"
+    
+    # P-value thresholds
+    p_value_threshold: 0.05
+    
+    # Heterogeneity assessment
+    assess_heterogeneity: true
+    heterogeneity_metrics:
+      - "Q_statistic"
+      - "I_squared"
+      - "tau_squared"
+    
+    # Publication bias assessment (for real meta-analysis)
+    publication_bias:
+      enabled: false  # Enable if combining studies
+      methods: ["egger_test", "funnel_plot"]
+  
+  # ========================================================================
+  # CONSENSUS THRESHOLDS
+  # ========================================================================
+  consensus:
+    # Minimum agreement required
+    min_agreement: 0.6  # 60% of pipelines must agree
+    
+    # Strict mode: Require unanimous agreement for some genes
+    strict_mode: false
+    strict_threshold: 1.0  # 100% for strict calls
+    
+    # Direction agreement: Pipelines must agree on up/down regulation
+    require_direction_consensus: true
+    direction_agreement_threshold: 0.8  # 80% must agree on direction
+    
+    # Magnitude agreement: Check if effect sizes are similar
+    check_magnitude_consistency: true
+    magnitude_cv_threshold: 0.5  # CV < 0.5 for consistency
+  
+  # ========================================================================
+  # DISCORDANCE ANALYSIS
+  # ========================================================================
+  discordance_analysis:
+    enabled: true
+    
+    # Identify genes with high discordance
+    flag_discordant_genes: true
+    discordance_threshold: 0.5  # Flag if >50% disagreement
+    
+    # Analyze reasons for discordance
+    investigate_causes: true
+    potential_causes:
+      - "pipeline_specific_bias"
+      - "low_expression"
+      - "high_variability"
+      - "batch_effects"
+      - "outlier_samples"
+    
+    # Generate discordance report
+    generate_report: true
+  
+  # ========================================================================
+  # CONFIDENCE SCORING
+  # ========================================================================
+  confidence_scoring:
+    enabled: true
+    
+    # Factors contributing to confidence
+    factors:
+      - "agreement_level"           # How many pipelines agree
+      - "p_value_consistency"       # Are p-values similar?
+      - "effect_size_consistency"   # Are log fold changes similar?
+      - "pipeline_performance"      # Performance of agreeing pipelines
+      - "ml_confidence"            # ML model confidence
+    
+    # Weights for each factor
+    factor_weights:
+      agreement_level: 0.3
+      p_value_consistency: 0.2
+      effect_size_consistency: 0.2
+      pipeline_performance: 0.2
+      ml_confidence: 0.1
+    
+    # Confidence categories
+    categories:
+      very_high: 0.9    # >90%
+      high: 0.75        # 75-90%
+      medium: 0.6       # 60-75%
+      low: 0.4          # 40-60%
+      very_low: 0.2     # <40%
+  
+  # ========================================================================
+  # OUTPUT AND REPORTING
+  # ========================================================================
+  
+  # Generate comprehensive ensemble report
+  generate_ensemble_report: true
+  
+  # Compare methods
+  compare_methods: true
+  method_comparison_metrics:
+    - "number_de_genes"
+    - "overlap_percentage"
+    - "concordance_score"
+    - "runtime"
+  
+  # Visualizations
+  plot_comparisons: true
+  plots:
+    - "venn_diagram"          # Overlap between pipelines
+    - "upset_plot"            # Multi-way intersections
+    - "concordance_heatmap"   # Pipeline agreement matrix
+    - "rank_comparison"       # Gene rank correlations
+    - "effect_size_comparison"  # Log fold change correlations
+    - "p_value_comparison"    # P-value correlations
+    - "confidence_distribution"  # Distribution of confidence scores
+    - "method_comparison"     # Compare ensemble methods
+  
+  # Venn/UpSet diagram settings
+  venn_diagrams:
+    max_sets: 5  # Maximum for readability
+    show_percentages: true
+    show_counts: true
+  
+  upset_plots:
+    min_intersection_size: 10
+    max_sets: 8
+  
+  # Export formats
+  export_formats:
+    - "csv"      # Individual pipeline results
+    - "tsv"      # Ensemble results
+    - "xlsx"     # Multi-sheet workbook with all results
+  
+  # Detailed output files
+  save_individual_results: true
+  save_agreement_matrix: true
+  save_confidence_scores: true
+  save_discordance_analysis: true
+
+# ============================================================================
+# STATISTICAL ANALYSIS - CONSISTENT ACROSS PIPELINES
+# ============================================================================
+statistics:
+  # Use same thresholds for all pipelines (consistency)
+  fdr_threshold: 0.05
+  log_fold_change_threshold: 1.0
+  p_value_threshold: 0.05
+  adjustment_method: "BH"
+  
+  # Document all statistical tests
+  document_tests: true
+
+# ============================================================================
+# PIPELINE SETTINGS
+# ============================================================================
+pipelines:
+  # Don't auto-select single pipeline (ensemble will select multiple)
+  auto_select: false
+  
+  # Pipeline timeout (ensemble takes longer)
+  timeout: 10800  # 3 hours per pipeline
+  
+  # Retry settings
+  retry_on_failure: true
+  max_retries: 1  # One retry for failed pipelines
+  
+  # Continue on partial failure
+  continue_on_pipeline_failure: true
+  min_successful_pipelines: 3  # Need at least 3 to proceed
+
+# ============================================================================
+# RESOURCE MONITORING
+# ============================================================================
+resource_monitoring:
+  enabled: true
+  sampling_interval: 5.0
+  
+  track_metrics:
+    - "cpu_percent"
+    - "memory_percent"
+    - "disk_io"
+  
+  # Monitor per-pipeline resources
+  per_pipeline_tracking: true
+  
+  save_metrics: true
+  generate_resource_report: true
+
+# ============================================================================
+# OUTPUT SETTINGS
+# ============================================================================
+output:
+  formats:
+    results: ["csv", "tsv", "xlsx"]
+    plots: ["png", "pdf"]
+    reports: ["html", "pdf"]
+  
+  # Organize by ensemble method
+  organize_by_method: true
+  
+  # Keep all intermediate results
+  keep_intermediate_files: true
+  
+  compress_outputs: true
+  timestamp_files: true
+
+# ============================================================================
+# AUTOMATED REPORTING - ENSEMBLE FOCUSED
+# ============================================================================
+automated_reporting:
+  enabled: true
+  formats: ["html", "pdf"]
+  
+  sections:
+    - "executive_summary"
+    - "ensemble_strategy"
+    - "pipeline_selection"
+    - "individual_results"
+    - "ensemble_results"
+    - "concordance_analysis"
+    - "discordance_analysis"
+    - "confidence_assessment"
+    - "method_comparison"
+    - "biological_interpretation"
+    - "recommendations"
+  
+  # Biological interpretation of ensemble results
+  interpretation:
+    enabled: true
+    databases: ["GO", "KEGG", "Reactome"]
+  
+  # Compare interpretations across methods
+  compare_enrichments: true
+
+# ============================================================================
+# BENCHMARKING
+# ============================================================================
+benchmarking:
+  # Benchmark ensemble performance
+  mode: "comprehensive"
+  
+  # Compare ensemble to individual pipelines
+  compare_to_individual: true
+  
+  metrics:
+    - "execution_time"
+    - "peak_memory"
+    - "accuracy"
+    - "sensitivity"
+    - "specificity"
+    - "f1_score"
+  
+  save_benchmarks: true
+
+# ============================================================================
+# ADVANCED ENSEMBLE FEATURES
+# ============================================================================
+advanced_ensemble:
+  # Iterative refinement
+  iterative_refinement:
+    enabled: false
+    max_iterations: 3
+    convergence_threshold: 0.01
+  
+  # Bootstrap confidence intervals
+  bootstrap:
+    enabled: true
+    n_bootstrap: 1000
+    confidence_level: 0.95
+  
+  # Sensitivity analysis
+  sensitivity_analysis:
+    enabled: true
+    vary_parameters:
+      - "vote_threshold"
+      - "min_agreement"
+      - "p_value_threshold"
+  
+  # Stability analysis
+  stability_analysis:
+    enabled: true
+    subsample_pipelines: true
+    n_subsamples: 100
+
+# ============================================================================
+# USAGE NOTES
+# ============================================================================
+# 
+# ENSEMBLE ANALYSIS WORKFLOW:
+# 
+# 1. Profile your data:
+#    raptor profile --counts data.csv --config config_ensemble.yaml
+# 
+# 2. Run ensemble analysis:
+#    raptor ensemble --counts data.csv --config config_ensemble.yaml
+# 
+# 3. Review results:
+#    - Check ensemble_report.html for overview
+#    - Examine concordance plots for agreement levels
+#    - Review confidence scores for each gene
+#    - Investigate discordant genes
+# 
+# INTERPRETATION GUIDE:
+# 
+# - Very High Confidence (>90% agreement): Use for clinical decisions
+# - High Confidence (75-90%): Robust biomarkers
+# - Medium Confidence (60-75%): Follow-up validation recommended
+# - Low Confidence (<60%): Investigate discordance, may be false positives
+# 
+# COMPUTATIONAL REQUIREMENTS:
+# 
+# - RAM: 48-64 GB recommended (running 4-6 pipelines)
+# - CPU: 12-16 cores optimal
+# - Time: 2-6 hours typical (depends on data size)
+# - Disk: 50-100 GB for intermediate files
+# 
+# TIPS FOR BEST RESULTS:
+# 
+# 1. Use diverse pipelines (different aligners, quantifiers, DE methods)
+# 2. Ensure high-quality data (QC first)
+# 3. Check for batch effects (critical for ensemble)
+# 4. Use meta-analysis for most rigorous combination
+# 5. Investigate highly discordant genes
+# 6. Weight by pipeline performance when available
+# 7. Report confidence scores with results
+# 
+# ============================================================================

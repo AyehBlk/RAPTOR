@@ -1,34 +1,44 @@
-# RAPTOR Examples
+# 🦖 RAPTOR Examples
 
-Example scripts demonstrating RAPTOR workflows.
+Example scripts demonstrating RAPTOR v2.1.0 features.
+
+## Official Example Workflows
+
+| Script | Description |
+|--------|-------------|
+| `example_ml_workflow.py` | Complete ML training workflow (data generation → training → evaluation) |
+| `example_quality_assessment.py` | Four comprehensive quality assessment examples |
+
+## Feature Demonstrations (with --demo mode)
+
+All these scripts support `--demo` mode for testing without RAPTOR installed:
+
+| Script | Feature | Demo Command |
+|--------|---------|--------------|
+| `05_ml_recommendation.py` | ML-based pipeline recommendation | `python 05_ml_recommendation.py --demo` |
+| `06_quality_assessment.py` | Data quality scoring | `python 06_quality_assessment.py --demo` |
+| `07_ensemble_analysis.py` | Multi-pipeline consensus | `python 07_ensemble_analysis.py --demo` |
+| `08_automated_report.py` | Report generation | `python 08_automated_report.py --demo` |
+| `09_resource_monitoring.py` | Resource tracking | `python 09_resource_monitoring.py --demo` |
+| `10_parameter_optimization.py` | Parameter tuning | `python 10_parameter_optimization.py --demo` |
 
 ## Quick Start
 
 ```bash
-# Run comprehensive demo
-chmod +x demo.sh && ./demo.sh
+# Test without RAPTOR installed
+python 05_ml_recommendation.py --demo
+python 06_quality_assessment.py --demo
 
-# Profile your own data
-chmod +x quick_profile.sh && ./quick_profile.sh my_counts.csv
-
-# Full benchmark (requires FASTQ files)
-chmod +x full_benchmark.sh && ./full_benchmark.sh -d fastq_data/
+# With real data (RAPTOR required)
+python 05_ml_recommendation.py --counts counts.csv --metadata metadata.csv
+python 06_quality_assessment.py --counts counts.csv --plot
 ```
 
-## Available Scripts
+## Installation
 
-### 1. demo.sh - Comprehensive Demo
-Complete demonstration of RAPTOR features (~30 min)
-
-### 2. quick_profile.sh - Fast Profiling
-Quick data profiling and recommendations (~5 min)
-
-### 3. full_benchmark.sh - Pipeline Comparison
-Rigorous benchmarking of multiple pipelines (2-24 hours)
-
-## Usage
-
-See `--help` for each script or read detailed documentation in [docs/](../docs/)
+```bash
+pip install raptor-rnaseq[ml]
+```
 
 ---
-**Support:** ayehbolouki1988@gmail.com
+*RAPTOR v2.1.0 - Making free science for everybody around the world 🌍*
