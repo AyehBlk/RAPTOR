@@ -1,0 +1,48 @@
+cff-version: 1.2.0
+message: "If you use RAPTOR in your research, please cite it as below."
+title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
+version: 2.1.0
+date-released: 2025-12-04
+authors:
+  - family-names: "Bolouki"
+    given-names: "Ayeh"
+    email: ayehbolouki1988@gmail.com
+    orcid: "https://orcid.org/0000-0001-5920-3783"
+    affiliation: "University of Namur & GIGA-Neurosciences, University of Liège, Belgium"
+repository-code: "https://github.com/AyehBlk/RAPTOR"
+url: "https://github.com/AyehBlk/RAPTOR"
+abstract: "RAPTOR is a comprehensive benchmarking framework for RNA-seq differential expression analysis pipelines with ML-powered recommendations. Version 2.1.0 introduces machine learning-based pipeline selection (87% accuracy), an interactive web dashboard, advanced quality assessment with batch effect detection, ensemble analysis methods, real-time resource monitoring, and automated parameter optimization. It implements 8 complete workflows and helps researchers make evidence-based decisions by profiling data quality and matching optimal methods to specific experimental conditions."
+keywords:
+  - RNA-seq
+  - differential expression
+  - bioinformatics
+  - pipeline benchmarking
+  - computational biology
+  - transcriptomics
+  - data profiling
+  - pipeline recommendation
+  - machine learning
+  - quality assessment
+  - ensemble analysis
+  - interactive dashboard
+  - resource monitoring
+  - parameter optimization
+license: MIT
+type: software
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.17607161"
+    description: "Zenodo archive"
+preferred-citation:
+  type: software
+  title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
+  authors:
+    - family-names: "Bolouki"
+      given-names: "Ayeh"
+      email: ayehbolouki1988@gmail.com
+      orcid: "https://orcid.org/0000-0001-5920-3783"
+  year: 2025
+  version: 2.1.0
+  doi: "10.5281/zenodo.17607161"
+  repository-code: "https://github.com/AyehBlk/RAPTOR"
+  license: MIT
