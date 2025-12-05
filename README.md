@@ -419,7 +419,7 @@ Copyright (c) 2025 Ayeh Bolouki
 - University of Namur for computational resources
 - GIGA-Neurosciences, University of Liège for collaborative support
 - The Bioconductor community for the R package ecosystem
-- All contributors and users who provided feedback
+- All users who provided feedback
 
 ---
 
