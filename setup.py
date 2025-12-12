@@ -1,4 +1,4 @@
-odin#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
 Setup configuration for PyPI distribution
