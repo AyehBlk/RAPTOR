@@ -8,7 +8,6 @@ Version 2.1.0 introduces ML-based recommendations, advanced quality assessment,
 automated reporting, and parameter optimization capabilities.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayeh.bolouki@unamur.be
 License: MIT
 """
@@ -83,15 +82,15 @@ def _show_welcome():
     print("""
     ╔══════════════════════════════════════════════════════════════╗
     ║                     🦖 RAPTOR v2.1.0                        ║
-    ║   RNA-seq Analysis Pipeline Testing & Optimization Resource ║
+    ║   RNA-seq Analysis Pipeline Testing & Optimization Resource  ║
     ║                                                              ║
     ║          🤖 NOW WITH ML-POWERED RECOMMENDATIONS!            ║
     ║          📊 ADVANCED QUALITY ASSESSMENT                     ║
     ║          📄 AUTOMATED REPORTING                             ║
     ║                                                              ║
     ║              Created by Ayeh Bolouki                         ║
-    ║         University of Namur & GIGA-Neurosciences            ║
-    ║            University of Liège, Belgium                      ║
+    ║             University of Liège, Belgium                     ║
+    ║                                                              ║
     ╚══════════════════════════════════════════════════════════════╝
     
     Quick Start:
