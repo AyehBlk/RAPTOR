@@ -629,8 +629,7 @@ raptor profile --counts cleaned_data.csv --use-ml
 ---
 
 **RAPTOR v2.1.0 Profile & Recommend**  
-**Author**: Ayeh Bolouki  
-**Affiliation**: University of Namur & GIGA-Neurosciences, University of Liège, Belgium  
+**Author**: Ayeh Bolouki
 **License**: MIT
 
 *"Profile once, recommend smartly!"* 🤖🦖
