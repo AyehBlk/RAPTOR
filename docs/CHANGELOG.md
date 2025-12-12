@@ -7,11 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.1.0] - 2025-11-XX
+## [2.1.0] - 2025-06-12
 
-**Major Release** - ML Intelligence & Interactive Dashboard
+**Major Release** - ML Intelligence, Interactive Dashboard & PyPI Publication
 
-This release represents a significant evolution of RAPTOR, introducing artificial intelligence, interactive visualization, and cloud computing capabilities while maintaining full backward compatibility with v2.0.0.
+This release represents a significant evolution of RAPTOR, introducing artificial intelligence, interactive visualization, cloud computing capabilities, and **official PyPI publication** while maintaining full backward compatibility with v2.0.0.
+
+### 🎉 Published to PyPI
+
+RAPTOR is now available on the Python Package Index!
+
+```bash
+# Install from PyPI
+pip install raptor-rnaseq
+
+# With all features
+pip install raptor-rnaseq[all]
+
+# With specific features
+pip install raptor-rnaseq[dashboard]
+pip install raptor-rnaseq[ml]
+pip install raptor-rnaseq[advanced]
+```
+
+**PyPI Page**: https://pypi.org/project/raptor-rnaseq/
 
 ###  Added
 
@@ -144,7 +163,7 @@ This release represents a significant evolution of RAPTOR, introducing artificia
 - Improved index building
 
 #### User Experience
-- Simplified installation process
+- Simplified installation process (now `pip install raptor-rnaseq`)
 - Better default configurations
 - More informative error messages
 - Enhanced help documentation
@@ -412,7 +431,7 @@ RAPTOR follows [Semantic Versioning](https://semver.org/):
 - **PATCH** version (0.0.X): Bug fixes, backward compatible
 
 ### Version History
-- **v2.1.0**: ML Intelligence & Dashboard (Current)
+- **v2.1.0**: ML Intelligence, Dashboard & PyPI (Current)
 - **v2.0.0**: Initial Public Release
 - **v1.0.0**: Development Release
 
@@ -449,10 +468,9 @@ See [Roadmap](ROADMAP.md) for detailed future plans.
 
 ## How to Update
 
-### From v2.0.0 to v2.1.0
+### From PyPI (Recommended)
 ```bash
 pip install --upgrade raptor-rnaseq
-raptor migrate --from v2.0.0
 ```
 
 ### From GitHub
@@ -463,6 +481,8 @@ pip install --upgrade git+https://github.com/AyehBlk/RAPTOR.git@v2.1.0
 ### Check Version
 ```bash
 raptor --version
+# or
+python -c "import raptor; print(raptor.__version__)"
 ```
 
 ---
@@ -480,7 +500,8 @@ raptor --version
 ---
 
 **Author:** Ayeh Bolouki  
-**License:** MIT
+**License:** MIT  
+**PyPI:** https://pypi.org/project/raptor-rnaseq/
 
 ---
 
