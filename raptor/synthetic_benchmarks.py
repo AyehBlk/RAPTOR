@@ -5,7 +5,6 @@ Generates realistic synthetic benchmark data for training and testing
 the ML-based pipeline recommender.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
