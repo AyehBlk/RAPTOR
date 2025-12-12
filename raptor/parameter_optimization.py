@@ -10,7 +10,6 @@ Automatically optimizes pipeline parameters based on data characteristics using:
 - Performance metrics
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
