@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+odin#!/usr/bin/env python3
 """
 RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
 Setup configuration for PyPI distribution
@@ -19,7 +19,7 @@ def read_file(filename):
 # Read version from __init__.py
 def get_version():
     """Extract version from raptor/__init__.py"""
-    with open('raptor/__init__.py', 'r') as f:
+    with open('raptor/__init__.py', 'r',encoding='utf-8') as f:
         for line in f:
             if line.startswith('__version__'):
                 return line.split('=')[1].strip().strip('"').strip("'")
