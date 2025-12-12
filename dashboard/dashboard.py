@@ -10,7 +10,6 @@ Web-based interface for all RAPTOR ML features including:
 - Benchmark comparisons
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
