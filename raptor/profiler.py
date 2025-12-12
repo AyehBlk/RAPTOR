@@ -6,7 +6,6 @@ pipeline recommendation. Calculates metrics related to library size, count
 distribution, biological variation, and experimental design.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
