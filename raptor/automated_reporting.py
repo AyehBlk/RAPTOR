@@ -11,7 +11,6 @@ Generates comprehensive, publication-ready reports with:
 - Recommendations
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
