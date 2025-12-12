@@ -7,7 +7,6 @@ Command-line interface for RAPTOR with integrated machine learning-based
 pipeline recommendation.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
