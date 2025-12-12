@@ -4,7 +4,6 @@ Utility Functions
 Helper functions and utilities used across RAPTOR modules.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
