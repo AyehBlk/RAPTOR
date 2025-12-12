@@ -1,200 +1,177 @@
-# 🦖 RAPTOR ML Upgrade - Quick Start Guide
+# 🦖 RAPTOR Quick Start Guide
 
 ## What's Included
 
 This package contains a complete **Machine Learning-based Pipeline Recommendation System** for RAPTOR:
 
-### Core Files (8 total)
+### Core Features
 
-1. **ml_recommender.py** - Main ML recommender implementation
-2. **synthetic_benchmarks.py** - Training data generator
-3. **example_ml_workflow.py** - Complete demo workflow
-4. **raptor_ml_cli.py** - Enhanced command-line interface
-5. **test_ml_system.py** - Comprehensive test suite
-6. **requirements_ml.txt** - Python dependencies
-7. **ML_RECOMMENDER_README.md** - Full documentation
-8. **IMPLEMENTATION_SUMMARY.md** - Technical overview (this file)
+- **ML-Based Recommendations** - Intelligent pipeline selection with 87% accuracy
+- **Interactive Dashboard** - Web-based interface (no coding required!)
+- **Quality Assessment** - Comprehensive data quality scoring
+- **Ensemble Analysis** - Combine multiple pipelines for robust results
+- **Resource Monitoring** - Track CPU, memory, and runtime
+- **Automated Reporting** - Publication-ready reports
 
-## Installation (5 Minutes)
+## Installation (2 Minutes)
 
-### Step 1: Install Dependencies
+### Option 1: Install from PyPI (Recommended)
 
 ```bash
-pip install numpy pandas scikit-learn scipy matplotlib seaborn joblib
+pip install raptor-rnaseq
 ```
 
-Or use the requirements file:
+With all features:
 ```bash
-pip install -r requirements_ml.txt
+pip install raptor-rnaseq[all]
 ```
 
-### Step 2: Verify Installation
+With specific features:
+```bash
+pip install raptor-rnaseq[dashboard]   # Web dashboard
+pip install raptor-rnaseq[ml]          # ML features
+pip install raptor-rnaseq[advanced]    # Advanced features
+```
+
+### Option 2: Install from GitHub
 
 ```bash
-python test_ml_system.py
+git clone https://github.com/AyehBlk/RAPTOR.git
+cd RAPTOR
+pip install -r requirements.txt
+```
+
+### Verify Installation
+
+```bash
+python -c "import raptor; print(raptor.__version__)"
 ```
 
 Expected output:
 ```
-✓ PASS Import dependencies
-✓ PASS Custom modules  
-✓ PASS Feature extraction
-✓ PASS Data generation
-✓ PASS Model training
-✓ PASS Prediction
+2.1.0
+```
 
-🎉 All tests passed! System is ready to use.
+Or run the test suite:
+```bash
+python test_ml_system.py
 ```
 
 ## First Run (2 Minutes)
 
-### See It In Action
+### Option A: Interactive Dashboard (Easiest)
 
 ```bash
-python example_ml_workflow.py --n-datasets 50
+python launch_dashboard.py
 ```
 
-This will:
-1. Generate 50 synthetic benchmark datasets
-2. Train a Random Forest model
-3. Evaluate performance
-4. Create visualizations
-5. Test predictions
+Then open http://localhost:8501 in your browser. Upload your data and get instant recommendations!
 
-Output includes:
-- Training accuracy: ~88%
-- Test accuracy: ~85%
-- Figures in `figures/` directory
-- Trained model in `models/` directory
-
-## Basic Usage
-
-### 1. Train a Model
-
-```python
-from ml_recommender import MLPipelineRecommender
-
-# Create and train
-recommender = MLPipelineRecommender(model_type='random_forest')
-results = recommender.train_from_benchmarks('ml_training_data/')
-
-print(f"Accuracy: {results['test_score']:.3f}")
-
-# Save for later
-recommender.save_model('my_models/')
-```
-
-### 2. Make Predictions
-
-```python
-from ml_recommender import MLPipelineRecommender
-
-# Load trained model
-recommender = MLPipelineRecommender()
-recommender.load_model('my_models/')
-
-# Get recommendation (profile is from RNAseqDataProfiler)
-recommendation = recommender.recommend(profile, top_k=3)
-
-print(f"Best: Pipeline {recommendation['pipeline_id']}")
-print(f"Confidence: {recommendation['confidence']:.1%}")
-```
-
-### 3. Use with RAPTOR
+### Option B: Command Line
 
 ```bash
-# Profile your data with ML recommendation
-python raptor_ml_cli.py profile \
-    --counts your_data.csv \
-    --use-ml \
-    --ml-model models/
+# Get ML recommendation for your data
+raptor profile --counts your_data.csv --use-ml
 ```
 
-## Integration with Your RAPTOR Installation
-
-### Option A: Standalone Usage
-
-Use the files as-is alongside your existing RAPTOR installation:
+### Option C: Python API
 
 ```python
-# In your scripts
-from ml_recommender import MLPipelineRecommender
-from raptor.profiler import RNAseqDataProfiler
+from raptor import RNAseqDataProfiler, MLPipelineRecommender
+import pandas as pd
+
+# Load your data
+counts = pd.read_csv('counts.csv', index_col=0)
 
 # Profile data
-counts = pd.read_csv('data.csv', index_col=0)
 profiler = RNAseqDataProfiler(counts)
 profile = profiler.run_full_profile()
 
 # Get ML recommendation
 recommender = MLPipelineRecommender()
-recommender.load_model('models/')
-rec = recommender.recommend(profile)
+recommendation = recommender.recommend(profile)
+
+print(f"Recommended: Pipeline {recommendation['pipeline_id']}")
+print(f"Confidence: {recommendation['confidence']:.1%}")
 ```
 
-### Option B: Full Integration
+## Basic Usage
 
-1. Copy `ml_recommender.py` and `synthetic_benchmarks.py` to your RAPTOR package:
+### 1. Get Pipeline Recommendation
+
 ```bash
-cp ml_recommender.py /path/to/raptor/raptor/
-cp synthetic_benchmarks.py /path/to/raptor/raptor/
+# Quick recommendation
+raptor profile --counts data.csv --use-ml
+
+# Output:
+# 🦖 RECOMMENDED: Pipeline 3 (Salmon-edgeR)
+# Confidence: 89%
+# Reason: Optimal for your sample size (n=12) and moderate BCV (0.35)
 ```
 
-2. Update `raptor/__init__.py`:
+### 2. Run Quality Assessment
+
 ```python
-from raptor.ml_recommender import MLPipelineRecommender
+from raptor.data_quality_assessment import DataQualityAssessor
+
+assessor = DataQualityAssessor(counts, metadata)
+report = assessor.assess_quality()
+
+print(f"Quality Score: {report['overall_score']}/100")
 ```
 
-3. Enhance existing `recommender.py`:
+### 3. Ensemble Analysis
+
 ```python
-# In raptor/recommender.py
-try:
-    from raptor.ml_recommender import MLPipelineRecommender
-    ML_AVAILABLE = True
-except ImportError:
-    ML_AVAILABLE = False
+from raptor.ensemble_analysis import EnsembleAnalyzer
 
-class PipelineRecommender:
-    def recommend(self, use_ml=False, ml_model_path=None):
-        if use_ml and ML_AVAILABLE and ml_model_path:
-            ml_rec = MLPipelineRecommender()
-            ml_rec.load_model(ml_model_path)
-            return ml_rec.recommend(self.profile)
-        else:
-            # Fall back to rule-based
-            return self._rule_based_recommend()
+analyzer = EnsembleAnalyzer()
+consensus = analyzer.combine_results(
+    results_dict={'deseq2': df1, 'edger': df2, 'limma': df3},
+    method='weighted_vote'
+)
+
+print(f"Consensus DE genes: {len(consensus['de_genes'])}")
 ```
 
-## Directory Structure
+### 4. Generate Report
 
-After running the workflow, you'll have:
+```bash
+raptor report --results results/ --output report.html
+```
+
+## Quick Command Reference
+
+```bash
+# Install
+pip install raptor-rnaseq
+
+# Launch dashboard
+python launch_dashboard.py
+
+# Get recommendation
+raptor profile --counts data.csv --use-ml
+
+# Run pipeline
+raptor run --pipeline 3 --data fastq/ --output results/
+
+# Generate report
+raptor report --results results/ --output report.html
+
+# Show help
+raptor --help
+```
+
+## Directory Structure After Installation
 
 ```
-raptor_ml_upgrade/
-├── ml_recommender.py              # Core ML module
-├── synthetic_benchmarks.py        # Data generator
-├── example_ml_workflow.py         # Demo workflow
-├── raptor_ml_cli.py              # CLI interface
-├── test_ml_system.py             # Tests
-├── requirements_ml.txt           # Dependencies
-├── ML_RECOMMENDER_README.md      # Full docs
-└── IMPLEMENTATION_SUMMARY.md     # This file
-
-Generated during use:
-├── ml_training_data/             # Training datasets
-│   ├── dataset_0000/
-│   │   ├── data_profile.json
-│   │   └── benchmark_results.json
-│   ├── dataset_0001/
-│   └── ...
-├── models/                       # Trained models
-│   ├── ml_recommender_random_forest.pkl
-│   ├── scaler_random_forest.pkl
-│   └── metadata_random_forest.json
-└── figures/                      # Visualizations
-    ├── confusion_matrix.png
-    ├── feature_importance.png
-    └── pipeline_metrics.png
+your_project/
+├── data/
+│   ├── counts.csv          # Your count matrix
+│   └── metadata.csv        # Sample metadata
+├── results/                # Pipeline outputs
+├── reports/                # Generated reports
+└── figures/                # Visualizations
 ```
 
 ## Common Use Cases
@@ -202,39 +179,30 @@ Generated during use:
 ### Use Case 1: Quick Recommendation
 
 ```bash
-# One-liner to get recommendation
-python raptor_ml_cli.py profile --counts data.csv --use-ml
+raptor profile --counts data.csv --use-ml
 ```
 
-### Use Case 2: Train on Your Benchmarks
+### Use Case 2: Full Workflow
 
 ```bash
-# You have real benchmark results
-python raptor_ml_cli.py train-ml \
-    --benchmark-dir my_benchmarks/ \
-    --output production_models/
+# 1. Profile and get recommendation
+raptor profile --counts data.csv --use-ml
+
+# 2. Run the recommended pipeline
+raptor run --pipeline 3 --data fastq/ --output results/
+
+# 3. Generate report
+raptor report --results results/
 ```
 
-### Use Case 3: Compare Models
-
-```bash
-# Compare Random Forest vs Gradient Boosting
-python example_ml_workflow.py --compare-models
-```
-
-### Use Case 4: Batch Processing
+### Use Case 3: Batch Processing
 
 ```python
-from ml_recommender import MLPipelineRecommender
-from raptor.profiler import RNAseqDataProfiler
-import pandas as pd
+from raptor import MLPipelineRecommender, RNAseqDataProfiler
 from pathlib import Path
 
-# Load model once
 recommender = MLPipelineRecommender()
-recommender.load_model('models/')
 
-# Process multiple datasets
 for data_file in Path('datasets/').glob('*.csv'):
     counts = pd.read_csv(data_file, index_col=0)
     profiler = RNAseqDataProfiler(counts)
@@ -244,39 +212,12 @@ for data_file in Path('datasets/').glob('*.csv'):
     print(f"{data_file.name}: Pipeline {rec['pipeline_id']}")
 ```
 
-## Performance Tips
-
-### For Speed
-```python
-# Use multiprocessing
-recommender.model.n_jobs = -1
-
-# Reduce feature set (if needed)
-# Focus on top 15 most important features
-```
-
-### For Accuracy
-```python
-# Train on more data
-generate_training_data(n_datasets=500)
-
-# Use ensemble
-rf_rec = rf_model.recommend(profile)
-gb_rec = gb_model.recommend(profile)
-# Combine predictions
-```
-
-### For Production
-```python
-# Load model once at startup
-_MODEL = MLPipelineRecommender()
-_MODEL.load_model('models/')
-
-def get_recommendation(profile):
-    return _MODEL.recommend(profile)
-```
-
 ## Troubleshooting
+
+### "Module not found"
+```bash
+pip install raptor-rnaseq[all]
+```
 
 ### "Model not found"
 ```bash
@@ -284,65 +225,32 @@ def get_recommendation(profile):
 python example_ml_workflow.py --n-datasets 100
 ```
 
-### "Import error"
-```bash
-# Install dependencies
-pip install -r requirements_ml.txt
-```
-
 ### "Low confidence predictions"
-- Train on more diverse data
-- Use ensemble of models
-- Check data quality
-- Consider rule-based fallback
-
-## What's Next?
-
-1. **Collect Real Benchmarks**: Run RAPTOR comparisons and save results
-2. **Retrain Model**: Incorporate your data for better accuracy
-3. **Share Model**: Export for collaborators or publication
-4. **Monitor Performance**: Track recommendation accuracy over time
+- Check data quality with `DataQualityAssessor`
+- Ensure sufficient sample size (n ≥ 6)
+- Consider ensemble analysis
 
 ## Need Help?
 
-- **Full Documentation**: See ML_RECOMMENDER_README.md
-- **Technical Details**: See IMPLEMENTATION_SUMMARY.md
-- **Run Tests**: `python test_ml_system.py`
+- **Documentation**: https://github.com/AyehBlk/RAPTOR/tree/main/docs
+- **PyPI**: https://pypi.org/project/raptor-rnaseq/
+- **Issues**: https://github.com/AyehBlk/RAPTOR/issues
 - **Email**: ayehbolouki1988@gmail.com
-
-## Quick Command Reference
-
-```bash
-# Test system
-python test_ml_system.py
-
-# Run complete demo
-python example_ml_workflow.py
-
-# Train model
-python raptor_ml_cli.py train-ml --benchmark-dir data/
-
-# Get recommendation
-python raptor_ml_cli.py profile --counts data.csv --use-ml
-
-# Generate training data
-python raptor_ml_cli.py generate-data --n-datasets 200
-```
 
 ## Success Criteria
 
-✓ All tests pass
-✓ Model trains in <5 seconds
-✓ Test accuracy >80%
-✓ Predictions in <0.1 seconds
+✓ Installation completes without errors
+✓ `import raptor` works
+✓ Dashboard launches at http://localhost:8501
+✓ ML recommendation runs in <0.1 seconds
 ✓ Confidence scores provided
-✓ Visualizations generated
 
 ---
 
-**Ready to upgrade RAPTOR? Start with:**
+**Ready to start? Run:**
 ```bash
-python example_ml_workflow.py
+pip install raptor-rnaseq
+python -c "import raptor"
 ```
 
 🦖 Happy analyzing!
