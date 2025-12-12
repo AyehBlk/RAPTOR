@@ -296,7 +296,6 @@ See [Migration Guide](docs/MIGRATION.md) for details.
 
 ###  Acknowledgments
 
-- University of Namur for computational resources
 - Community contributors for bug reports and suggestions
 - Users who provided feedback on v2.0.0
 
@@ -481,7 +480,6 @@ raptor --version
 ---
 
 **Author:** Ayeh Bolouki  
-**Affiliation:** University of Namur, Belgium  
 **License:** MIT
 
 ---
