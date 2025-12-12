@@ -12,6 +12,9 @@ This script will:
 
 Author: Ayeh Bolouki
 Version: 2.1.0
+
+Note: For simple installation, you can also use:
+    pip install raptor-rnaseq
 """
 
 import sys
@@ -56,34 +59,57 @@ def install_dependencies():
     """Install required packages."""
     print_header("Installing Dependencies")
     
-    # Try different requirements files
-    requirements_files = ["requirements.txt", "requirements_ml.txt"]
-    requirements_file = None
+    print("Choose installation method:")
+    print("  1. Install from PyPI (recommended)")
+    print("  2. Install from requirements.txt (development)")
     
-    for rf in requirements_files:
-        if Path(rf).exists():
-            requirements_file = Path(rf)
-            break
+    choice = input("\nEnter choice [1/2] (default: 1): ").strip()
     
-    if requirements_file is None:
-        print_error("No requirements file found!")
-        print_info("Expected: requirements.txt or requirements_ml.txt")
-        return False
-    
-    print_info(f"Installing packages from {requirements_file}...")
-    print_info("This may take a few minutes...\n")
-    
-    try:
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "-r", str(requirements_file), "--quiet"],
-            check=True
-        )
-        print_success("All dependencies installed successfully!")
-        return True
-    except subprocess.CalledProcessError as e:
-        print_error(f"Failed to install dependencies: {e}")
-        print_info(f"Try manually: pip install -r {requirements_file}")
-        return False
+    if choice == "2":
+        # Install from requirements.txt
+        requirements_files = ["requirements.txt", "requirements_ml.txt"]
+        requirements_file = None
+        
+        for rf in requirements_files:
+            if Path(rf).exists():
+                requirements_file = Path(rf)
+                break
+        
+        if requirements_file is None:
+            print_error("No requirements file found!")
+            print_info("Expected: requirements.txt or requirements_ml.txt")
+            return False
+        
+        print_info(f"Installing packages from {requirements_file}...")
+        print_info("This may take a few minutes...\n")
+        
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-r", str(requirements_file), "--quiet"],
+                check=True
+            )
+            print_success("All dependencies installed successfully!")
+            return True
+        except subprocess.CalledProcessError as e:
+            print_error(f"Failed to install dependencies: {e}")
+            print_info(f"Try manually: pip install -r {requirements_file}")
+            return False
+    else:
+        # Install from PyPI (default)
+        print_info("Installing RAPTOR from PyPI...")
+        print_info("This may take a few minutes...\n")
+        
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "raptor-rnaseq[all]", "--quiet"],
+                check=True
+            )
+            print_success("RAPTOR installed successfully from PyPI!")
+            return True
+        except subprocess.CalledProcessError as e:
+            print_error(f"Failed to install from PyPI: {e}")
+            print_info("Try manually: pip install raptor-rnaseq")
+            return False
 
 def verify_installation():
     """Verify all modules can be imported."""
@@ -114,6 +140,15 @@ def verify_installation():
         except ImportError:
             print_error(f"{display_name} not found")
             all_ok = False
+    
+    # Verify RAPTOR itself
+    print("\n")
+    try:
+        import raptor
+        print_success(f"RAPTOR {raptor.__version__} installed")
+    except ImportError:
+        print_error("RAPTOR package not found")
+        all_ok = False
     
     return all_ok
 
@@ -248,6 +283,9 @@ def print_summary():
 ║         RAPTOR v2.1.0 - Ready to Use! 🦖                             ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
+Quick Install (if you haven't already):
+   pip install raptor-rnaseq
+
 What's available:
 
 🎨 Interactive Dashboard:
@@ -255,7 +293,7 @@ What's available:
    → Web-based interface at http://localhost:8501
 
 🤖 ML Recommendations:
-   python raptor_ml_cli.py profile --counts data.csv --use-ml
+   raptor profile --counts data.csv --use-ml
 
 📊 Quality Assessment:
    from raptor.data_quality_assessment import DataQualityAssessor
@@ -275,9 +313,10 @@ What's available:
 🧪 Test System:
    python test_ml_system.py
 
-🔧 Support:
-   Email: ayehbolouki1988@gmail.com
+🔗 Links:
+   PyPI: https://pypi.org/project/raptor-rnaseq/
    GitHub: https://github.com/AyehBlk/RAPTOR
+   Email: ayehbolouki1988@gmail.com
 
 🚀 Quick Start:
    1. Launch dashboard: python launch_dashboard.py
@@ -297,6 +336,8 @@ def main():
     ║              with Interactive Dashboard                          ║
     ║                                                                  ║
     ║                   Version 2.1.0                                  ║
+    ║                                                                  ║
+    ║   Quick install: pip install raptor-rnaseq                       ║
     ╚══════════════════════════════════════════════════════════════════╝
     """)
     
@@ -312,7 +353,7 @@ def main():
     # Step 3: Verify installation
     if not verify_installation():
         print_error("Some dependencies are missing")
-        print_info("Try: pip install -r requirements.txt")
+        print_info("Try: pip install raptor-rnaseq[all]")
         sys.exit(1)
     
     # Step 4: Run tests
