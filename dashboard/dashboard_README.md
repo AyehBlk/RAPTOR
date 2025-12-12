@@ -399,7 +399,6 @@ Built with:
 
 ---
 
-**Author**: Ayeh Bolouki  
-**Affiliation**: University of Namur, Belgium  
+**Author**: Ayeh Bolouki
 **Version**: 2.1.0  
 **Last Updated**: November 2025
