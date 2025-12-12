@@ -23,7 +23,7 @@ Deep dive into all 8 RNA-seq analysis pipelines with ML-powered selection guidan
 
 Each pipeline now includes:
 -  **ML Success Rate** - Historical success on similar data
-- 📊 **Quality Compatibility** - Which data qualities work best
+-  **Quality Compatibility** - Which data qualities work best
 -  **Resource Predictions** - Estimated CPU/memory/time
 -  **Best Use Cases** - ML-learned optimal scenarios
 -  **Ensemble Weight** - Recommended weight in ensemble analysis
