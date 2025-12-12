@@ -980,8 +980,7 @@ Cloud deployment provides:
 
 ---
 
-**Author:** Ayeh Bolouki  
-**Affiliation:** University of Namur, Belgium  
+**Author:** Ayeh Bolouki   
 **Version:** 2.1.0  
 **License:** MIT
 
