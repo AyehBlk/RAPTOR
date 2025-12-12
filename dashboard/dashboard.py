@@ -771,8 +771,6 @@ def main():
     RNA-seq Analysis Pipeline Testing & Optimization Resource
     
     Created by Ayeh Bolouki
-    
-    University of Namur & GIGA-Neurosciences, University of Liège, Belgium
     """)
     
     # Route to appropriate page
