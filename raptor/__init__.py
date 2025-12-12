@@ -8,7 +8,7 @@ Version 2.1.0 introduces ML-based recommendations, advanced quality assessment,
 automated reporting, and parameter optimization capabilities.
 
 Author: Ayeh Bolouki
-Email: ayeh.bolouki@unamur.be
+Email: ayehbolouki1988@gmail.com
 License: MIT
 """
 
