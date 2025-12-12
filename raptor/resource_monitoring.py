@@ -5,7 +5,6 @@ Tracks CPU, memory, disk I/O, and other system resources during pipeline executi
 to optimize performance and identify bottlenecks.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayeh.bolouki@unamur.be
 """
 
