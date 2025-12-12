@@ -5,7 +5,6 @@ Machine learning-powered pipeline recommendation system that learns from
 historical benchmark data to predict optimal pipelines for new datasets.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
