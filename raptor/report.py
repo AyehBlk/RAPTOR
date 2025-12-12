@@ -5,7 +5,6 @@ Creates comprehensive reports comparing pipeline performance with
 publication-quality visualizations.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
