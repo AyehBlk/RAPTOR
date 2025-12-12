@@ -5,7 +5,6 @@ RAPTOR Dashboard Launcher
 Quick launcher for the interactive web dashboard.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Version: 2.1.0
 """
 
