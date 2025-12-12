@@ -5,7 +5,6 @@ Generates simulated RNA-seq data with known ground truth for benchmarking
 and validation purposes.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
