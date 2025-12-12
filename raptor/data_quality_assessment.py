@@ -12,7 +12,6 @@ Provides comprehensive quality metrics including:
 - Biological signal strength
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
