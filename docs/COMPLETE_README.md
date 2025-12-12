@@ -2,6 +2,7 @@
 
 ## Complete Machine Learning-Powered RNA-seq Analysis System with Interactive Dashboard
 
+[![PyPI](https://img.shields.io/pypi/v/raptor-rnaseq.svg?style=flat&logo=pypi&logoColor=white)](https://pypi.org/project/raptor-rnaseq/)
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen.svg)]()
@@ -78,16 +79,13 @@
 ### Option 1: Dashboard (Recommended for Beginners) ⭐
 
 ```bash
-# 1. Install dependencies (2 minutes)
-pip install -r requirements_ml.txt
+# 1. Install from PyPI (2 minutes)
+pip install raptor-rnaseq[all]
 
-# 2. Test installation (30 seconds)
-python test_ml_system.py
-
-# 3. Launch dashboard (10 seconds)
+# 2. Launch dashboard (10 seconds)
 python launch_dashboard.py
 
-# 4. Use in browser (2 minutes)
+# 3. Use in browser (2 minutes)
 #    - Opens automatically at http://localhost:8501
 #    - Upload data or use sample
 #    - Click "Profile Data"
@@ -102,30 +100,23 @@ python launch_dashboard.py
 ### Option 2: Command Line (For Power Users)
 
 ```bash
-# 1. Install (2 minutes)
-pip install -r requirements_ml.txt
+# 1. Install from PyPI (2 minutes)
+pip install raptor-rnaseq[all]
 
-# 2. Generate training data (2 minutes)
-python example_ml_workflow.py --n-datasets 200
+# 2. Profile your data with ML (10 seconds)
+raptor profile --counts your_data.csv --use-ml
 
-# 3. Profile your data with ML (10 seconds)
-python raptor_ml_cli.py profile \
-    --counts your_data.csv \
-    --use-ml \
-    --ml-model models/
-
-# 4. View recommendation
+# 3. View recommendation
 ```
 
-**Total Time:** ~5 minutes  
+**Total Time:** ~3 minutes  
 **Coding Required:** Basic CLI  
 **Perfect For:** Command-line users, automation, integration
 
 ### Option 3: Python API (For Developers)
 
 ```python
-from ml_recommender import MLPipelineRecommender
-from raptor.profiler import RNAseqDataProfiler
+from raptor import MLPipelineRecommender, RNAseqDataProfiler
 import pandas as pd
 
 # Load data
@@ -137,7 +128,6 @@ profile = profiler.run_full_profile()
 
 # Get ML recommendation
 recommender = MLPipelineRecommender()
-recommender.load_model('models/')
 rec = recommender.recommend(profile)
 
 print(f"Recommended: Pipeline {rec['pipeline_id']}")
@@ -299,9 +289,7 @@ In browser:
 **Steps:**
 ```bash
 # 1. Profile and get recommendation
-python raptor_ml_cli.py profile \
-    --counts experiment1_counts.csv \
-    --use-ml
+raptor profile --counts experiment1_counts.csv --use-ml
 
 # Recommendation: Use pipelines 1, 3, 5
 
@@ -400,208 +388,61 @@ Total: $15
 
 **Before:**
 ```
-Single pipeline results → 500 DE genes
-30% false positives → 150 fake genes
-Validation rate 60% → Many failures
-Reviewers skeptical → Requested more validation
+Submit paper → Reviewer asks "Why this pipeline?"
+Answer: "Common choice" → Weak
+Reviewer requests comparison → 2 weeks delay
+Revisions → Another 2 weeks
+Total: 1 month delay
 ```
 
 **After:**
 ```
-Ensemble analysis → 350 consensus genes
-20% false positives → 70 fake genes
-Validation rate 80% → Fewer failures
-Reviewers satisfied → "Robust methodology"
-```
-
-**Result:** Paper accepted faster, stronger findings
-
----
-
-##  Documentation Guide
-
-### For Different User Types
-
-**Beginners:**
-1. Start: `ULTIMATE_SUMMARY.md` (overview)
-2. Then: `QUICK_START.md` (get running)
-3. Finally: `DASHBOARD_GUIDE.md` (use interface)
-
-**Researchers:**
-1. Start: `QUICK_START.md` (get running)
-2. Then: `ML_RECOMMENDER_README.md` (understand ML)
-3. Finally: `DASHBOARD_GUIDE.md` or CLI commands
-
-**Developers:**
-1. Start: `IMPLEMENTATION_SUMMARY.md` (technical details)
-2. Then: `ARCHITECTURE_DIAGRAM.md` (system design)
-3. Finally: Source code + API documentation
-
-**Core Facilities:**
-1. Start: `DASHBOARD_GUIDE.md` (deployment)
-2. Then: `QUICK_START.md` (setup)
-3. Finally: `IMPLEMENTATION_SUMMARY.md` (troubleshooting)
-
-### Reading Time Estimates
-
-| Document | Time | Must-Read? |
-|----------|------|------------|
-| ULTIMATE_SUMMARY.md | 15 min | ⭐ Yes |
-| QUICK_START.md | 5 min | ⭐ Yes |
-| DASHBOARD_GUIDE.md | 20 min | If using UI |
-| ML_RECOMMENDER_README.md | 20 min | If using ML |
-| IMPLEMENTATION_SUMMARY.md | 30 min | For developers |
-| ARCHITECTURE_DIAGRAM.md | 15 min | Optional |
-| README.md | 10 min | Optional |
-
----
-
-##  Installation
-
-### System Requirements
-
-**Minimum:**
-- Python 3.8+
-- 4 GB RAM
-- 2 CPU cores
-- 500 MB disk space
-- Modern web browser
-
-**Recommended:**
-- Python 3.9+
-- 8 GB RAM
-- 4+ CPU cores
-- 1 GB disk space
-- Chrome/Firefox browser
-
-### Dependencies
-
-**Core (Required):**
-```
-numpy>=1.21.0
-pandas>=1.3.0
-scikit-learn>=1.0.0
-scipy>=1.7.0
-joblib>=1.1.0
-matplotlib>=3.4.0
-seaborn>=0.11.0
-```
-
-**Dashboard (Required for UI):**
-```
-streamlit>=1.28.0
-plotly>=5.14.0
-psutil>=5.8.0
-```
-
-**Optional:**
-```
-tqdm>=4.62.0        # Progress bars
-pyyaml>=5.4.0       # Config files
-```
-
-### Installation Steps
-
-```bash
-# 1. Install all dependencies (one command)
-pip install -r requirements_ml.txt
-
-# 2. Verify installation
-python test_ml_system.py
-
-# 3. Generate initial training data (first time only)
-python example_ml_workflow.py --n-datasets 200
-
-# 4. Ready to use!
-python launch_dashboard.py
+Submit paper → Include ML recommendation + confidence
+"AI-recommended based on data characteristics" → Strong
+Ensemble validation included → Robust
+Reviewer satisfied → Accepted!
+Total: No delay
 ```
 
 ---
 
-##  Advanced Configuration
+##  File Documentation
 
-### Custom Model Training
+### Core Files
 
-```python
-from ml_recommender import MLPipelineRecommender
-
-# Train with your benchmark data
-recommender = MLPipelineRecommender(model_type='random_forest')
-results = recommender.train_from_benchmarks('my_benchmarks/')
-
-# Save
-recommender.save_model('production_models/')
+#### dashboard.py (48 KB)
+```
+Purpose: Main web dashboard application
+Features: All ML, monitoring, ensemble features
+Launch: python launch_dashboard.py (easier) or streamlit run dashboard.py
 ```
 
-### Dashboard Deployment
-
-**Local Network:**
-```bash
-streamlit run dashboard.py \
-    --server.address 0.0.0.0 \
-    --server.port 8501
+#### ml_recommender.py (27 KB)
+```
+Purpose: Machine learning recommendation engine
+Contains: MLPipelineRecommender class
+Methods: train(), predict(), recommend(), explain()
+Models: Random Forest, Gradient Boosting
 ```
 
-**With Docker:**
-```dockerfile
-FROM python:3.9-slim
-WORKDIR /app
-COPY . /app
-RUN pip install -r requirements_ml.txt
-EXPOSE 8501
-CMD ["streamlit", "run", "dashboard.py"]
+#### synthetic_benchmarks.py (14 KB)
+```
+Purpose: Generate training data
+Contains: BenchmarkDataGenerator class
+Features: Realistic RNA-seq simulation
+Use: Training custom models
 ```
 
-### API Integration
+### Documentation Files
 
-```python
-# Flask API wrapper
-from flask import Flask, request, jsonify
-from ml_recommender import MLPipelineRecommender
-
-app = Flask(__name__)
-recommender = MLPipelineRecommender()
-recommender.load_model('models/')
-
-@app.route('/recommend', methods=['POST'])
-def recommend():
-    profile = request.json
-    rec = recommender.recommend(profile)
-    return jsonify(rec)
-```
-
----
-
-##  Contributing
-
-We welcome contributions! Areas for improvement:
-
-- [ ] Additional ML models (deep learning, etc.)
-- [ ] More ensemble methods
-- [ ] Dashboard enhancements
-- [ ] Documentation improvements
-- [ ] Bug fixes
-- [ ] Performance optimizations
-
----
-
-##  Citation
-
-If you use RAPTOR Ultimate in your research:
-
-```bibtex
-@software{raptor_ultimate_2025,
-  author = {Bolouki, Ayeh},
-  title = {RAPTOR Ultimate: AI-Powered RNA-seq Analysis 
-           with Interactive Dashboard},
-  year = {2025},
-  version = {2.1.0},
-  url = {https://github.com/AyehBlk/RAPTOR},
-  note = {Machine learning-based pipeline recommendation, 
-          resource monitoring, ensemble analysis, and 
-          interactive web dashboard}
-}
-```
+| File | Pages | Reading Time | Purpose |
+|------|-------|--------------|---------|
+| ULTIMATE_SUMMARY.md | 22 | 30 min | Complete technical overview |
+| DASHBOARD_GUIDE.md | 14 | 20 min | Dashboard user manual |
+| QUICK_START.md | 8 | 10 min | Get running fast |
+| ML_RECOMMENDER_README.md | 12 | 15 min | ML system details |
+| IMPLEMENTATION_SUMMARY.md | 13 | 20 min | Technical implementation |
+| ARCHITECTURE_DIAGRAM.md | 22 | 25 min | System architecture |
 
 ---
 
@@ -609,66 +450,88 @@ If you use RAPTOR Ultimate in your research:
 
 ### Common Issues
 
-**1. "Streamlit not found"**
+**Issue:** Dashboard doesn't launch
 ```bash
-pip install streamlit plotly
+# Fix: Ensure all dependencies installed
+pip install raptor-rnaseq[all]
 ```
 
-**2. "Model not found"**
+**Issue:** ML model not found
 ```bash
-# Generate training data and model
+# Fix: Generate model first
 python example_ml_workflow.py --n-datasets 200
 ```
 
-**3. "Import error: ml_recommender"**
-```bash
-# Ensure files are in same directory or Python path
-export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+**Issue:** Low prediction confidence
+```
+Cause: Data outside training distribution
+Fix: Train custom model with similar data
 ```
 
-**4. "Dashboard won't start"**
-```bash
-# Try different port
-streamlit run dashboard.py --server.port 8502
+**Issue:** Dashboard slow
 ```
-
-**5. "Low confidence predictions"**
-- Train with more diverse data
-- Use ensemble methods
-- Check data quality
-
-### Getting Help
-
-1. **Check documentation:** Most issues are covered
-2. **Run tests:** `python test_ml_system.py`
-3. **Check examples:** They show correct usage
-4. **Email support:** ayehbolouki1988@gmail.com
+Cause: Large datasets
+Fix: Enable sampling in settings
+```
 
 ---
 
-##  Contact & Support
+##  Support
+
+### Getting Help
+
+1. **Read documentation** (start with QUICK_START.md)
+2. **Check issues** on GitHub
+3. **Email** ayehbolouki1988@gmail.com
+
+### Reporting Bugs
+
+Include:
+- RAPTOR version (`python -c "import raptor; print(raptor.__version__)"`)
+- Python version
+- Operating system
+- Error message
+- Minimal reproduction steps
+
+---
+
+##  Contributing
+
+We welcome contributions! See CONTRIBUTING.md for guidelines.
+
+**Ways to contribute:**
+- Report bugs
+- Suggest features
+- Submit pull requests
+- Improve documentation
+- Share benchmarks
+
+---
+
+##  Contact
 
 **Author:** Ayeh Bolouki  
 **Email:** ayehbolouki1988@gmail.com  
-**GitHub:** https://github.com/AyehBlk/RAPTOR
+**GitHub:** https://github.com/AyehBlk/RAPTOR  
+**PyPI:** https://pypi.org/project/raptor-rnaseq/
 
 ---
 
 ##  Roadmap
 
-### Version 2.1 (Q1 2025)
+### Version 2.2 (2025)
 - [ ] User authentication for dashboard
 - [ ] Job queue system
 - [ ] Email notifications
 - [ ] Advanced analytics
 
-### Version 2.5 (Q2 2025)
+### Version 2.5 (2025)
 - [ ] Deep learning models
 - [ ] Transfer learning
 - [ ] Cloud deployment templates
 - [ ] Mobile app
 
-### Version 3.0 (Q3 2025)
+### Version 3.0 (2026)
 - [ ] Multi-omics integration
 - [ ] Automated report generation
 - [ ] API marketplace
@@ -710,9 +573,7 @@ MIT License - See LICENSE file for details
 
 ```bash
 # One command to rule them all:
-pip install -r requirements_ml.txt && \
-python test_ml_system.py && \
-python launch_dashboard.py
+pip install raptor-rnaseq[all] && python launch_dashboard.py
 ```
 
 **Welcome to the future of RNA-seq analysis! 🦖**
@@ -720,6 +581,6 @@ python launch_dashboard.py
 ---
 
 *Created with ♥ by Ayeh Bolouki*  
-*November 2025*
+*June 2025*
 
 **🦖 RAPTOR ULTIMATE - Intelligent • Monitored • Robust • Accessible**
