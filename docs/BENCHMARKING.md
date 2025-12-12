@@ -512,7 +512,6 @@ For detailed metrics and interpretation, see the full documentation.
 
 **RAPTOR v2.1.0 Benchmarking**  
 **Author**: Ayeh Bolouki  
-**Affiliation**: University of Namur, Belgium  
 **License**: MIT
 
 *"Benchmark smarter, not longer!"* ⚡🦖
