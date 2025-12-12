@@ -10,9 +10,9 @@
 
 ---
 
-## 🌟 What's New in v2.1.0
+##  What's New in v2.1.0
 
-### 🆕 Major Features
+###  Major Features
 
 1. **🎨 Interactive Web Dashboard** - No coding required!
    - Beautiful Streamlit-based UI
@@ -41,9 +41,9 @@
 
 ---
 
-## 📦 Package Contents
+##  Package Contents
 
-### 🎁 Complete Package: 17 Files, ~450 KB
+###  Complete Package: 17 Files, ~450 KB
 
 #### Core Implementation (8 files)
 
@@ -73,7 +73,7 @@
 
 ---
 
-## ⚡ Quick Start (5 Minutes)
+##  Quick Start (5 Minutes)
 
 ### Option 1: Dashboard (Recommended for Beginners) ⭐
 
@@ -150,7 +150,7 @@ print(f"Confidence: {rec['confidence']:.1%}")
 
 ---
 
-## 🎯 Key Features
+##  Key Features
 
 ### 1. ML-Based Pipeline Recommendation
 
@@ -215,7 +215,7 @@ Ensemble (5 pipelines): 350 DE genes (50 false positives)
 Improvement: 67% reduction in false positives
 ```
 
-### 4. Interactive Web Dashboard ⭐
+### 4. Interactive Web Dashboard 
 
 **What it does:**
 - No-code web interface
@@ -239,7 +239,7 @@ Results: Download with one click
 
 ---
 
-## 📊 Performance Comparison
+##  Performance Comparison
 
 ### Before vs After RAPTOR Ultimate
 
@@ -269,7 +269,7 @@ Results: Download with one click
 
 ---
 
-## 🚀 Usage Examples
+##  Usage Examples
 
 ### Example 1: First-Time User (Dashboard)
 
@@ -347,7 +347,7 @@ echo "Access at: http://your-server:8501"
 
 ---
 
-## 💡 Real-World Impact
+##  Real-World Impact
 
 ### Case Study 1: Time Savings
 
@@ -418,7 +418,7 @@ Reviewers satisfied → "Robust methodology"
 
 ---
 
-## 🎓 Documentation Guide
+##  Documentation Guide
 
 ### For Different User Types
 
@@ -456,7 +456,7 @@ Reviewers satisfied → "Robust methodology"
 
 ---
 
-## 📥 Installation
+##  Installation
 
 ### System Requirements
 
@@ -518,7 +518,7 @@ python launch_dashboard.py
 
 ---
 
-## 🔧 Advanced Configuration
+##  Advanced Configuration
 
 ### Custom Model Training
 
@@ -572,7 +572,7 @@ def recommend():
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! Areas for improvement:
 
@@ -585,7 +585,7 @@ We welcome contributions! Areas for improvement:
 
 ---
 
-## 📜 Citation
+##  Citation
 
 If you use RAPTOR Ultimate in your research:
 
@@ -605,7 +605,7 @@ If you use RAPTOR Ultimate in your research:
 
 ---
 
-## 🆘 Troubleshooting
+##  Troubleshooting
 
 ### Common Issues
 
@@ -646,16 +646,15 @@ streamlit run dashboard.py --server.port 8502
 
 ---
 
-## 📞 Contact & Support
+##  Contact & Support
 
 **Author:** Ayeh Bolouki  
 **Email:** ayehbolouki1988@gmail.com  
-**Affiliation:** University of Namur & GIGA-Neurosciences, University of Liège, Belgium  
 **GitHub:** https://github.com/AyehBlk/RAPTOR
 
 ---
 
-## 📈 Roadmap
+##  Roadmap
 
 ### Version 2.1 (Q1 2025)
 - [ ] User authentication for dashboard
@@ -677,7 +676,7 @@ streamlit run dashboard.py --server.port 8502
 
 ---
 
-## 🏆 Acknowledgments
+##  Acknowledgments
 
 This work builds on:
 - scikit-learn for ML algorithms
@@ -689,13 +688,13 @@ Special thanks to all beta testers and early adopters!
 
 ---
 
-## 📄 License
+##  License
 
 MIT License - See LICENSE file for details
 
 ---
 
-## 🎉 Final Words
+##  Final Words
 
 **RAPTOR Ultimate represents the culmination of extensive research and development to create the most comprehensive RNA-seq analysis system available.**
 
@@ -721,7 +720,6 @@ python launch_dashboard.py
 ---
 
 *Created with ♥ by Ayeh Bolouki*  
-*University of Namur Belgium*  
 *November 2025*
 
 **🦖 RAPTOR ULTIMATE - Intelligent • Monitored • Robust • Accessible**
