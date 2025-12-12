@@ -5,7 +5,6 @@ Provides the `raptor` command with subcommands for profiling, benchmarking,
 and generating reports.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
