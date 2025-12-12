@@ -875,7 +875,6 @@ dashboard.start()
 
 **RAPTOR v2.1.0**  
 **Author**: Ayeh Bolouki  
-**Affiliation**: University of Namur & GIGA-Neurosciences, University of Liège, Belgium  
 **License**: MIT
 
 **Upgrade today for ML-powered RNA-seq analysis!** 🤖🦖
