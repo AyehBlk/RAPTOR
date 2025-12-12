@@ -11,7 +11,6 @@ Demonstrates the full machine learning workflow:
 5. Compare different models
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayehbolouki1988@gmail.com
 Version: 2.1.0
 """
