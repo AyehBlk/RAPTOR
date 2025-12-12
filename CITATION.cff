@@ -8,7 +8,6 @@ authors:
     given-names: "Ayeh"
     email: ayehbolouki1988@gmail.com
     orcid: "https://orcid.org/0000-0001-5920-3783"
-    affiliation: "University of Namur & GIGA-Neurosciences, University of Liège, Belgium"
 repository-code: "https://github.com/AyehBlk/RAPTOR"
 url: "https://github.com/AyehBlk/RAPTOR"
 abstract: "RAPTOR is a comprehensive benchmarking framework for RNA-seq differential expression analysis pipelines with ML-powered recommendations. Version 2.1.0 introduces machine learning-based pipeline selection (87% accuracy), an interactive web dashboard, advanced quality assessment with batch effect detection, ensemble analysis methods, real-time resource monitoring, and automated parameter optimization. It implements 8 complete workflows and helps researchers make evidence-based decisions by profiling data quality and matching optimal methods to specific experimental conditions."
