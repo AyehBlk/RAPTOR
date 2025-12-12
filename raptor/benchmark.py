@@ -5,7 +5,6 @@ Runs multiple RNA-seq pipelines and compares their performance across
 accuracy, speed, and resource usage metrics.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
