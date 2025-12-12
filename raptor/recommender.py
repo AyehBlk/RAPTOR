@@ -6,7 +6,6 @@ to optimal analysis pipelines. Uses scoring system to evaluate pipeline
 suitability based on data profile.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur, Belgium
 Email: ayehbolouki1988@gmail.com
 """
 
