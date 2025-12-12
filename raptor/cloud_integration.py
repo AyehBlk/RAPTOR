@@ -4,7 +4,6 @@ Cloud Integration
 Deploy and run RAPTOR pipelines on cloud platforms (AWS, Google Cloud, Azure).
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayeh.bolouki@unamur.be
 """
 
