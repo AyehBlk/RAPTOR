@@ -5,7 +5,6 @@ Combines results from multiple RNA-seq pipelines to provide robust
 differential expression detection through consensus approaches.
 
 Author: Ayeh Bolouki
-Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayeh.bolouki@unamur.be
 """
 
