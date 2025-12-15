@@ -1,0 +1,711 @@
+# ============================================================================
+# RAPTOR v2.1.1 - PUBLICATION-READY CONFIGURATION
+# ============================================================================
+# 
+# This configuration is designed for researchers preparing manuscripts
+# and publications. It emphasizes reproducibility, comprehensive reporting,
+# biological interpretation, and publication-quality visualizations.
+#
+# Perfect for:
+# - Manuscript preparation
+# - Supplementary materials
+# - Peer review responses
+# - Grant applications
+# - Conference presentations
+#
+# NEW in v2.1.1: Adaptive Threshold Optimizer for data-driven, defensible
+# threshold selection with publication-ready methods text generation.
+#
+# Features:
+# - Comprehensive quality control
+# - Data-driven threshold optimization (NEW!)
+# - Biological interpretation with multiple databases
+# - Publication-quality figures
+# - Detailed statistical reporting
+# - Reproducible analysis pipeline
+# - Complete documentation
+#
+# Usage: raptor profile --counts data.csv --config config_publication_ready.yaml
+# ============================================================================
+
+# ============================================================================
+# GENERAL SETTINGS
+# ============================================================================
+general:
+  version: "2.1.1"
+  verbose: true
+  log_level: "INFO"
+  output_dir: "./publication_analysis"
+  random_seed: 42  # Critical for reproducibility
+  
+  # Documentation
+  document_parameters: true
+  save_session_info: true
+  generate_methods_section: true
+
+# ============================================================================
+# COMPUTATIONAL RESOURCES
+# ============================================================================
+resources:
+  # Use consistent resources for reproducibility
+  default_threads: 8
+  default_memory_gb: 32
+  
+  # Document resource usage for methods section
+  track_resource_usage: true
+
+# ============================================================================
+# DATA PROFILING - COMPREHENSIVE
+# ============================================================================
+profiling:
+  # Biological Coefficient of Variation analysis
+  bcv_thresholds:
+    very_low: 0.2
+    low: 0.4
+    moderate: 0.6
+    high: 0.8
+  
+  depth_categories:
+    low: 10
+    moderate: 30
+    high: 50
+  
+  sample_size:
+    small: 6
+    medium: 12
+    large: 20
+  
+  # Strict quality control
+  min_replicates: 3
+  check_batch_effects: true
+  
+  # Conservative filters
+  min_counts_per_gene: 10
+  min_samples_per_gene: 3
+  filter_low_counts: true
+  
+  # Generate all diagnostic plots
+  generate_plots: true
+  save_profile: true
+  profile_format: "json"
+  
+  # Additional profiling for publication
+  generate_summary_statistics: true
+  calculate_correlation_matrix: true
+  perform_dimensionality_reduction: true
+
+# ============================================================================
+# ML-BASED RECOMMENDATION WITH TRANSPARENCY
+# ============================================================================
+ml_recommendation:
+  enabled: true
+  model_type: "random_forest"
+  model_path: "./models/raptor_rf_model.pkl"
+  
+  prediction:
+    confidence_threshold: 0.7
+    top_n_recommendations: 3
+    
+    # Critical for publication transparency
+    explain_predictions: true
+    feature_importance: true
+    
+  # Document ML decision-making
+  performance:
+    track_metrics: true
+    save_metrics: true
+    metrics_file: "ml_performance.json"
+    generate_performance_report: true
+
+# ============================================================================
+# ADAPTIVE THRESHOLD OPTIMIZER - PUBLICATION MODE (NEW in v2.1.1)
+# ============================================================================
+# Data-driven threshold optimization with full documentation for publication
+# Addresses reviewer concerns about "arbitrary" threshold selection
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  
+  # Balanced goal for publication (not too permissive, not too conservative)
+  goal: "balanced"
+  
+  # Enable all p-value adjustment methods for comparison
+  padj_methods:
+    benjamini_hochberg: true    # Standard FDR
+    benjamini_yekutieli: true   # Conservative FDR (any dependence)
+    storey_qvalue: true         # More powerful FDR with π₀
+    holm: true                  # FWER control
+    hochberg: true              # Less conservative FWER
+    bonferroni: true            # Most conservative
+  
+  # Enable all logFC methods for robustness
+  logfc_methods:
+    auto: true                  # Consensus (recommended)
+    mad: true                   # MAD-based
+    mixture: true               # Gaussian mixture
+    power: true                 # Power-based
+    percentile: true            # Percentile-based
+  
+  default_logfc_method: "auto"  # Use consensus for publication
+  
+  # π₀ estimation (important for methods section)
+  pi0_estimation:
+    enabled: true
+    methods:
+      - "storey"
+      - "pounds"
+      - "histogram"
+    default_method: "storey"
+    document_estimation: true   # Include in methods text
+  
+  # Comprehensive threshold comparison for supplementary
+  comparison:
+    enabled: true
+    logfc_values: [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+    padj_values: [0.001, 0.01, 0.05, 0.1]
+    generate_heatmap: true
+    include_in_supplement: true
+  
+  # Publication-quality visualization
+  visualization:
+    volcano_plot: true
+    logfc_distribution: true
+    pvalue_distribution: true
+    threshold_heatmap: true
+    optimization_summary: true
+    adjustment_comparison: true
+    
+    # Publication settings
+    plot_format: "png"  # Also generates PDF/SVG
+    dpi: 300            # Publication quality
+    style: "publication"
+    color_palette: "colorblind_safe"
+    font_family: "Arial"
+  
+  # Output for publication
+  output:
+    save_optimized_results: true
+    save_significant_genes: true
+    generate_methods_text: true      # Auto-generates methods paragraph
+    export_formats: ["csv", "xlsx"]
+    
+    # Include in supplementary materials
+    include_threshold_rationale: true
+    include_pi0_estimation: true
+    include_method_comparison: true
+
+# ============================================================================
+# ADVANCED QUALITY ASSESSMENT - PUBLICATION STANDARDS
+# ============================================================================
+quality_assessment:
+  enabled: true
+  
+  # Comprehensive quality metrics
+  metrics:
+    - "library_size"
+    - "detected_genes"
+    - "mitochondrial_content"
+    - "ribosomal_content"
+    - "duplicate_rate"
+    - "mapping_rate"
+    - "contamination"
+    - "complexity"
+    - "gc_content"
+    - "3prime_bias"
+  
+  # Stringent quality thresholds (document any deviations)
+  thresholds:
+    min_library_size: 5e6  # More stringent
+    max_library_size: 1e8
+    min_detected_genes: 10000  # More stringent
+    max_mitochondrial_pct: 5  # More stringent
+    max_ribosomal_pct: 25
+    min_mapping_rate: 80  # More stringent
+    max_duplicate_rate: 40
+  
+  # Batch effect detection - critical for multi-batch studies
+  batch_detection:
+    enabled: true
+    method: "pca"
+    p_value_threshold: 0.01
+    variance_threshold: 0.1
+    
+    # Generate batch effect visualizations
+    plot_batch_effects: true
+    test_batch_significance: true
+  
+  # Outlier detection and documentation
+  outlier_detection:
+    enabled: true
+    method: "isolation_forest"
+    contamination: 0.05
+    document_outliers: true
+  
+  # Comprehensive QC report
+  generate_qc_report: true
+  qc_report_format: "both"  # HTML and PDF
+  plot_diagnostics: true
+  
+  # Publication-quality plots
+  plot_settings:
+    dpi: 300  # Publication quality
+    format: ["png", "pdf", "svg"]
+    style: "publication"
+    color_palette: "colorblind_safe"
+
+# ============================================================================
+# RESOURCE MONITORING - DOCUMENT COMPUTATIONAL REQUIREMENTS
+# ============================================================================
+resource_monitoring:
+  enabled: true
+  sampling_interval: 1.0
+  
+  track_metrics:
+    - "cpu_percent"
+    - "memory_percent"
+    - "disk_io"
+    - "execution_time"
+  
+  # Document for methods section
+  save_metrics: true
+  metrics_file: "resource_usage.csv"
+  generate_resource_report: true
+
+# ============================================================================
+# ENSEMBLE ANALYSIS - ROBUST RESULTS
+# ============================================================================
+ensemble:
+  enabled: false  # Enable if publication requires robustness analysis
+  
+  methods:
+    - "rank_aggregation"
+    - "vote_counting"
+    - "weighted_average"
+    - "meta_analysis"
+  
+  # Conservative consensus
+  consensus:
+    min_agreement: 0.75  # 75% agreement required
+    strict_mode: true
+  
+  # Statistical meta-analysis
+  meta_analysis:
+    method: "fishers"
+    p_value_threshold: 0.05
+    adjust_method: "BH"
+  
+  # Comprehensive reporting
+  generate_ensemble_report: true
+  compare_methods: true
+  plot_comparisons: true
+
+# ============================================================================
+# STATISTICAL ANALYSIS - PUBLICATION STANDARDS (UPDATED v2.1.1)
+# ============================================================================
+statistics:
+  # Default thresholds (ATO will optimize these)
+  fdr_threshold: 0.05
+  log_fold_change_threshold: 1.0  # |log2FC| >= 1 (2-fold change)
+  p_value_threshold: 0.05
+  
+  # Use Adaptive Threshold Optimizer (recommended)
+  use_adaptive_thresholds: true
+  document_threshold_rationale: true  # Include ATO reasoning
+  
+  # Stringent multiple testing correction
+  adjustment_method: "BH"  # Benjamini-Hochberg
+  
+  # Effect size reporting (important for publication)
+  min_base_mean: 10
+  report_effect_sizes: true
+  
+  # Additional filters
+  cook_cutoff: true
+  independent_filtering: true
+  
+  # Batch correction if needed
+  batch_correction:
+    enabled: false  # Enable if batch effects detected
+    method: "combat"
+    preserve_design: true
+    document_correction: true
+
+# ============================================================================
+# AUTOMATED REPORTING - PUBLICATION QUALITY (UPDATED v2.1.1)
+# ============================================================================
+automated_reporting:
+  enabled: true
+  
+  # Both formats for submission and supplementary
+  formats:
+    - "html"  # For supplementary materials
+    - "pdf"   # For main manuscript
+  
+  # Comprehensive sections (updated for v2.1.1)
+  sections:
+    - "executive_summary"
+    - "study_overview"
+    - "data_profiling"
+    - "quality_assessment"
+    - "pipeline_recommendation"
+    - "threshold_optimization"      # NEW in v2.1.1
+    - "normalization_methods"
+    - "differential_expression"
+    - "biological_interpretation"
+    - "enrichment_analysis"
+    - "network_analysis"
+    - "resource_usage"
+    - "statistical_methods"
+    - "conclusions"
+    - "references"
+  
+  # Biological interpretation - comprehensive
+  interpretation:
+    enabled: true
+    databases:
+      - "GO"           # Gene Ontology
+      - "KEGG"         # KEGG Pathways
+      - "Reactome"     # Reactome Pathways
+      - "WikiPathways" # WikiPathways
+      - "DisGeNET"     # Disease associations
+      - "MSigDB"       # Molecular Signatures
+    
+    # Enrichment settings
+    enrichment:
+      method: "hypergeometric"
+      p_value_cutoff: 0.05
+      q_value_cutoff: 0.1
+      min_genes: 5
+      max_genes: 500
+      
+      # Multiple enrichment methods for robustness
+      compare_methods: true
+      methods: ["hypergeometric", "fisher", "gsea"]
+    
+    # Network analysis
+    network:
+      enabled: true
+      method: "string"
+      confidence_threshold: 0.7
+      generate_network_plots: true
+  
+  # Publication-quality visualizations
+  plots:
+    volcano: true
+    ma_plot: true
+    heatmap: true
+    pca: true
+    enrichment_bar: true
+    enrichment_dot: true
+    network_graph: true
+    threshold_optimization: true   # NEW in v2.1.1
+    pi0_estimation: true           # NEW in v2.1.1
+    
+    # Plot quality settings
+    settings:
+      dpi: 300
+      format: ["png", "pdf", "svg"]
+      color_palette: "colorblind_safe"
+      font_family: "Arial"
+      font_size: 10
+  
+  # Report customization
+  template: "publication"  # publication-optimized template
+  logo: null  # Path to institution logo
+  author_info: true
+  timestamp: true
+  
+  # Citation generation
+  include_citations: true
+  citation_style: "nature"  # nature, science, cell, plos
+  
+  # Data availability statement
+  data_availability:
+    enabled: true
+    statement: "Raw data and analysis code available upon request."
+    repository: null  # e.g., GEO accession number
+
+# ============================================================================
+# BENCHMARKING - DOCUMENT PIPELINE PERFORMANCE
+# ============================================================================
+benchmarking:
+  mode: "comprehensive"
+  
+  # Comprehensive metrics for methods section
+  metrics:
+    - "execution_time"
+    - "peak_memory"
+    - "cpu_usage"
+    - "accuracy"
+    - "sensitivity"
+    - "specificity"
+    - "f1_score"
+    - "precision"
+    - "recall"
+  
+  # Document pipeline selection rationale
+  compare_pipelines: true
+  statistical_tests: true
+  test_method: "wilcoxon"
+  
+  save_benchmarks: true
+  benchmark_dir: "./benchmarks"
+  plot_comparisons: true
+
+# ============================================================================
+# OUTPUT SETTINGS - PUBLICATION STANDARDS
+# ============================================================================
+output:
+  # Multiple formats for different submission requirements
+  formats:
+    results:
+      - "csv"      # For supplementary tables
+      - "tsv"      # For databases
+      - "xlsx"     # For reviewers
+    plots:
+      - "png"      # For manuscript (high DPI)
+      - "pdf"      # For vector graphics
+      - "svg"      # For web supplements
+    reports:
+      - "html"     # For online supplements
+      - "pdf"      # For print submission
+  
+  # Compression for large supplementary files
+  compress_outputs: true
+  compression_format: "zip"
+  
+  # Organized file structure
+  organize_by_type: true
+  
+  # File naming with timestamps
+  timestamp_files: true
+  prefix: "publication"
+  
+  # Keep all files for transparency
+  keep_intermediate_files: true
+  cleanup_on_success: false
+
+# ============================================================================
+# REPRODUCIBILITY SETTINGS
+# ============================================================================
+reproducibility:
+  # Critical for publication
+  set_random_seed: true
+  random_seed: 42
+  
+  # Session information
+  save_session_info: true
+  session_info_file: "session_info.txt"
+  
+  # Software versions
+  document_versions: true
+  versions_file: "software_versions.txt"
+  
+  # Analysis provenance
+  track_provenance: true
+  provenance_file: "analysis_provenance.json"
+  
+  # Parameter logging
+  log_all_parameters: true
+  parameter_file: "analysis_parameters.yaml"
+  
+  # Code availability
+  save_analysis_code: true
+  code_file: "analysis_code.R"  # or .py
+
+# ============================================================================
+# SUPPLEMENTARY MATERIALS GENERATION (UPDATED v2.1.1)
+# ============================================================================
+supplementary:
+  generate_supplements: true
+  
+  # Supplementary tables
+  tables:
+    - "all_de_genes"             # All DE genes with statistics
+    - "top_de_genes"             # Top 100 DE genes
+    - "threshold_optimization"   # NEW: ATO results and rationale
+    - "enrichment_results"       # All enrichment results
+    - "sample_metadata"          # Sample information
+    - "qc_metrics"               # Quality control metrics
+    - "pipeline_parameters"      # Analysis parameters
+  
+  # Supplementary figures
+  figures:
+    - "qc_plots"                 # All QC plots
+    - "normalization_plots"      # Before/after normalization
+    - "exploratory_plots"        # PCA, clustering, etc.
+    - "threshold_plots"          # NEW: ATO visualizations
+    - "de_plots"                 # All DE visualizations
+    - "enrichment_plots"         # All enrichment plots
+    - "network_plots"            # Network visualizations
+  
+  # Supplementary text
+  text:
+    - "methods_detail"           # Detailed methods
+    - "threshold_rationale"      # NEW: Threshold selection rationale
+    - "pipeline_description"     # Pipeline documentation
+    - "statistical_tests"        # Statistical procedures
+    - "software_info"            # Software and versions
+  
+  # Package everything
+  create_supplement_package: true
+  package_format: "zip"
+
+# ============================================================================
+# METHODS SECTION GENERATION (UPDATED v2.1.1)
+# ============================================================================
+methods_generation:
+  enabled: true
+  
+  # Generate text for methods section
+  generate_methods_text: true
+  methods_file: "methods_section.txt"
+  
+  # Include these components (updated for v2.1.1)
+  components:
+    - "sample_description"
+    - "sequencing_info"
+    - "quality_control"
+    - "normalization"
+    - "pipeline_selection"
+    - "threshold_optimization"   # NEW: ATO methods text
+    - "differential_expression"
+    - "statistical_tests"
+    - "enrichment_analysis"
+    - "software_versions"
+    - "data_availability"
+  
+  # Writing style
+  style: "academic"  # academic, technical, concise
+  
+  # Citations
+  include_citations: true
+  citation_format: "numbered"  # numbered, author-year
+  
+  # Include ATO citation
+  cite_threshold_optimizer: true
+
+# ============================================================================
+# PEER REVIEW SUPPORT (UPDATED v2.1.1)
+# ============================================================================
+peer_review_support:
+  # Address common reviewer concerns
+  
+  # Threshold justification (NEW - addresses common reviewer concern)
+  threshold_justification:
+    enabled: true
+    document_ato_reasoning: true
+    compare_to_traditional: true  # Show difference vs |logFC|>1, padj<0.05
+  
+  # Robustness checks
+  sensitivity_analysis:
+    enabled: true
+    vary_thresholds: true
+    vary_normalization: true
+    include_ato_comparison: true  # NEW: Compare ATO vs traditional
+  
+  # Negative controls
+  negative_controls:
+    enabled: false
+    scrambled_data: false
+  
+  # Positive controls
+  positive_controls:
+    enabled: false
+    known_markers: []
+  
+  # Response preparation
+  prepare_reviewer_responses: true
+  response_template: "./reviewer_response_template.txt"
+
+# ============================================================================
+# DATA ARCHIVING FOR REPOSITORIES
+# ============================================================================
+data_archiving:
+  # Prepare for GEO/ArrayExpress/SRA submission
+  prepare_for_submission: true
+  
+  # GEO format
+  geo_format:
+    enabled: true
+    metadata_template: "GEO_metadata_template.xlsx"
+  
+  # Generate MIAME-compliant documentation
+  miame_compliant: true
+
+# ============================================================================
+# ADVANCED SETTINGS
+# ============================================================================
+advanced:
+  # Caching for reproducibility
+  cache_results: true
+  cache_dir: "./.raptor_cache"
+  
+  # Checkpointing
+  checkpoint_enabled: true
+  checkpoint_interval: 600  # 10 minutes
+  
+  # Debugging (for reviewer questions)
+  save_debug_info: true
+  debug_dir: "./debug"
+
+# ============================================================================
+# JOURNAL-SPECIFIC SETTINGS
+# ============================================================================
+journal_requirements:
+  # Adjust these based on target journal
+  
+  # Nature journals
+  nature:
+    figure_dpi: 300
+    figure_format: ["pdf", "eps"]
+    color_mode: "RGB"
+    font_family: "Arial"
+    max_figure_width: 183  # mm
+  
+  # Science
+  science:
+    figure_dpi: 300
+    figure_format: ["pdf", "eps", "tiff"]
+    color_mode: "RGB"
+    font_family: "Arial"
+  
+  # Cell Press
+  cell:
+    figure_dpi: 300
+    figure_format: ["eps", "pdf"]
+    color_mode: "RGB"
+    font_family: "Arial"
+  
+  # PLOS
+  plos:
+    figure_dpi: 300
+    figure_format: ["tiff", "eps", "pdf"]
+    color_mode: "RGB"
+    font_family: "Arial"
+
+# ============================================================================
+# PUBLICATION CHECKLIST (UPDATED v2.1.1)
+# ============================================================================
+# 
+# Before submission, ensure:
+# ☐ Random seed set for reproducibility
+# ☐ All quality control metrics documented
+# ☐ Pipeline selection rationale clear
+# ☐ Threshold selection justified (use ATO methods text) ← NEW
+# ☐ π₀ estimation documented ← NEW
+# ☐ Statistical methods fully described
+# ☐ Multiple testing correction applied
+# ☐ Effect sizes reported
+# ☐ All figures high resolution (300 DPI)
+# ☐ Supplementary materials complete
+# ☐ Software versions documented
+# ☐ Code available (GitHub, Zenodo)
+# ☐ Data archived (GEO, SRA)
+# ☐ Methods section written (including ATO paragraph) ← NEW
+# ☐ Biological interpretation included
+# ☐ Negative/positive controls documented
+# ☐ Reproducible with provided code/data
+# ☐ Journal formatting requirements met
+# 
+# ============================================================================

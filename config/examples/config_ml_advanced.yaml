@@ -1,0 +1,538 @@
+# ============================================================================
+# RAPTOR v2.1.1 - ADVANCED ML CONFIGURATION
+# ============================================================================
+# 
+# This configuration is optimized for machine learning enthusiasts and 
+# data scientists who want to fine-tune RAPTOR's ML recommendation system.
+#
+# Perfect for:
+# - Training custom models on your benchmark data
+# - Hyperparameter tuning experiments
+# - Model comparison studies
+# - Feature engineering research
+#
+# Usage: raptor ml-train --benchmarks ./data/ --config config_ml_advanced.yaml
+# ============================================================================
+
+# ============================================================================
+# GENERAL SETTINGS
+# ============================================================================
+general:
+  version: "2.1.1"
+  verbose: true
+  log_level: "DEBUG"  # Detailed logging for ML experiments
+  output_dir: "./ml_experiments"
+  random_seed: 42  # For reproducibility
+
+# ============================================================================
+# COMPUTATIONAL RESOURCES FOR ML
+# ============================================================================
+resources:
+  ml_training:
+    threads: 12
+    memory_gb: 32
+  
+  # GPU settings (if available)
+  gpu:
+    enabled: true
+    device_id: 0
+    memory_fraction: 0.8
+
+# ============================================================================
+# ADVANCED ML CONFIGURATION
+# ============================================================================
+ml_recommendation:
+  enabled: true
+  
+  # Model ensemble approach
+  model_type: "ensemble"  # Use multiple models for best performance
+  
+  # Model paths
+  model_path: "./models/production/"
+  scaler_path: "./models/production/scaler.pkl"
+  
+  # ========================================================================
+  # FEATURE ENGINEERING
+  # ========================================================================
+  features:
+    # Core features
+    - "bcv"
+    - "sequencing_depth"
+    - "num_samples"
+    - "num_replicates"
+    
+    # Advanced features
+    - "dispersion"
+    - "library_size_cv"
+    - "zero_inflation"
+    - "batch_effect_score"
+    
+    # Derived features
+    - "sample_to_replicate_ratio"
+    - "depth_per_sample"
+    - "bcv_depth_interaction"
+    
+  # Feature transformations
+  feature_engineering:
+    polynomial_features: true
+    polynomial_degree: 2
+    interaction_only: false
+    
+    log_transform: ["sequencing_depth", "num_samples"]
+    
+    feature_selection:
+      enabled: true
+      method: "mutual_info"  # mutual_info, f_classif, rfe
+      n_features: 15
+  
+  # ========================================================================
+  # TRAINING CONFIGURATION
+  # ========================================================================
+  training:
+    # Data splitting
+    test_size: 0.2
+    validation_size: 0.1
+    stratify: true
+    
+    # Cross-validation
+    cross_validation_folds: 10
+    cross_validation_strategy: "stratified"  # stratified, grouped, time_series
+    
+    # Hyperparameter tuning
+    hyperparameter_tuning: true
+    tuning_method: "bayesian"  # grid_search, random_search, bayesian, optuna
+    n_iter: 200
+    cv_folds: 5
+    
+    # Early stopping
+    early_stopping: true
+    patience: 20
+    
+    # Class imbalance handling
+    handle_imbalance: true
+    imbalance_method: "smote"  # smote, adasyn, random_oversample, class_weight
+  
+  # ========================================================================
+  # RANDOM FOREST CONFIGURATION
+  # ========================================================================
+  random_forest:
+    n_estimators: 500
+    max_depth: 20
+    min_samples_split: 2
+    min_samples_leaf: 1
+    max_features: "sqrt"
+    bootstrap: true
+    oob_score: true
+    max_samples: 0.8
+    
+    # Feature importance
+    importance_type: "impurity"  # impurity, permutation
+    
+    # Hyperparameter search space
+    param_grid:
+      n_estimators: [200, 300, 500, 700]
+      max_depth: [10, 15, 20, 25, 30]
+      min_samples_split: [2, 5, 10]
+      min_samples_leaf: [1, 2, 4]
+      max_features: ["sqrt", "log2", 0.3, 0.5]
+  
+  # ========================================================================
+  # GRADIENT BOOSTING CONFIGURATION
+  # ========================================================================
+  gradient_boosting:
+    n_estimators: 300
+    learning_rate: 0.05
+    max_depth: 8
+    subsample: 0.8
+    min_samples_split: 5
+    min_samples_leaf: 2
+    max_features: "sqrt"
+    
+    # Advanced settings
+    loss: "log_loss"
+    validation_fraction: 0.1
+    n_iter_no_change: 20
+    
+    # Hyperparameter search space
+    param_grid:
+      n_estimators: [100, 200, 300, 500]
+      learning_rate: [0.01, 0.05, 0.1, 0.2]
+      max_depth: [6, 8, 10, 12]
+      subsample: [0.6, 0.8, 1.0]
+      min_samples_split: [2, 5, 10]
+  
+  # ========================================================================
+  # XGBOOST CONFIGURATION
+  # ========================================================================
+  xgboost:
+    enabled: true
+    n_estimators: 300
+    learning_rate: 0.05
+    max_depth: 8
+    subsample: 0.8
+    colsample_bytree: 0.8
+    gamma: 0.1
+    reg_alpha: 0.1
+    reg_lambda: 1.0
+    
+    # GPU acceleration
+    tree_method: "gpu_hist"  # auto, gpu_hist, hist
+    gpu_id: 0
+    
+    # Hyperparameter search space
+    param_grid:
+      n_estimators: [200, 300, 500]
+      learning_rate: [0.01, 0.05, 0.1]
+      max_depth: [6, 8, 10]
+      subsample: [0.7, 0.8, 0.9]
+      colsample_bytree: [0.7, 0.8, 0.9]
+      gamma: [0, 0.1, 0.5]
+  
+  # ========================================================================
+  # NEURAL NETWORK CONFIGURATION
+  # ========================================================================
+  neural_network:
+    enabled: true
+    
+    # Architecture
+    hidden_layers: [256, 128, 64, 32]
+    activation: "relu"
+    dropout_rate: 0.3
+    batch_normalization: true
+    
+    # Training
+    learning_rate: 0.001
+    optimizer: "adam"  # adam, sgd, rmsprop
+    epochs: 200
+    batch_size: 32
+    
+    # Regularization
+    l1_regularization: 0.001
+    l2_regularization: 0.01
+    dropout_schedule: "constant"  # constant, linear, exponential
+    
+    # Learning rate schedule
+    lr_schedule:
+      enabled: true
+      method: "reduce_on_plateau"  # reduce_on_plateau, cyclic, cosine_annealing
+      factor: 0.5
+      patience: 10
+      min_lr: 1e-6
+    
+    # Early stopping
+    early_stopping:
+      enabled: true
+      monitor: "val_loss"
+      patience: 20
+      restore_best_weights: true
+    
+    # Callbacks
+    callbacks:
+      - "early_stopping"
+      - "lr_scheduler"
+      - "model_checkpoint"
+      - "tensorboard"
+  
+  # ========================================================================
+  # ENSEMBLE METHODS
+  # ========================================================================
+  ensemble_methods:
+    # Voting ensemble
+    voting:
+      enabled: true
+      voting_type: "soft"  # hard, soft
+      weights: [1.5, 1.2, 1.0, 1.3]  # RF, GB, XGB, NN
+    
+    # Stacking ensemble
+    stacking:
+      enabled: true
+      meta_learner: "logistic_regression"  # logistic_regression, random_forest, xgboost
+      cv_folds: 5
+    
+    # Blending
+    blending:
+      enabled: false
+      blend_ratio: 0.5
+  
+  # ========================================================================
+  # PREDICTION SETTINGS
+  # ========================================================================
+  prediction:
+    confidence_threshold: 0.75
+    top_n_recommendations: 5
+    
+    # Uncertainty estimation
+    uncertainty_estimation:
+      enabled: true
+      method: "dropout_monte_carlo"  # dropout_monte_carlo, bootstrap, bayesian
+      n_iterations: 100
+    
+    # Explainability
+    explain_predictions: true
+    explanation_method: "shap"  # shap, lime, integrated_gradients
+    
+    # Feature importance
+    feature_importance: true
+    importance_method: "shap"  # shap, permutation, gain
+    plot_importance: true
+  
+  # ========================================================================
+  # MODEL EVALUATION & TRACKING
+  # ========================================================================
+  performance:
+    track_metrics: true
+    
+    # Metrics to compute
+    metrics:
+      - "accuracy"
+      - "balanced_accuracy"
+      - "f1_score"
+      - "precision"
+      - "recall"
+      - "roc_auc"
+      - "pr_auc"
+      - "confusion_matrix"
+      - "classification_report"
+      - "cohen_kappa"
+      - "matthews_corrcoef"
+    
+    # Per-class metrics
+    per_class_metrics: true
+    
+    # Learning curves
+    generate_learning_curves: true
+    
+    # Calibration
+    calibration_curve: true
+    
+    # Save results
+    save_metrics: true
+    metrics_file: "ml_performance_detailed.json"
+    
+    # MLflow tracking (if installed)
+    mlflow:
+      enabled: false
+      tracking_uri: "http://localhost:5000"
+      experiment_name: "raptor_ml"
+  
+  # ========================================================================
+  # MODEL PERSISTENCE & VERSIONING
+  # ========================================================================
+  model_persistence:
+    save_best_model: true
+    save_all_models: false
+    
+    # Model versioning
+    versioning:
+      enabled: true
+      version_format: "timestamp"  # timestamp, semantic, incremental
+    
+    # Model registry
+    registry:
+      enabled: false
+      backend: "mlflow"  # mlflow, dvc, custom
+  
+  # ========================================================================
+  # EXPERIMENT TRACKING
+  # ========================================================================
+  experiment_tracking:
+    enabled: true
+    log_parameters: true
+    log_metrics: true
+    log_artifacts: true
+    
+    # What to log
+    log_items:
+      - "hyperparameters"
+      - "training_metrics"
+      - "validation_metrics"
+      - "test_metrics"
+      - "feature_importance"
+      - "confusion_matrix"
+      - "learning_curves"
+      - "model_file"
+      - "predictions"
+      - "runtime"
+
+# ============================================================================
+# ADAPTIVE THRESHOLD OPTIMIZER - ADVANCED (NEW in v2.1.1)
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  goal: "balanced"
+  
+  # Enable all methods for comprehensive analysis
+  padj_methods:
+    benjamini_hochberg: true
+    benjamini_yekutieli: true
+    storey_qvalue: true
+    holm: true
+    hochberg: true
+    bonferroni: true
+  
+  logfc_methods:
+    auto: true
+    mad: true
+    mixture: true
+    power: true
+    percentile: true
+  
+  default_logfc_method: "auto"
+  
+  # Advanced π₀ estimation
+  pi0_estimation:
+    enabled: true
+    methods:
+      - "storey"
+      - "pounds"
+      - "histogram"
+    default_method: "storey"
+  
+  # Comprehensive comparison
+  comparison:
+    enabled: true
+    logfc_values: [0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5]
+    padj_values: [0.001, 0.005, 0.01, 0.05, 0.1]
+    generate_heatmap: true
+  
+  # Full visualization suite
+  visualization:
+    volcano_plot: true
+    logfc_distribution: true
+    pvalue_distribution: true
+    threshold_heatmap: true
+    optimization_summary: true
+    adjustment_comparison: true
+    plot_format: "png"
+    dpi: 300
+  
+  output:
+    save_optimized_results: true
+    save_significant_genes: true
+    generate_methods_text: true
+    export_formats: ["csv", "xlsx", "json"]
+
+# ============================================================================
+# ADVANCED DATA QUALITY ASSESSMENT
+# ============================================================================
+quality_assessment:
+  enabled: true
+  
+  # Comprehensive quality metrics
+  metrics:
+    - "library_size"
+    - "detected_genes"
+    - "mitochondrial_content"
+    - "ribosomal_content"
+    - "duplicate_rate"
+    - "mapping_rate"
+    - "contamination"
+    - "complexity"
+    - "3prime_bias"
+    - "gc_content"
+  
+  # Advanced outlier detection
+  outlier_detection:
+    enabled: true
+    method: "ensemble"  # Use multiple methods
+    methods:
+      - "isolation_forest"
+      - "lof"
+      - "mahalanobis"
+    consensus_threshold: 0.67
+
+# ============================================================================
+# RESOURCE MONITORING
+# ============================================================================
+resource_monitoring:
+  enabled: true
+  sampling_interval: 0.5  # High-frequency monitoring
+  
+  track_metrics:
+    - "cpu_percent"
+    - "memory_percent"
+    - "disk_io"
+    - "network_io"
+    - "gpu_utilization"
+    - "gpu_memory"
+  
+  save_metrics: true
+  plot_realtime: true
+
+# ============================================================================
+# BENCHMARKING FOR MODEL TRAINING
+# ============================================================================
+benchmarking:
+  mode: "comprehensive"
+  
+  # Generate diverse training data
+  use_simulated_data: true
+  simulation_params:
+    n_datasets: 500  # Large training set
+    n_genes: 20000
+    n_samples_range: [4, 30]
+    de_fraction_range: [0.05, 0.3]
+    fold_change_range: [1.5, 8.0]
+    dispersion_levels: ["low", "moderate", "high", "very_high"]
+  
+  save_benchmarks: true
+  benchmark_dir: "./ml_training_data"
+
+# ============================================================================
+# OUTPUT SETTINGS
+# ============================================================================
+output:
+  formats:
+    results: ["csv", "json", "pickle"]
+    plots: ["png", "pdf", "svg"]
+    reports: ["html", "pdf"]
+  
+  # Save everything for analysis
+  compress_outputs: true
+  keep_intermediate_files: true
+  timestamp_files: true
+
+# ============================================================================
+# AUTOMATED REPORTING
+# ============================================================================
+automated_reporting:
+  enabled: true
+  formats: ["html", "pdf"]
+  
+  sections:
+    - "executive_summary"
+    - "model_architecture"
+    - "training_results"
+    - "hyperparameter_tuning"
+    - "feature_importance"
+    - "model_comparison"
+    - "performance_metrics"
+    - "threshold_optimization"  # NEW in v2.1.1
+    - "predictions_analysis"
+  
+  # Detailed ML visualizations
+  plots:
+    confusion_matrix: true
+    roc_curve: true
+    pr_curve: true
+    learning_curves: true
+    feature_importance: true
+    shap_summary: true
+    prediction_distribution: true
+    threshold_optimization: true  # NEW in v2.1.1
+
+# ============================================================================
+# NOTES FOR ML RESEARCHERS
+# ============================================================================
+# This configuration is designed for serious ML experimentation.
+# 
+# Tips:
+# 1. Start with smaller n_iter for hyperparameter tuning to test
+# 2. Enable GPU if available for 10-20x speedup
+# 3. Use MLflow or TensorBoard for experiment tracking
+# 4. Generate diverse training data (500+ datasets recommended)
+# 5. Consider ensemble methods for production deployment
+# 6. Always validate on held-out test set
+# 7. Use SHAP values to understand model decisions
+# 8. NEW: Use threshold_optimizer for data-driven DE thresholds
+# ============================================================================
