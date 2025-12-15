@@ -4,8 +4,8 @@ RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
 A comprehensive benchmarking framework for RNA-seq differential expression analysis
 pipelines with intelligent, data-driven pipeline recommendations powered by machine learning.
 
-Version 2.1.0 introduces ML-based recommendations, advanced quality assessment,
-automated reporting, and parameter optimization capabilities.
+Version 2.1.1 introduces the Adaptive Threshold Optimizer (ATO) for data-driven
+significance threshold selection in differential expression analysis.
 
 Install from PyPI: pip install raptor-rnaseq
 
@@ -15,7 +15,7 @@ License: MIT
 """
 
 # Version information
-__version__ = '2.1.0'
+__version__ = '2.1.1'
 __author__ = 'Ayeh Bolouki'
 __email__ = 'ayeh.bolouki@unamur.be'
 __license__ = 'MIT'
@@ -29,11 +29,16 @@ __all__ = [
     'PipelineBenchmark',
     'DataSimulator',
     'ReportGenerator',
-    # New classes (v2.1.0)
+    # ML classes (v2.1.0)
     'MLPipelineRecommender',
     'DataQualityAssessor',
     'ParameterOptimizer',
     'AutomatedReportGenerator',
+    # Threshold Optimizer (v2.1.1) - NEW
+    'AdaptiveThresholdOptimizer',
+    'ThresholdResult',
+    'optimize_thresholds',
+    'THRESHOLD_OPTIMIZER_AVAILABLE',
     # Version info
     '__version__',
 ]
@@ -64,7 +69,48 @@ except ImportError as e:
         ImportWarning
     )
 
+# ==============================================================================
+# Threshold Optimizer Module (v2.1.1) - NEW
+# ==============================================================================
+
+try:
+    from raptor.threshold_optimizer import (
+        # Main class
+        AdaptiveThresholdOptimizer,
+        
+        # Result container
+        ThresholdResult,
+        
+        # Convenience function
+        optimize_thresholds,
+        
+        # Visualization functions
+        plot_optimization_summary,
+        plot_volcano,
+        plot_logfc_distribution,
+        plot_pvalue_distribution,
+        plot_threshold_comparison,
+        plot_adjustment_comparison
+    )
+    THRESHOLD_OPTIMIZER_AVAILABLE = True
+except ImportError as e:
+    import warnings
+    warnings.warn(
+        f"Threshold Optimizer module not available: {e}. "
+        "Some features may be limited.",
+        ImportWarning
+    )
+    THRESHOLD_OPTIMIZER_AVAILABLE = False
+    
+    # Create placeholder classes for graceful degradation
+    AdaptiveThresholdOptimizer = None
+    ThresholdResult = None
+    optimize_thresholds = None
+
+# ==============================================================================
 # Package-level configuration
+# ==============================================================================
+
 import logging
 
 # Set up logging
@@ -83,11 +129,12 @@ def _show_welcome():
     """Display welcome message on first import."""
     print("""
     ╔══════════════════════════════════════════════════════════════════╗
-    ║                     🦖 RAPTOR v2.1.0                             ║
+    ║                     🦖 RAPTOR v2.1.1                             ║
     ║   RNA-seq Analysis Pipeline Testing & Optimization Resource      ║
     ║                                                                  ║
-    ║          🤖 NOW WITH ML-POWERED RECOMMENDATIONS!                 ║
+    ║          🤖 ML-POWERED RECOMMENDATIONS                           ║
     ║          📊 ADVANCED QUALITY ASSESSMENT                          ║
+    ║          🎯 ADAPTIVE THRESHOLD OPTIMIZER (NEW!)                  ║
     ║          📄 AUTOMATED REPORTING                                  ║
     ║                                                                  ║
     ║              Created by Ayeh Bolouki                             ║
@@ -95,11 +142,23 @@ def _show_welcome():
     ║                                                                  ║
     ╚══════════════════════════════════════════════════════════════════╝
     
+    What's New in v2.1.1:
+    • 🎯 Adaptive Threshold Optimizer (ATO) for DE analysis
+      - Data-driven logFC and padj threshold selection
+      - Multiple p-value adjustment methods (BH, BY, q-value, Holm...)
+      - π₀ estimation for true null proportion
+      - Interactive dashboard integration
+    
     Quick Start:
     • pip install raptor-rnaseq                        # Install from PyPI
     • raptor profile --counts data.csv --use-ml       # Get ML recommendation
     • python launch_dashboard.py                       # Launch web dashboard
     • raptor --help                                    # See all commands
+    
+    Threshold Optimizer:
+    • from raptor import optimize_thresholds
+    • result = optimize_thresholds(de_results, goal='discovery')
+    • print(result.summary())
     
     PyPI: https://pypi.org/project/raptor-rnaseq/
     GitHub: https://github.com/AyehBlk/RAPTOR
@@ -113,3 +172,49 @@ if not _WELCOME_SHOWN:
         _WELCOME_SHOWN = True
     except:
         pass  # Suppress errors in non-interactive environments
+
+
+# ==============================================================================
+# Convenience functions
+# ==============================================================================
+
+def get_version():
+    """Return the current RAPTOR version."""
+    return __version__
+
+
+def check_installation():
+    """Check which RAPTOR components are available."""
+    components = {
+        'core': True,
+        'ml_recommender': False,
+        'threshold_optimizer': THRESHOLD_OPTIMIZER_AVAILABLE,
+        'dashboard': False,
+    }
+    
+    try:
+        from raptor.ml_recommender import MLPipelineRecommender
+        components['ml_recommender'] = True
+    except ImportError:
+        pass
+    
+    try:
+        import streamlit
+        components['dashboard'] = True
+    except ImportError:
+        pass
+    
+    return components
+
+
+def print_status():
+    """Print installation status."""
+    components = check_installation()
+    print("\n🦖 RAPTOR Installation Status:")
+    print("=" * 40)
+    for name, available in components.items():
+        status = "✅" if available else "❌"
+        print(f"  {status} {name}")
+    print("=" * 40)
+    print(f"  Version: {__version__}")
+    print()
