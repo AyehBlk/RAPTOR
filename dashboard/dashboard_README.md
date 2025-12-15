@@ -126,15 +126,22 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 ## 📁 File Structure
 
 ```
-raptor/
-├── dashboard.py              # Main dashboard application
-├── threshold_optimizer/      # ATO module (v2.1.1)
-│   ├── __init__.py
-│   ├── ato.py               # Main optimizer class
-│   └── visualization.py     # Plotting functions
-├── ml_recommender.py
-├── launch_dashboard.py
-└── README.md
+RAPTOR/
+├── launch_dashboard.py           # Dashboard launcher (root)
+├── dashboard/                    # Dashboard folder
+│   ├── dashboard.py              # Main dashboard application
+│   ├── dashboard_README.md       # This file
+│   └── docs/
+│       └── THRESHOLD_OPTIMIZER.md
+└── raptor/                       # Python package
+    ├── __init__.py
+    ├── ml_recommender.py
+    ├── threshold_optimizer/      # ATO module (v2.1.1)
+    │   ├── __init__.py
+    │   ├── ato.py                # Main optimizer class
+    │   └── visualization.py      # Plotting functions
+    └── ... other modules
+
 ```
 
 ---
