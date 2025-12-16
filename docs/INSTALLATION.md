@@ -4,6 +4,14 @@ Complete installation instructions for RAPTOR (RNA-seq Analysis Pipeline Testing
 
 ---
 
+## 🆕 What's New in v2.1.1
+
+- **Adaptive Threshold Optimizer (ATO)** - Data-driven threshold selection
+- No new dependencies required
+- Automatic integration with existing features
+
+---
+
 ## System Requirements
 
 ### Minimum Requirements
@@ -57,6 +65,12 @@ pip install raptor-rnaseq[all]
 
 ```bash
 python -c "import raptor; print(f'RAPTOR {raptor.__version__} installed successfully!')"
+```
+
+#### Verify Threshold Optimizer (v2.1.1)
+
+```bash
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
 ```
 
 ---
@@ -207,6 +221,9 @@ from raptor import RNAseqDataProfiler, MLPipelineRecommender
 from raptor.data_quality_assessment import DataQualityAssessor
 from raptor.ensemble_analysis import EnsembleAnalyzer
 
+# Threshold Optimizer (v2.1.1)
+from raptor.threshold_optimizer import AdaptiveThresholdOptimizer, optimize_thresholds
+
 print("✅ All modules imported successfully!")
 ```
 
@@ -217,11 +234,15 @@ print("✅ All modules imported successfully!")
 After installation, test with:
 
 ```bash
-# Launch dashboard
-python -c "import raptor" && echo "✅ RAPTOR ready!"
+# Check version
+python -c "import raptor; print(raptor.__version__)"
+# Expected: 2.1.1
 
-# Or launch the dashboard
-raptor --help
+# Check ATO
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
+
+# Launch dashboard
+raptor dashboard
 ```
 
 ---
@@ -233,6 +254,11 @@ raptor --help
 #### "ModuleNotFoundError: No module named 'raptor'"
 ```bash
 pip install raptor-rnaseq
+```
+
+#### "ModuleNotFoundError: No module named 'raptor.threshold_optimizer'"
+```bash
+pip install --upgrade raptor-rnaseq
 ```
 
 #### "pip: command not found"
@@ -280,6 +306,11 @@ git pull
 pip install -e .
 ```
 
+### Check Current Version
+```bash
+python -c "import raptor; print(raptor.__version__)"
+```
+
 ---
 
 ## Uninstalling
@@ -294,10 +325,11 @@ pip uninstall raptor-rnaseq
 
 After installation:
 
-1. **Launch the dashboard**: `python launch_dashboard.py`
+1. **Launch the dashboard**: `raptor dashboard`
 2. **Read the Quick Start**: [QUICK_START.md](QUICK_START.md)
-3. **Try an example**: [examples/](examples/)
-4. **Read the docs**: [docs/](docs/)
+3. **Try Threshold Optimizer**: [THRESHOLD_OPTIMIZER.md](THRESHOLD_OPTIMIZER.md)
+4. **Try an example**: [examples/](examples/)
+5. **Read the docs**: [docs/](docs/)
 
 ---
 
@@ -311,4 +343,5 @@ After installation:
 ---
 
 **Author:** Ayeh Bolouki  
+**Version:** 2.1.1  
 **License:** MIT
