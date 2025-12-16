@@ -77,8 +77,7 @@ python -c "from raptor.threshold_optimizer import optimize_thresholds; print('âœ
 
 ### v2.1.1 (Current)
 -  **Added Tutorial 07: Threshold Optimization** (ATO)
--  Updated all tutorials with v2.1.1 references
--  Added ATO integration to Tutorials 01-06
+
 
 ---
 
