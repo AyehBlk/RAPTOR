@@ -7,13 +7,147 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.1.1] - 2025-12-15
+
+**Feature Release** - Adaptive Threshold Optimizer
+
+This release introduces the **Adaptive Threshold Optimizer (ATO)**, a data-driven approach to selecting significance thresholds for differential expression analysis. No more arbitrary cutoffs!
+
+###  Highlights
+
+```bash
+# Verify ATO is available
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
+```
+
+###  Added
+
+#### Adaptive Threshold Optimizer (ATO) - Major New Feature!
+- **Data-Driven Threshold Selection** - Replace arbitrary thresholds with scientifically justified values
+  - Multiple p-value adjustment methods (BH, BY, Storey q-value, Holm, Hochberg, Bonferroni)
+  - Five logFC optimization methods (MAD, mixture model, power-based, percentile, consensus)
+  - π₀ estimation for true null proportion (Storey, Pounds & Cheng, histogram methods)
+  - Analysis goal presets (discovery, balanced, validation)
+  - Automatic threshold reasoning and explanation
+
+- **Publication-Ready Output**
+  - Auto-generated methods text for papers
+  - Comprehensive threshold comparison heatmaps
+  - Volcano plots with optimized thresholds
+  - P-value and logFC distribution visualizations
+  - Export to CSV/Excel with full statistics
+
+- **Dashboard Integration**
+  - New "🎯 Threshold Optimizer" page in interactive dashboard
+  - Upload DE results (DESeq2/edgeR/limma compatible)
+  - Demo data generation for testing
+  - Interactive visualizations with Plotly
+  - Download buttons for results and methods text
+
+#### Dashboard Updates
+- Added Threshold Optimizer page (7th navigation page)
+- Added ATO availability indicator in sidebar
+- Added "What's New in v2.1.1" banner on home page
+- Updated navigation structure
+- Added session state management for ATO
+
+#### Configuration Updates
+- New `threshold_optimizer` section in all config files
+- Updated `config.yaml` with full ATO documentation
+- Added `use_adaptive_thresholds` option to statistics section
+- Updated cloud container images to v2.1.1
+- Added ATO settings to publication and ensemble configs
+
+###  New Module
+
+```
+raptor/threshold_optimizer/
+├── __init__.py          # Module exports
+├── ato.py               # AdaptiveThresholdOptimizer class
+└── visualization.py     # Plotting functions
+```
+
+**Main Classes:**
+- `AdaptiveThresholdOptimizer` - Core optimization class
+- `ThresholdResult` - Named tuple for results
+- `optimize_thresholds()` - Convenience function
+
+###  ATO Features
+
+| Feature | Description |
+|---------|-------------|
+| **Analysis Goals** | discovery (permissive), balanced (standard), validation (stringent) |
+| **P-value Methods** | Benjamini-Hochberg, Benjamini-Yekutieli, Storey q-value, Holm, Hochberg, Bonferroni |
+| **LogFC Methods** | Auto (consensus), MAD-based, Mixture model, Power-based, Percentile |
+| **π₀ Estimation** | Storey's spline, Pounds & Cheng, Histogram-based |
+| **Visualizations** | Volcano, distributions, heatmaps, optimization summary |
+
+###  Changed
+
+- Updated version to 2.1.1 across all files
+- Enhanced `__init__.py` with ATO imports and availability flags
+- Updated `launch_dashboard.py` with ATO check on startup
+- All example configs updated for v2.1.1
+- Updated container image references to 2.1.1
+- Added `use_adaptive_thresholds: true` as recommended default
+
+###  New Documentation
+
+- **THRESHOLD_OPTIMIZER.md** - Comprehensive ATO documentation
+
+###  Fixed
+
+- Dashboard now gracefully handles missing ATO module
+- Improved error messages for threshold optimization failures
+- Fixed config validation for new threshold_optimizer section
+
+### ⚙️ Dependencies
+
+No new required dependencies. ATO uses existing scipy, numpy, and pandas.
+
+###  Migration from v2.1.0
+
+**Full backward compatibility maintained!**
+
+```bash
+# Just update the package
+pip install --upgrade raptor-rnaseq
+```
+
+Enable ATO (Optional):
+```yaml
+threshold_optimizer:
+  enabled: true
+  goal: "discovery"
+```
+
+###  Quick ATO Example
+
+```python
+from raptor.threshold_optimizer import AdaptiveThresholdOptimizer
+import pandas as pd
+
+# Load DE results
+df = pd.read_csv('deseq2_results.csv')
+
+# Optimize thresholds
+ato = AdaptiveThresholdOptimizer(df, logfc_col='log2FoldChange', pvalue_col='pvalue')
+result = ato.optimize(goal='discovery')
+
+print(f"Optimal logFC threshold: {result.logfc_threshold:.3f}")
+print(f"Significant genes: {result.n_significant}")
+print(f"\nMethods text:\n{result.methods_text}")
+```
+
+---
+
 ## [2.1.0] - 2025-06-12
 
 **Major Release** - ML Intelligence, Interactive Dashboard & PyPI Publication
 
 This release represents a significant evolution of RAPTOR, introducing artificial intelligence, interactive visualization, cloud computing capabilities, and **official PyPI publication** while maintaining full backward compatibility with v2.0.0.
 
-### 🎉 Published to PyPI
+###  Published to PyPI
 
 RAPTOR is now available on the Python Package Index!
 
@@ -23,11 +157,6 @@ pip install raptor-rnaseq
 
 # With all features
 pip install raptor-rnaseq[all]
-
-# With specific features
-pip install raptor-rnaseq[dashboard]
-pip install raptor-rnaseq[ml]
-pip install raptor-rnaseq[advanced]
 ```
 
 **PyPI Page**: https://pypi.org/project/raptor-rnaseq/
@@ -39,11 +168,8 @@ pip install raptor-rnaseq[advanced]
   - Random Forest model trained on 10,000+ real-world RNA-seq analyses
   - 85-90% accuracy in pipeline recommendations
   - Confidence scoring for all predictions
-  - Support for 50+ organisms and 100+ tissue types
-  - Automatic feature extraction from metadata
   - Model explainability with feature importance
   - Custom model training for lab-specific optimization
-  - Integration with existing workflow (fully optional)
 
 #### Interactive Dashboard
 - **Web-Based Dashboard** - Modern, interactive interface built with Streamlit
@@ -51,283 +177,61 @@ pip install raptor-rnaseq[advanced]
   - Real-time analysis monitoring
   - Interactive quality control visualizations
   - Pipeline comparison plots
-  - Resource usage graphs
-  - Drag-and-drop file upload
-  - Export publication-ready figures (PNG, SVG, PDF)
-  - Multi-user support
-  - Mobile-responsive design
-  - Dark/light theme options
+  - Export publication-ready figures
 
 #### Advanced Quality Assessment
 - **Comprehensive QC Module** - Enhanced quality control and data assessment
   - Multi-level quality scoring (0-100 scale)
   - Automated contamination detection
   - Batch effect identification
-  - Sample quality metrics
-  - Read quality profiling
-  - Adapter content analysis
-  - Duplication rate assessment
-  - GC bias detection
-  - Integration with FastQC results
-  - Automated QC report generation
 
 #### Resource Monitoring
 - **Real-Time Resource Tracking** - Live monitoring of computational resources
   - CPU usage per pipeline
   - Memory consumption tracking
-  - Disk I/O monitoring
-  - Network usage (for cloud deployments)
-  - Per-sample resource profiling
-  - Resource prediction for new analyses
-  - Bottleneck identification
-  - Optimization suggestions
-  - Historical resource database
   - Cost estimation (cloud deployments)
 
 #### Ensemble Analysis
 - **Multi-Pipeline Ensemble** - Consensus building across multiple pipelines
   - Weighted averaging of results
-  - Outlier detection and removal
   - Confidence scoring per gene
-  - Variance analysis across pipelines
-  - Robust result generation
-  - Support for 2-10 simultaneous pipelines
-  - Custom weighting schemes
-  - Ensemble validation metrics
-  - Differential expression consensus
   - Publication-quality ensemble reports
 
 #### Parameter Optimization
 - **Automated Parameter Tuning** - Intelligent parameter optimization
-  - Grid search optimization
-  - Bayesian optimization
-  - Multi-objective optimization
-  - Parameter sensitivity analysis
-  - Automatic best parameter selection
-  - Custom optimization objectives
-  - Results validation
-  - Optimization history tracking
-  - Reproducible configurations
+  - Grid search and Bayesian optimization
   - Integration with ML recommendations
 
 #### Automated Reporting
 - **Publication-Ready Reports** - Comprehensive automated documentation
   - HTML interactive reports
   - PDF static reports
-  - Markdown documentation
   - Methods section generation
-  - Figure legends automation
-  - Statistical summaries
-  - Quality metrics tables
-  - Customizable templates
-  - Logo/branding support
-  - Multi-language support (English, French, Spanish)
 
 #### Cloud Integration
 - **Multi-Cloud Support** - Native cloud computing integration
-  - AWS Batch integration
-  - Google Cloud Platform support
-  - Microsoft Azure support
-  - Automatic instance provisioning
+  - AWS Batch, GCP, Azure support
   - Spot/preemptible instance support
   - Auto-scaling capabilities
-  - Cost optimization
-  - Data transfer automation
-  - Cloud storage integration (S3, GCS, Azure Blob)
-  - Cloud-specific optimizations
-  - Budget alerts and controls
 
-###  Changed
+### 🔧 Changed
 
-#### Core Improvements
 - Refactored configuration system for better flexibility
 - Enhanced error handling and recovery
-- Improved logging with structured output
-- Updated documentation with comprehensive examples
-- Modernized CLI interface with rich formatting
-- Enhanced progress bars with detailed status
-- Improved multiprocessing efficiency
-- Better memory management for large datasets
-- Faster pipeline initialization
-- Optimized file I/O operations
-
-#### Pipeline Updates
-- Updated Salmon support (v1.10.0+)
-- Updated Kallisto support (v0.50.0+)
-- Updated STAR support (v2.7.11+)
-- Enhanced RSEM integration
-- Improved transcript quantification accuracy
-- Better handling of multi-mapped reads
-- Support for newer reference genomes
-- Enhanced GTF/GFF parsing
-- Improved index building
-
-#### User Experience
 - Simplified installation process (now `pip install raptor-rnaseq`)
-- Better default configurations
-- More informative error messages
-- Enhanced help documentation
-- Improved command-line interface
-- Better progress reporting
-- More intuitive file organization
-- Clearer configuration validation
-- Enhanced user feedback
+- Updated Salmon, Kallisto, STAR support
 
 ###  Fixed
 
-#### Critical Fixes
-- Fixed memory leak in long-running analyses (Issue #42)
-- Corrected race condition in parallel processing (Issue #38)
-- Fixed crash with non-standard chromosome names (Issue #45)
-- Resolved deadlock in resource monitoring (Issue #51)
-- Fixed incorrect TPM calculations in edge cases (Issue #40)
-
-#### Minor Fixes
-- Corrected typos in documentation
-- Fixed broken links in README
-- Resolved installation issues on Windows WSL
-- Fixed progress bar display on certain terminals
-- Corrected timestamp formatting in logs
-- Fixed file permission issues on shared filesystems
-- Resolved conflicts with certain Python packages
-- Fixed CSV parsing edge cases
-- Corrected plot rendering on headless systems
-- Fixed color scheme in dark terminals
-
-#### Platform-Specific
-- **macOS**: Fixed multiprocessing spawn issues
-- **Windows**: Resolved path handling in WSL
-- **Linux**: Fixed tmpdir handling on minimal systems
-- **ARM**: Enhanced compatibility with ARM processors
-- **HPC**: Better SLURM/PBS integration
-
-###  Security
-
-- Implemented input validation for all user inputs
-- Added sanitization for file paths
-- Enhanced cloud credential handling
-- Secure temporary file creation
-- Protection against path traversal attacks
-- Updated dependencies for security patches
-- Added checksums for downloaded models
-- Secure API token handling
-- Enhanced encryption for cloud data
-
-###  Documentation
-
-#### New Documentation
-- [ML Training Guide](docs/ML_TRAINING.md) - Custom model training
-- [Dashboard Guide](docs/DASHBOARD.md) - Dashboard usage and deployment
-- [Cloud Deployment Guide](docs/CLOUD_DEPLOYMENT.md) - Cloud computing setup
-- [Ensemble Guide](docs/ENSEMBLE.md) - Ensemble analysis
-- [Optimization Guide](docs/OPTIMIZATION.md) - Parameter optimization
-- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
-- [FAQ](FAQ.md) - Frequently asked questions
-
-#### Updated Documentation
-- [README.md](README.md) - Complete overhaul with v2.1.0 features
-- [Installation Guide](INSTALLATION.md) - New installation options
-- [User Guide](USER_GUIDE.md) - Comprehensive tutorials
-- [Configuration Guide](CONFIGURATION.md) - All new options
-- [API Reference](API.md) - Python API documentation
-- [Contributing Guide](CONTRIBUTING.md) - Development guidelines
-
-#### New Examples
-- Example 1: Basic ML-guided analysis
-- Example 2: Dashboard-based workflow
-- Example 3: Ensemble analysis
-- Example 4: Cloud deployment (AWS)
-- Example 5: Custom pipeline optimization
-- Example 6: Integration with DESeq2/edgeR
-
-###  Testing
-
-- Added 250+ new unit tests
-- Implemented integration tests for new features
-- Added end-to-end test suite
-- Created benchmark suite for performance testing
-- Added cloud deployment tests
-- Implemented ML model validation tests
-- Enhanced CI/CD pipeline
-- Added automated regression testing
-- Improved test coverage to 85%
-
-###  Dependencies
-
-#### New Dependencies
-- `scikit-learn>=1.3.0` - Machine learning
-- `streamlit>=1.29.0` - Interactive dashboard
-- `plotly>=5.17.0` - Interactive plots
-- `psutil>=5.9.0` - Resource monitoring
-- `boto3>=1.29.0` - AWS integration
-- `google-cloud-storage>=2.10.0` - GCP integration
-- `azure-storage-blob>=12.19.0` - Azure integration
-- `statsmodels>=0.14.0` - Statistical analysis
-- `joblib>=1.3.0` - Model serialization
-- `rich>=13.7.0` - CLI formatting
-
-#### Updated Dependencies
-- `pandas>=2.0.0` (was 1.5.0)
-- `numpy>=1.24.0` (was 1.23.0)
-- `matplotlib>=3.7.0` (was 3.6.0)
-- `seaborn>=0.12.0` (was 0.11.0)
-- `pyyaml>=6.0` (was 5.4.0)
-- `click>=8.1.0` (was 8.0.0)
+- Fixed memory leak in long-running analyses
+- Corrected race condition in parallel processing
+- Fixed crash with non-standard chromosome names
 
 ###  Performance
 
-- 25% faster pipeline execution through optimized I/O
-- 40% reduction in memory usage for large datasets
-- 3x faster quality control analysis
-- 50% faster ensemble analysis
-- Improved parallelization efficiency
+- 25% faster pipeline execution
+- 40% reduction in memory usage
 - Reduced startup time by 60%
-- Optimized index loading
-- Better CPU utilization
-- Reduced disk space requirements
-- Faster report generation
-
-###  Migration from v2.0.0
-
-**Full backward compatibility maintained!**
-
-All v2.0.0 configurations and workflows continue to work without modification. New features are opt-in.
-
-#### Automatic Migration
-```bash
-raptor migrate --from v2.0.0 --to v2.1.0
-```
-
-#### Manual Updates (Optional)
-```yaml
-# Add new sections to existing config.yaml
-ml_recommendation:
-  enabled: true
-
-dashboard:
-  enabled: true
-
-resource_monitoring:
-  enabled: true
-```
-
-See [Migration Guide](docs/MIGRATION.md) for details.
-
-###  Acknowledgments
-
-- Community contributors for bug reports and suggestions
-- Users who provided feedback on v2.0.0
-
-###  Statistics
-
-- **Lines of Code Added:** 15,000+
-- **New Features:** 8 major systems
-- **Bug Fixes:** 25+
-- **New Tests:** 250+
-- **Documentation Pages:** 500+
-- **Development Time:** 6 months
-- **Contributors:** 3
-- **Coffee Consumed:** ∞
 
 ---
 
@@ -337,68 +241,11 @@ See [Migration Guide](docs/MIGRATION.md) for details.
 
 ###  Added
 
-#### Core Features
 - Multi-pipeline RNA-seq analysis framework
 - Support for Salmon, Kallisto, STAR, RSEM, HTSeq
 - Automated quality control
 - Pipeline comparison metrics
 - Comprehensive configuration system
-- Parallel sample processing
-- Flexible output formats
-
-#### Pipelines
-- **Salmon** - Fast quasi-mapping quantification
-- **Kallisto** - Ultra-fast transcript quantification
-- **STAR** - Splice-aware alignment
-- **RSEM** - Accurate transcript quantification
-- **HTSeq** - Count-based quantification
-- **HISAT2** - Fast alignment
-
-#### Analysis Features
-- TPM/FPKM/CPM normalization
-- Basic quality metrics
-- Pipeline benchmark comparisons
-- Customizable workflows
-- Batch processing
-
-#### Outputs
-- Count matrices (raw and normalized)
-- Quality control reports
-- Pipeline comparison tables
-- Basic visualizations
-- Log files
-
-#### Documentation
-- README with basic usage
-- Installation instructions
-- Configuration examples
-- Simple user guide
-
-###  Dependencies
-
-#### Core Dependencies
-- Python >=3.8
-- pandas >=1.5.0
-- numpy >=1.23.0
-- matplotlib >=3.6.0
-- seaborn >=0.11.0
-- pyyaml >=5.4.0
-- click >=8.0.0
-
-#### Analysis Tools (Optional)
-- Salmon
-- Kallisto
-- STAR
-- RSEM
-- HTSeq
-- HISAT2
-
-###  Known Issues
-
-- Memory usage high for STAR with large genomes (addressed in v2.1.0)
-- Limited cloud support (added in v2.1.0)
-- Basic visualization only (enhanced in v2.1.0)
-- Manual pipeline selection (ML added in v2.1.0)
 
 ---
 
@@ -406,103 +253,29 @@ See [Migration Guide](docs/MIGRATION.md) for details.
 
 **Initial Development Release**
 
-###  Added
 - Basic framework structure
 - Support for 2 pipelines (Salmon, STAR)
 - Simple configuration
-- Basic quality control
-- Minimal documentation
-
-###  Limitations
-- Limited pipeline support
-- No parallel processing
-- Basic error handling
-- Limited documentation
-- Manual configuration only
 
 ---
 
-## Version Numbering
+## Version History
 
-RAPTOR follows [Semantic Versioning](https://semver.org/):
-
-- **MAJOR** version (X.0.0): Incompatible API changes
-- **MINOR** version (0.X.0): New features, backward compatible
-- **PATCH** version (0.0.X): Bug fixes, backward compatible
-
-### Version History
-- **v2.1.0**: ML Intelligence, Dashboard & PyPI (Current)
+- **v2.1.1**: Adaptive Threshold Optimizer (Current)
+- **v2.1.0**: ML Intelligence, Dashboard & PyPI
 - **v2.0.0**: Initial Public Release
 - **v1.0.0**: Development Release
 
 ---
 
-## Future Releases
-
-### Planned for v2.2.0
-- Single-cell RNA-seq support
-- Spatial transcriptomics
-- Long-read RNA-seq (ONT/PacBio)
-- Enhanced visualization
-- Multi-language interface
-- Real-time collaborative analysis
-
-### Planned for v2.3.0
-- GPU acceleration
-- Advanced statistical models
-- Integration with more tools
-- Mobile app
-- Plugin system
-
-See [Roadmap](ROADMAP.md) for detailed future plans.
-
----
-
-## Release Frequency
-
-- **Major releases**: Annually
-- **Minor releases**: Quarterly
-- **Patch releases**: As needed
-
----
-
 ## How to Update
 
-### From PyPI (Recommended)
 ```bash
 pip install --upgrade raptor-rnaseq
 ```
-
-### From GitHub
-```bash
-pip install --upgrade git+https://github.com/AyehBlk/RAPTOR.git@v2.1.0
-```
-
-### Check Version
-```bash
-raptor --version
-# or
-python -c "import raptor; print(raptor.__version__)"
-```
-
----
-
-## Support
-
-**Questions about changes?**
-- Open an [issue](https://github.com/AyehBlk/RAPTOR/issues)
-- Email: ayehbolouki1988@gmail.com
-
-**Found a bug?**
-- Check [existing issues](https://github.com/AyehBlk/RAPTOR/issues)
-- Submit a [bug report](https://github.com/AyehBlk/RAPTOR/issues/new)
 
 ---
 
 **Author:** Ayeh Bolouki  
 **License:** MIT  
 **PyPI:** https://pypi.org/project/raptor-rnaseq/
-
----
-
-*"Every version is a step toward perfection, but perfection is a journey, not a destination."* 🚀
