@@ -1,708 +1,564 @@
-# RAPTOR Migration Guide: v2.0.0 → v2.1.0
+# RAPTOR Migration Guide: v2.1.0 → v2.1.1
 
-**Complete guide for upgrading to RAPTOR v2.1.0**
+**Complete guide for upgrading to RAPTOR v2.1.1**
 
 ---
 
-##  Overview
+## 🌟 Overview
 
-RAPTOR v2.1.0 is a **major feature release** that adds 8 new capabilities while maintaining **100% backward compatibility** with v2.0.0.
+RAPTOR v2.1.1 is a **feature release** that adds the **Adaptive Threshold Optimizer (ATO)** while maintaining **100% backward compatibility** with v2.1.0 and v2.0.0.
 
-### What's New in v2.1.0
+### 🎯 What's New in v2.1.1
 
-1.  **ML-Based Pipeline Recommendations** - AI-powered selection
-2.  **Advanced Quality Assessment** - Comprehensive QC metrics
-3.  **Real-Time Resource Monitoring** - Track CPU, memory, GPU
-4.  **Ensemble Analysis** - Combine multiple pipelines
-5.  **Interactive Dashboard** - Web-based interface
-6.  **Parameter Optimization** - Automated tuning
-7.  **Automated Reporting** - Enhanced reports with interpretation
-8.  **Cloud Integration** - AWS/GCP/Azure support
+**One Major Feature:**
+1. 🎯 **Adaptive Threshold Optimizer (ATO)** - Data-driven threshold selection
+
+**Key Benefits:**
+- Replace arbitrary |logFC| > 1 with optimized values
+- Multiple p-value adjustment methods
+- π₀ estimation for true null proportion
+- Auto-generated publication methods text
+- Dashboard integration
 
 ---
 
 ## ✅ Is Migration Right for You?
 
-### Migrate to v2.1.0 if:
-- ✅ You want ML-powered recommendations
-- ✅ You need ensemble analysis for robustness
-- ✅ You want the interactive dashboard
-- ✅ You're starting new analyses
-- ✅ You have time to explore new features
+### Migrate to v2.1.1 if:
+- ✅ You want data-driven thresholds
+- ✅ You're preparing manuscripts (need methods text)
+- ✅ You want defensible threshold choices
+- ✅ You use ensemble analysis
+- ✅ You want the dashboard ATO page
 
-### Stay on v2.0.0 if:
-- ⚠️ You're in the middle of a publication (wait until submitted)
-- ⚠️ Your current workflow is working perfectly
-- ⚠️ You have strict computational constraints
-- ⚠️ You need to reproduce exact v2.0.0 results
+### Stay on v2.1.0 if:
+- ⚠️ You're in the middle of an analysis (wait until complete)
+- ⚠️ Your current thresholds are validated
+- ⚠️ You need exact result reproducibility
 
-**Good news:** v2.1.0 is **100% backward compatible**, so all v2.0.0 commands still work!
+**Good news:** v2.1.1 is **100% backward compatible!**
 
 ---
 
-##  Installation
+## 📦 Installation
 
-### Option 1: Upgrade Existing Installation
+### Option 1: Upgrade Existing Installation (Recommended)
 
 ```bash
 # If installed via pip
 pip install --upgrade raptor-rnaseq
 
-# If installed via conda
-conda update -c bioconda raptor
-
 # Verify version
-raptor --version  # Should show v2.1.0
+raptor --version  # Should show v2.1.1
+
+# Verify ATO
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
 ```
 
-### Option 2: Fresh Installation (Recommended)
+### Option 2: Fresh Installation
 
 ```bash
-# Create new conda environment
-conda create -n raptor-v2.1 python=3.9
-conda activate raptor-v2.1
+# Create new environment
+conda create -n raptor-v2.1.1 python=3.9
+conda activate raptor-v2.1.1
 
-# Install RAPTOR v2.1.0 with all features
-conda install -c bioconda raptor
-
-# Or from GitHub
-git clone https://github.com/AyehBlk/RAPTOR.git
-cd RAPTOR
-git checkout v2.1.0
-pip install -e .
+# Install RAPTOR v2.1.1
+pip install raptor-rnaseq
 
 # Verify
 raptor --version
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
 ```
 
-### Option 3: Keep Both Versions (Safest)
+### Option 3: Keep Both Versions
 
 ```bash
-# Keep v2.0.0 environment
-conda activate raptor-v2.0  # Your existing environment
+# Keep v2.1.0 environment
+conda activate raptor-v2.1.0
 
-# Create separate v2.1.0 environment
-conda create -n raptor-v2.1 python=3.9
-conda activate raptor-v2.1
-pip install raptor-rnaseq==2.1.0
+# Create separate v2.1.1 environment
+conda create -n raptor-v2.1.1 python=3.9
+conda activate raptor-v2.1.1
+pip install raptor-rnaseq
 
-# Switch between versions as needed
-conda activate raptor-v2.0  # For old analyses
-conda activate raptor-v2.1  # For new analyses
-```
-
----
-
-##  New Dependencies
-
-### Required (Core Features)
-
-```bash
-# These are automatically installed
-pip install scikit-learn>=1.3.0  # For ML features
-pip install psutil>=5.9.0        # For resource monitoring
-```
-
-### Optional (Advanced Features)
-
-```bash
-# For interactive dashboard
-pip install streamlit>=1.28.0
-pip install plotly>=5.17.0
-
-# For cloud integration
-pip install boto3>=1.28.0      # AWS
-pip install google-cloud>=2.0  # GCP
-pip install azure-storage>=12.0 # Azure
-
-# For parameter optimization
-pip install optuna>=3.3.0      # Bayesian optimization
-
-# Install all optional dependencies
-pip install raptor-rnaseq[all]
+# Switch as needed
+conda activate raptor-v2.1.0  # For reproducibility
+conda activate raptor-v2.1.1  # For new ATO features
 ```
 
 ---
 
-##  Configuration Files
+## 📚 New Dependencies
 
-### v2.0.0 Config Files Still Work!
+### No New Required Dependencies!
 
-Your existing `config.yaml` files are **100% compatible** with v2.1.0.
+ATO uses existing scipy, numpy, and pandas.
+
+### Optional Enhancement
 
 ```bash
-# Your old config works as-is
+# For advanced π₀ estimation (optional)
+pip install statsmodels>=0.14.0
+```
+
+---
+
+## ⚙️ Configuration Files
+
+### v2.1.0 Config Files Still Work!
+
+Your existing configs are **100% compatible**:
+
+```bash
 raptor profile \
   --counts data.csv \
-  --config my_v2.0_config.yaml  # ✓ Still works!
+  --config my_v2.1.0_config.yaml  # ✓ Still works!
 ```
 
-### New v2.1.0 Config Options
+### New v2.1.1 Config Options
 
-To use new features, add these sections to your config:
+Add these sections to enable ATO:
 
 ```yaml
 # Add to your existing config.yaml
 
-# ML Recommendations (NEW)
-ml_recommendation:
+# NEW: Threshold Optimizer settings
+threshold_optimizer:
   enabled: true
-  model_type: "random_forest"
-  confidence_threshold: 0.7
+  goal: "balanced"           # discovery, balanced, or validation
+  default_padj_method: "BH"  # BH, BY, storey, holm, bonferroni
+  default_logfc_method: "auto"  # auto, mad, mixture, power, percentile
 
-# Quality Assessment (ENHANCED)
-quality_assessment:
-  enabled: true
-  metrics:
-    - "library_size"
-    - "detected_genes"
-    - "mitochondrial_content"
-    - "mapping_rate"
-
-# Resource Monitoring (NEW)
-resource_monitoring:
-  enabled: true
-  sampling_interval: 1.0
-
-# Ensemble Analysis (NEW)
-ensemble:
-  enabled: false  # Enable when needed
-  methods:
-    - "meta_analysis"
-    - "vote_counting"
-
-# Dashboard (NEW)
-dashboard:
-  enabled: false  # Launch separately
-  port: 8501
-
-# Automated Reporting (ENHANCED)
-automated_reporting:
-  enabled: true
-  interpretation:
-    enabled: true
-    databases: ["GO", "KEGG", "Reactome"]
+# Update statistics section
+statistics:
+  use_adaptive_thresholds: true  # NEW: Use ATO instead of fixed thresholds
+  fdr_threshold: 0.05
+  log2fc_threshold: 1.0  # Fallback if ATO disabled
 ```
 
-**Or use example configs:**
+### Example Config Files
 
 ```bash
-# Copy example config for your use case
-cp config/examples/config_ml_advanced.yaml my_config.yaml
-cp config/examples/config_ensemble.yaml my_ensemble_config.yaml
+# Copy example config
+cp config/examples/config_with_ato.yaml my_config.yaml
 ```
 
 ---
 
-##  Command Changes
+## 🔄 Command Changes
 
 ### Good News: No Breaking Changes!
 
-All v2.0.0 commands work identically in v2.1.0:
+All v2.1.0 commands work identically:
 
 ```bash
 # These all work exactly the same
-raptor profile --counts data.csv
-raptor compare --data fastq/ --output results/
+raptor profile --counts data.csv --use-ml
 raptor run --pipeline 3 --data fastq/
-```
-
-### New Commands in v2.1.0
-
-```bash
-# NEW: ML-powered recommendations
-raptor profile --counts data.csv --use-ml
-
-# NEW: Ensemble analysis
-raptor ensemble --counts data.csv --pipelines 1,3,5
-
-# NEW: Launch dashboard
+raptor ensemble --pipelines 1,3,4
 raptor dashboard
+```
 
-# NEW: Train custom ML model
-raptor ml-train --benchmarks ./data/
+### New Commands in v2.1.1
 
-# NEW: Monitor resources
-raptor monitor --pid 12345
+```bash
+# NEW: Optimize thresholds from command line
+raptor optimize-thresholds \
+  --input de_results.csv \
+  --goal balanced \
+  --output optimized_results.csv
 
-# NEW: Parameter optimization
-raptor optimize --counts data.csv --pipeline 3
+# NEW: Ensemble with ATO
+raptor ensemble \
+  --data data/ \
+  --pipelines 1,3,4 \
+  --use-ato \
+  --ato-goal balanced
 ```
 
 ---
 
-##  Migration Scenarios
+## 🔬 Migration Scenarios
 
-### Scenario 1: Basic User (Just Profiling)
+### Scenario 1: Basic User (Threshold Optimization)
 
-**v2.0.0 workflow:**
+**v2.1.0 workflow:**
 ```bash
-raptor profile --counts data.csv --output report.html
+raptor run --pipeline 3 --data fastq/ --output results/
+# Then manually filter: |logFC| > 1, FDR < 0.05 (arbitrary!)
 ```
 
-**v2.1.0 equivalent (exactly the same):**
+**v2.1.1 workflow (enhanced):**
 ```bash
-raptor profile --counts data.csv --output report.html
-```
-
-**v2.1.0 enhanced (optional):**
-```bash
-# Enable ML for smarter recommendations
-raptor profile --counts data.csv --use-ml --output report.html
-```
-
-**Migration effort:** None (or 5 minutes to try ML)
-
-### Scenario 2: Power User (Running Pipelines)
-
-**v2.0.0 workflow:**
-```bash
-# Run profiling
-raptor profile --counts data.csv
-
-# Run recommended pipeline
+# Run pipeline (same)
 raptor run --pipeline 3 --data fastq/ --output results/
 
-# Generate report
-raptor report --results results/ --output final_report.html
+# NEW: Optimize thresholds
+python -c "
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+df = pd.read_csv('results/de_results.csv')
+result = optimize_thresholds(df, goal='balanced')
+print(f'Optimal threshold: |logFC| > {result.logfc_threshold:.2f}')
+print(result.methods_text)  # Copy to paper!
+result.results_df.to_csv('results/optimized_results.csv')
+"
 ```
 
-**v2.1.0 workflow (same commands work):**
+**Migration effort:** 5 minutes to add ATO step
+
+### Scenario 2: Dashboard User
+
+**v2.1.0 workflow:**
 ```bash
-# Everything works identically
-raptor profile --counts data.csv
-raptor run --pipeline 3 --data fastq/ --output results/
-raptor report --results results/ --output final_report.html
+raptor dashboard
+# Use ML recommendations, view results
 ```
 
-**v2.1.0 enhanced (with new features):**
+**v2.1.1 workflow (enhanced):**
 ```bash
-# Use ML recommendations
-raptor profile --counts data.csv --use-ml
-
-# Run with resource monitoring
-raptor run --pipeline 3 --data fastq/ --monitor
-
-# Generate enhanced report with interpretation
-raptor report --results results/ --interpret --output report.html
+raptor dashboard
+# Same as before, PLUS:
+# Click "🎯 Threshold Optimizer" in sidebar (NEW!)
+# Upload DE results, get optimized thresholds
+# Download methods text for publication
 ```
 
-**Migration effort:** 30 minutes to explore new features
+**Migration effort:** None (new page appears automatically)
 
-### Scenario 3: Researcher (Benchmarking)
+### Scenario 3: Ensemble User
 
-**v2.0.0 workflow:**
+**v2.1.0 workflow:**
 ```bash
-# Run benchmark
-raptor compare --data fastq/ --pipelines 1,3,5 --output benchmark/
-
-# Analyze results
-raptor report --results benchmark/ --output comparison.html
+raptor ensemble --pipelines 1,3,4 --output results/
+# Results use fixed thresholds per pipeline
 ```
 
-**v2.1.0 workflow (works identically):**
+**v2.1.1 workflow (enhanced):**
 ```bash
-raptor compare --data fastq/ --pipelines 1,3,5 --output benchmark/
-raptor report --results benchmark/ --output comparison.html
+raptor ensemble \
+  --pipelines 1,3,4 \
+  --use-ato \
+  --ato-goal balanced \
+  --output results/
+# Results use uniform, data-driven thresholds!
 ```
 
-**v2.1.0 enhanced (with ensemble):**
-```bash
-# Run benchmark (same as before)
-raptor compare --data fastq/ --pipelines 1,3,5 --output benchmark/
+**Migration effort:** Add `--use-ato` flag
 
-# NEW: Combine results with ensemble
-raptor ensemble --results benchmark/ --method meta_analysis
+### Scenario 4: Python API User
 
-# Generate comprehensive report
-raptor report --results benchmark/ --ensemble --output report.html
-```
-
-**Migration effort:** 1 hour to learn ensemble analysis
-
-### Scenario 4: Developer (Python API)
-
-**v2.0.0 code:**
+**v2.1.0 code:**
 ```python
-from raptor import RNAseqDataProfiler, PipelineRecommender
+from raptor import MLPipelineRecommender, RNAseqDataProfiler
 
-# Profile data
-profiler = RNAseqDataProfiler(counts, metadata)
+profiler = RNAseqDataProfiler(counts, metadata, use_ml=True)
 profile = profiler.profile()
 
-# Get recommendation
-recommender = PipelineRecommender()
+recommender = MLPipelineRecommender()
 recommendation = recommender.recommend(profile)
 ```
 
-**v2.1.0 code (backward compatible):**
+**v2.1.1 code (backward compatible + enhanced):**
 ```python
-# Your v2.0.0 code works unchanged!
-from raptor import RNAseqDataProfiler, PipelineRecommender
+# Your v2.1.0 code still works!
+from raptor import MLPipelineRecommender, RNAseqDataProfiler
 
-profiler = RNAseqDataProfiler(counts, metadata)
+profiler = RNAseqDataProfiler(counts, metadata, use_ml=True)
 profile = profiler.profile()
 
-recommender = PipelineRecommender()
+recommender = MLPipelineRecommender()
 recommendation = recommender.recommend(profile)
+
+# NEW: After running pipeline, optimize thresholds
+from raptor.threshold_optimizer import optimize_thresholds
+
+de_results = pd.read_csv('pipeline_results.csv')
+result = optimize_thresholds(de_results, goal='balanced')
+
+print(f"Optimal |logFC|: {result.logfc_threshold:.3f}")
+print(f"Significant genes: {result.n_significant}")
+print(f"\nMethods:\n{result.methods_text}")
 ```
 
-**v2.1.0 enhanced (with ML):**
-```python
-# Use new ML recommender
-from raptor import RNAseqDataProfiler, MLPipelineRecommender
-
-profiler = RNAseqDataProfiler(counts, metadata)
-profile = profiler.profile()
-
-# NEW: ML-based recommendation
-ml_recommender = MLPipelineRecommender(model_type='random_forest')
-recommendation = ml_recommender.recommend(profile)
-print(f"Confidence: {recommendation['confidence']:.1%}")
-```
-
-**Migration effort:** 2 hours to update scripts with new features
+**Migration effort:** Add ATO import and calls where needed
 
 ---
 
-##  Results Compatibility
+## 📊 Results Compatibility
 
 ### Will My Results Change?
 
-**Short answer:** No, if you use the same commands.
+**Short answer:** No, unless you enable ATO.
 
-**Detailed answer:**
-
-| Feature | v2.0.0 Result | v2.1.0 Result | Notes |
+| Feature | v2.1.0 Result | v2.1.1 Result | Notes |
 |---------|---------------|---------------|-------|
-| **Pipeline execution** | Identical | Identical | Same pipelines, same parameters |
-| **Rule-based recommendations** | Identical | Identical | Same algorithm |
-| **Benchmark comparisons** | Identical | Identical | Same metrics |
-| **ML recommendations** | N/A | New feature | Different from rule-based |
+| **Pipeline execution** | Identical | Identical | Same |
+| **ML recommendations** | Identical | Identical | Same |
+| **Ensemble analysis** | Identical | Identical | Unless `--use-ato` |
+| **Dashboard** | Same | Same + ATO page | New feature |
+| **Thresholds** | Fixed | **Data-driven with ATO** | Opt-in |
 
-### Reproducing v2.0.0 Results
-
-If you need exact v2.0.0 results:
+### Reproducing v2.1.0 Results
 
 ```bash
-# Disable new features
-raptor profile \
-  --counts data.csv \
-  --no-ml \
-  --legacy-mode \
-  --output results/
+# Disable ATO (not needed - it's off by default)
+raptor run --pipeline 3 --output results/
 
-# Or use v2.0.0 config
-raptor profile \
-  --counts data.csv \
-  --config my_v2.0_config.yaml
+# Or explicitly in config
+threshold_optimizer:
+  enabled: false
 ```
 
 ---
 
-##  Potential Issues & Solutions
+## 🚨 Potential Issues & Solutions
 
-### Issue 1: Import Errors
+### Issue 1: ATO Not Found
 
 **Error:**
 ```python
-ImportError: cannot import name 'MLPipelineRecommender'
+ModuleNotFoundError: No module named 'raptor.threshold_optimizer'
 ```
-
-**Cause:** Old RAPTOR version cached
 
 **Solution:**
 ```bash
-# Clear Python cache
-pip cache purge
-pip uninstall raptor-rnaseq
-pip install raptor-rnaseq==2.1.0
-
-# Or force reinstall
-pip install --force-reinstall raptor-rnaseq==2.1.0
+pip install --upgrade raptor-rnaseq
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('OK')"
 ```
 
-### Issue 2: Config Validation Warnings
+### Issue 2: Column Not Found
+
+**Error:**
+```python
+KeyError: 'log2FoldChange' not found
+```
+
+**Solution:**
+```python
+# Check your column names
+print(df.columns.tolist())
+
+# Use correct column names
+result = optimize_thresholds(
+    df,
+    logfc_col='logFC',      # edgeR uses 'logFC'
+    pvalue_col='PValue'     # edgeR uses 'PValue'
+)
+```
+
+### Issue 3: Dashboard ATO Page Missing
+
+**Solution:**
+```bash
+# Update RAPTOR
+pip install --upgrade raptor-rnaseq
+
+# Restart dashboard
+raptor dashboard
+
+# Look for "🎯 Threshold Optimizer" in sidebar
+```
+
+### Issue 4: π₀ Estimation Warning
 
 **Warning:**
 ```
-Warning: Unknown config parameter 'ml_recommendation'
-```
-
-**Cause:** Using v2.1.0 config with v2.0.0 installation
-
-**Solution:**
-```bash
-# Verify version
-raptor --version
-
-# If showing v2.0.0, upgrade
-pip install --upgrade raptor-rnaseq
-
-# Or ignore warning (v2.0.0 will skip unknown parameters)
-```
-
-### Issue 3: Dashboard Won't Start
-
-**Error:**
-```bash
-raptor dashboard
-# ModuleNotFoundError: No module named 'streamlit'
+Warning: π₀ estimation failed, using default 0.9
 ```
 
 **Solution:**
-```bash
-# Install dashboard dependencies
-pip install streamlit plotly
+```python
+# Usually means insufficient data or unusual p-value distribution
+# The analysis will still work with default π₀
 
-# Or install all optional dependencies
-pip install raptor-rnaseq[all]
-```
-
-### Issue 4: ML Model Not Found
-
-**Error:**
-```
-FileNotFoundError: Model file not found at models/raptor_rf_model.pkl
-```
-
-**Solution:**
-```bash
-# Download pre-trained model
-raptor ml-download-model
-
-# Or disable ML temporarily
-raptor profile --counts data.csv --no-ml
-
-# Or train your own
-raptor ml-train --benchmarks ./data/ --quick
-```
-
-### Issue 5: Memory Issues with New Features
-
-**Problem:** Resource monitoring uses extra memory
-
-**Solution:**
-```yaml
-# Adjust in config
-resource_monitoring:
-  enabled: true
-  sampling_interval: 5.0  # Less frequent sampling
-  track_metrics:
-    - "cpu_percent"
-    - "memory_percent"
-    # Remove less critical metrics
+# Or try different method
+result = optimize_thresholds(df, goal='balanced', pi0_method='histogram')
 ```
 
 ---
 
-##  Updated Documentation
+## 📚 Updated Documentation
 
 ### New Documentation Files
 
-Read these to learn new features:
-
-1. **[ML_GUIDE.md](ML_GUIDE.md)** - ML recommendations
-2. **[ENSEMBLE_GUIDE.md](ENSEMBLE_GUIDE.md)** - Ensemble analysis
-3. **[DASHBOARD_GUIDE.md](dashboard/README.md)** - Interactive dashboard
-4. **[QUALITY_GUIDE.md](QUALITY_GUIDE.md)** - Quality assessment
-5. **[RESOURCE_MONITOR_GUIDE.md](RESOURCE_MONITOR_GUIDE.md)** - Monitoring
-6. **[PARAMETER_OPTIMIZATION.md](PARAMETER_OPTIMIZATION.md)** - Tuning
-7. **[CLOUD_DEPLOYMENT.md](CLOUD_DEPLOYMENT.md)** - Cloud integration
+1. **[THRESHOLD_OPTIMIZER.md](THRESHOLD_OPTIMIZER.md)** - Comprehensive ATO guide
 
 ### Updated Documentation
 
-These have been updated for v2.1.0:
-
-- **INSTALLATION.md** - New dependencies
-- **API.md** - New classes and methods
-- **FAQ.md** - v2.1.0 questions
-- **TROUBLESHOOTING.md** - New feature issues
-
----
-
-##  Learning Path
-
-### Week 1: Basic Migration
-- Day 1: Install v2.1.0
-- Day 2: Test existing workflows
-- Day 3: Try ML recommendations
-- Day 4: Explore dashboard
-- Day 5: Read new documentation
-
-### Week 2: Advanced Features
-- Day 1: Learn ensemble analysis
-- Day 2: Try resource monitoring
-- Day 3: Explore quality assessment
-- Day 4: Test parameter optimization
-- Day 5: Practice with real data
-
-### Month 1: Full Adoption
-- Week 1-2: Basic migration (above)
-- Week 3: Integrate into workflows
-- Week 4: Train team members
+- **INSTALLATION.md** - ATO verification steps
+- **QUICK_START.md** - ATO quick example
+- **DASHBOARD.md** - ATO page documentation
+- **ENSEMBLE.md** - ATO integration
+- **API.md** - threshold_optimizer module
+- **FAQ.md** - Threshold selection Q&A
+- **TROUBLESHOOTING.md** - ATO issues
+- **PIPELINES.md** - ATO compatibility
+- **DOCUMENTATION_INDEX.md** - ATO links
 
 ---
 
-##  Migration Checklist
+## 📋 Migration Checklist
 
-Before migrating to v2.1.0:
+### Before Migrating
 
-### Preparation
 - [ ] Read this migration guide
-- [ ] Back up existing results
-- [ ] Document current workflow
-- [ ] Test on non-critical data first
+- [ ] Back up any in-progress analyses
+- [ ] Note current threshold choices (for comparison)
 
 ### Installation
-- [ ] Install v2.1.0
-- [ ] Verify version (`raptor --version`)
-- [ ] Test basic commands
-- [ ] Check dependencies
 
-### Validation
-- [ ] Run simple test analysis
-- [ ] Compare results with v2.0.0 (optional)
-- [ ] Test new features you'll use
-- [ ] Update scripts if using API
+- [ ] Upgrade: `pip install --upgrade raptor-rnaseq`
+- [ ] Verify version: `raptor --version` → 2.1.1
+- [ ] Verify ATO: `python -c "from raptor.threshold_optimizer import optimize_thresholds; print('OK')"`
+
+### Learning ATO
+
+- [ ] Read [THRESHOLD_OPTIMIZER.md](THRESHOLD_OPTIMIZER.md)
+- [ ] Try ATO on existing DE results
+- [ ] Compare ATO thresholds to your usual choices
+- [ ] Try dashboard ATO page
 
 ### Adoption
-- [ ] Update documentation
-- [ ] Train team members
-- [ ] Update workflows
-- [ ] Monitor for issues
+
+- [ ] Update scripts to include ATO (optional)
+- [ ] Update config files with ATO settings (optional)
+- [ ] Update documentation/SOPs
+- [ ] Share methods text template with team
 
 ---
 
-##  Getting Help
+## 📈 Feature Comparison
+
+### v2.1.0 vs v2.1.1
+
+| Feature | v2.1.0 | v2.1.1 | Notes |
+|---------|--------|--------|-------|
+| **All v2.1.0 features** | ✅ | ✅ | Identical |
+| **ML recommendations** | ✅ | ✅ | Same |
+| **Dashboard** | ✅ | ✅ Enhanced | + ATO page |
+| **Ensemble analysis** | ✅ | ✅ Enhanced | + ATO integration |
+| **🎯 Threshold Optimizer** | ❌ | ✅ | **NEW** |
+| **Publication methods text** | ❌ | ✅ | **NEW** |
+| **π₀ estimation** | ❌ | ✅ | **NEW** |
+| **Data-driven logFC** | ❌ | ✅ | **NEW** |
+
+---
+
+## 🎯 Quick Start with ATO
+
+### Immediate Use (No Config Changes)
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+# Load any DE results
+df = pd.read_csv('deseq2_results.csv')
+
+# Optimize
+result = optimize_thresholds(
+    df,
+    logfc_col='log2FoldChange',
+    pvalue_col='pvalue',
+    goal='balanced'
+)
+
+# Use results
+print(f"Optimal |logFC| threshold: {result.logfc_threshold:.3f}")
+print(f"Significant genes: {result.n_significant}")
+
+# Copy to paper
+print(result.methods_text)
+
+# Save
+result.results_df.to_csv('optimized_results.csv')
+```
+
+### Dashboard Use
+
+```bash
+raptor dashboard
+# Click "🎯 Threshold Optimizer"
+# Upload, optimize, download!
+```
+
+---
+
+## 📞 Getting Help
 
 ### Resources
 
-1. **Documentation:** Read [ML_GUIDE.md](ML_GUIDE.md) and [ENSEMBLE_GUIDE.md](ENSEMBLE_GUIDE.md)
-2. **FAQ:** Check [FAQ.md](FAQ.md) for common questions
-3. **Troubleshooting:** See [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
-4. **Examples:** Look at [config/examples/](../config/examples/)
+1. **Documentation:** [THRESHOLD_OPTIMIZER.md](THRESHOLD_OPTIMIZER.md)
+2. **FAQ:** [FAQ.md](FAQ.md) - Threshold selection section
+3. **Troubleshooting:** [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ### Community Support
 
 - **GitHub Issues:** https://github.com/AyehBlk/RAPTOR/issues
-- **Discussions:** https://github.com/AyehBlk/RAPTOR/discussions
 - **Email:** ayehbolouki1988@gmail.com
 
-### Reporting Migration Issues
-
-If you encounter problems:
+### Reporting Issues
 
 ```markdown
-**Issue Title:** v2.1.0 Migration: [Brief Description]
+**Issue Title:** v2.1.1 Migration: [Brief Description]
 
 **Information:**
-- Previous version: v2.0.0
-- New version: v2.1.0
-- Operating system: [e.g., Ubuntu 22.04]
-- Installation method: [pip/conda/source]
+- Previous version: v2.1.0
+- New version: v2.1.1
+- Feature: Threshold Optimizer
 
 **Problem:**
 [Describe what's not working]
 
-**Expected:**
-[What you expected to happen]
-
-**Steps to reproduce:**
-1. [First step]
-2. [Second step]
-3. [...]
-
 **Error messages:**
 ```
-[Paste error messages here]
+[Paste error]
 ```
-
-**Already tried:**
-- [ ] Reinstalled RAPTOR
-- [ ] Checked documentation
-- [ ] Searched existing issues
 ```
 
 ---
 
-##  Feature Comparison
+## 🗓️ Version Timeline
 
-### v2.0.0 vs v2.1.0
-
-| Feature | v2.0.0 | v2.1.0 | Notes |
-|---------|--------|--------|-------|
-| **8 Pipeline implementations** | ✅ | ✅ | Identical |
-| **Data profiling** | ✅ | ✅ Enhanced | More metrics |
-| **Rule-based recommendations** | ✅ | ✅ | Same algorithm |
-| **ML recommendations** | ❌ | ✅ | **NEW** |
-| **Benchmarking** | ✅ | ✅ | Same |
-| **Ensemble analysis** | ❌ | ✅ | **NEW** |
-| **Interactive dashboard** | ❌ | ✅ | **NEW** |
-| **Resource monitoring** | Basic | ✅ Advanced | **ENHANCED** |
-| **Quality assessment** | Basic | ✅ Comprehensive | **ENHANCED** |
-| **Parameter optimization** | Manual | ✅ Automated | **NEW** |
-| **Automated reporting** | ✅ | ✅ Enhanced | Interpretation added |
-| **Cloud integration** | ❌ | ✅ | **NEW** |
+- **v2.0.0** (Jan 2025) - Initial release
+- **v2.1.0** (Nov 2025) - ML, Dashboard, Ensemble
+- **v2.1.1** (Dec 2025) - 🎯 Adaptive Threshold Optimizer ← **YOU ARE HERE**
+- **v2.2.0** (Planned Q1 2026) - Single-cell support
 
 ---
 
-##  Success Stories
-
-### Early Adopters
-
-> "Migration took 30 minutes. ML recommendations saved me hours of benchmarking."
-> — Postdoc, Cancer Research Lab
-
-> "Ensemble analysis gave us confidence for our clinical biomarkers. Worth the upgrade!"
-> — Senior Scientist, Biotech Company
-
-> "The dashboard makes RAPTOR accessible to our wet-lab scientists. Game changer."
-> — Bioinformatics Core Director
-
----
-
-##  Version Timeline
-
-- **v2.0.0** (Released: Jan 2025) - Initial release
-- **v2.1.0** (Released: Nov 2025) - Major feature update
-- **v2.1.1** (Planned: Dec 2025) - Bug fixes
-- **v2.2.0** (Planned: Q1 2026) - Additional features
-
----
-
-##  Conclusion
+## ✅ Conclusion
 
 ### Key Takeaways
 
-✅ **v2.1.0 is backward compatible** - Your v2.0.0 workflows work unchanged
+✅ **v2.1.1 is backward compatible** - All v2.1.0 workflows work unchanged
 
-✅ **Migration is optional** - But highly recommended for new projects
+✅ **ATO is opt-in** - Your existing analyses won't change
 
-✅ **New features are opt-in** - Use what you need, ignore the rest
+✅ **Easy to adopt** - One import, one function call
 
-✅ **Comprehensive documentation** - Guides for every new feature
+✅ **Publication-ready** - Auto-generated methods text
 
-✅ **Community support** - Help available via GitHub and email
+✅ **Dashboard integration** - No coding required
 
 ### Recommended Migration Timeline
 
-- **Immediate:** If starting new project
-- **Within 1 month:** For active researchers
-- **Within 3 months:** For established workflows
-- **When convenient:** For published work
+- **Immediate:** If preparing manuscript
+- **This week:** For active projects
+- **When convenient:** For established workflows
 
 ---
 
-**Welcome to RAPTOR v2.1.0!** 🦖
+**Welcome to RAPTOR v2.1.1 with Adaptive Threshold Optimizer!** 🎯🦖
 
 ---
 
 **Author:** Ayeh Bolouki  
-**Version:** 2.1.0  
-**Date:** November 2025  
+**Version:** 2.1.1  
+**Date:** December 2025  
 **License:** MIT
 
 ---
 
-*"Evolution, not revolution - upgrading RAPTOR while preserving what works."* 🔄
+*"Data-driven thresholds - because your data deserves better than arbitrary cutoffs."* 🎯
