@@ -7,11 +7,37 @@ This package contains a complete **Machine Learning-based Pipeline Recommendatio
 ### Core Features
 
 - **ML-Based Recommendations** - Intelligent pipeline selection with 87% accuracy
+- **🎯 Threshold Optimizer** - Data-driven significance thresholds (**NEW in v2.1.1!**)
 - **Interactive Dashboard** - Web-based interface (no coding required!)
 - **Quality Assessment** - Comprehensive data quality scoring
 - **Ensemble Analysis** - Combine multiple pipelines for robust results
 - **Resource Monitoring** - Track CPU, memory, and runtime
 - **Automated Reporting** - Publication-ready reports
+
+---
+
+## 🆕 What's New in v2.1.1
+
+### Adaptive Threshold Optimizer (ATO)
+
+Stop using arbitrary thresholds! ATO determines data-driven cutoffs:
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+# Load your DE results
+df = pd.read_csv('deseq2_results.csv')
+
+# Get optimized thresholds
+result = optimize_thresholds(df, goal='discovery')
+
+print(f"Optimal logFC: {result.logfc_threshold:.2f}")
+print(f"Significant genes: {result.n_significant}")
+print(f"\nMethods text for publication:\n{result.methods_text}")
+```
+
+---
 
 ## Installation (2 Minutes)
 
@@ -24,13 +50,6 @@ pip install raptor-rnaseq
 With all features:
 ```bash
 pip install raptor-rnaseq[all]
-```
-
-With specific features:
-```bash
-pip install raptor-rnaseq[dashboard]   # Web dashboard
-pip install raptor-rnaseq[ml]          # ML features
-pip install raptor-rnaseq[advanced]    # Advanced features
 ```
 
 ### Option 2: Install from GitHub
@@ -49,23 +68,28 @@ python -c "import raptor; print(raptor.__version__)"
 
 Expected output:
 ```
-2.1.0
+2.1.1
 ```
 
-Or run the test suite:
+### Verify Threshold Optimizer
+
 ```bash
-python test_ml_system.py
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
 ```
+
+---
 
 ## First Run (2 Minutes)
 
 ### Option A: Interactive Dashboard (Easiest)
 
 ```bash
-python launch_dashboard.py
+raptor dashboard
 ```
 
 Then open http://localhost:8501 in your browser. Upload your data and get instant recommendations!
+
+**NEW in v2.1.1:** Click "🎯 Threshold Optimizer" in the sidebar to optimize DE thresholds!
 
 ### Option B: Command Line
 
@@ -95,6 +119,56 @@ print(f"Recommended: Pipeline {recommendation['pipeline_id']}")
 print(f"Confidence: {recommendation['confidence']:.1%}")
 ```
 
+---
+
+## Quick Threshold Optimization (NEW in v2.1.1!)
+
+### From Python
+
+```python
+from raptor.threshold_optimizer import AdaptiveThresholdOptimizer
+import pandas as pd
+
+# Load DE results from any pipeline
+df = pd.read_csv('deseq2_results.csv')
+
+# Create optimizer
+ato = AdaptiveThresholdOptimizer(
+    df, 
+    logfc_col='log2FoldChange', 
+    pvalue_col='pvalue'
+)
+
+# Optimize for discovery (exploratory analysis)
+result = ato.optimize(goal='discovery')
+
+# Or for validation (stringent analysis)
+result = ato.optimize(goal='validation')
+
+# Get results
+print(f"Optimal logFC threshold: {result.logfc_threshold:.3f}")
+print(f"Optimal p-value threshold: {result.pvalue_threshold}")
+print(f"Significant genes: {result.n_significant}")
+print(f"π₀ estimate: {result.pi0:.3f}")
+
+# Get publication-ready methods text
+print(result.methods_text)
+
+# Save optimized results
+result.results_df.to_csv('optimized_results.csv')
+```
+
+### From Dashboard
+
+1. Launch: `raptor dashboard`
+2. Click "🎯 Threshold Optimizer" in sidebar
+3. Upload your DE results (CSV)
+4. Select analysis goal (Discovery/Balanced/Validation)
+5. Click "Optimize Thresholds"
+6. Download results and methods text
+
+---
+
 ## Basic Usage
 
 ### 1. Get Pipeline Recommendation
@@ -120,7 +194,17 @@ report = assessor.assess_quality()
 print(f"Quality Score: {report['overall_score']}/100")
 ```
 
-### 3. Ensemble Analysis
+### 3. Optimize Thresholds (NEW!)
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+
+# Quick optimization
+result = optimize_thresholds(de_results, goal='balanced')
+print(f"Use |logFC| > {result.logfc_threshold:.2f}, padj < {result.pvalue_threshold}")
+```
+
+### 4. Ensemble Analysis
 
 ```python
 from raptor.ensemble_analysis import EnsembleAnalyzer
@@ -134,11 +218,13 @@ consensus = analyzer.combine_results(
 print(f"Consensus DE genes: {len(consensus['de_genes'])}")
 ```
 
-### 4. Generate Report
+### 5. Generate Report
 
 ```bash
 raptor report --results results/ --output report.html
 ```
+
+---
 
 ## Quick Command Reference
 
@@ -147,7 +233,7 @@ raptor report --results results/ --output report.html
 pip install raptor-rnaseq
 
 # Launch dashboard
-python launch_dashboard.py
+raptor dashboard
 
 # Get recommendation
 raptor profile --counts data.csv --use-ml
@@ -162,6 +248,25 @@ raptor report --results results/ --output report.html
 raptor --help
 ```
 
+---
+
+## Analysis Goals for Threshold Optimizer
+
+| Goal | Use Case | Behavior |
+|------|----------|----------|
+| **discovery** | Exploratory analysis | More permissive, maximize sensitivity |
+| **balanced** | Standard publication | Balance sensitivity/specificity |
+| **validation** | Clinical/confirmation | Stringent, maximize specificity |
+
+```python
+# Examples
+result = optimize_thresholds(df, goal='discovery')   # More genes
+result = optimize_thresholds(df, goal='balanced')    # Standard
+result = optimize_thresholds(df, goal='validation')  # Fewer, high-confidence genes
+```
+
+---
+
 ## Directory Structure After Installation
 
 ```
@@ -170,9 +275,12 @@ your_project/
 │   ├── counts.csv          # Your count matrix
 │   └── metadata.csv        # Sample metadata
 ├── results/                # Pipeline outputs
+│   └── deseq2_results.csv  # DE results (use with ATO!)
 ├── reports/                # Generated reports
 └── figures/                # Visualizations
 ```
+
+---
 
 ## Common Use Cases
 
@@ -182,7 +290,7 @@ your_project/
 raptor profile --counts data.csv --use-ml
 ```
 
-### Use Case 2: Full Workflow
+### Use Case 2: Full Workflow with Threshold Optimization
 
 ```bash
 # 1. Profile and get recommendation
@@ -191,7 +299,17 @@ raptor profile --counts data.csv --use-ml
 # 2. Run the recommended pipeline
 raptor run --pipeline 3 --data fastq/ --output results/
 
-# 3. Generate report
+# 3. Optimize thresholds for the results
+python -c "
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+df = pd.read_csv('results/de_results.csv')
+result = optimize_thresholds(df, goal='balanced')
+print(f'Optimal thresholds: |logFC| > {result.logfc_threshold:.2f}, padj < {result.pvalue_threshold}')
+result.results_df.to_csv('results/optimized_de_results.csv')
+"
+
+# 4. Generate report
 raptor report --results results/
 ```
 
@@ -199,6 +317,7 @@ raptor report --results results/
 
 ```python
 from raptor import MLPipelineRecommender, RNAseqDataProfiler
+from raptor.threshold_optimizer import optimize_thresholds
 from pathlib import Path
 
 recommender = MLPipelineRecommender()
@@ -212,11 +331,18 @@ for data_file in Path('datasets/').glob('*.csv'):
     print(f"{data_file.name}: Pipeline {rec['pipeline_id']}")
 ```
 
+---
+
 ## Troubleshooting
 
 ### "Module not found"
 ```bash
 pip install raptor-rnaseq[all]
+```
+
+### "threshold_optimizer not found"
+```bash
+pip install --upgrade raptor-rnaseq
 ```
 
 ### "Model not found"
@@ -230,6 +356,8 @@ python example_ml_workflow.py --n-datasets 100
 - Ensure sufficient sample size (n ≥ 6)
 - Consider ensemble analysis
 
+---
+
 ## Need Help?
 
 - **Documentation**: https://github.com/AyehBlk/RAPTOR/tree/main/docs
@@ -237,12 +365,15 @@ python example_ml_workflow.py --n-datasets 100
 - **Issues**: https://github.com/AyehBlk/RAPTOR/issues
 - **Email**: ayehbolouki1988@gmail.com
 
+---
+
 ## Success Criteria
 
 ✓ Installation completes without errors
 ✓ `import raptor` works
 ✓ Dashboard launches at http://localhost:8501
 ✓ ML recommendation runs in <0.1 seconds
+✓ Threshold Optimizer available (**v2.1.1**)
 ✓ Confidence scores provided
 
 ---
@@ -250,7 +381,13 @@ python example_ml_workflow.py --n-datasets 100
 **Ready to start? Run:**
 ```bash
 pip install raptor-rnaseq
-python -c "import raptor"
+python -c "import raptor; from raptor.threshold_optimizer import optimize_thresholds; print('✅ Ready!')"
 ```
 
 🦖 Happy analyzing!
+
+---
+
+**Version:** 2.1.1  
+**Author:** Ayeh Bolouki  
+**License:** MIT
