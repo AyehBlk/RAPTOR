@@ -581,6 +581,6 @@ pip install raptor-rnaseq[all] && python launch_dashboard.py
 ---
 
 *Created with ♥ by Ayeh Bolouki*  
-*June 2025*
+*December 2025*
 
 **🦖 RAPTOR ULTIMATE - Intelligent • Monitored • Robust • Accessible**
