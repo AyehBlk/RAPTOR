@@ -5,12 +5,14 @@ RAPTOR Interactive Dashboard
 
 Web-based interface for all RAPTOR ML features including:
 - ML-based pipeline recommendations
+- Adaptive Threshold Optimizer (NEW in v2.1.1)
 - Resource monitoring
 - Ensemble analysis
 - Benchmark comparisons
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
+Version: 2.1.1
 """
 
 import streamlit as st
@@ -23,6 +25,7 @@ import json
 import sys
 import time
 from datetime import datetime
+from io import StringIO
 
 # Page configuration
 st.set_page_config(
@@ -73,8 +76,36 @@ st.markdown("""
         border-radius: 0.5rem;
         border-left: 4px solid #F44336;
     }
+    .new-feature {
+        background-color: #E3F2FD;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        border-left: 4px solid #2196F3;
+        margin: 0.5rem 0;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+
+# Check for Threshold Optimizer availability
+try:
+    from raptor.threshold_optimizer import (
+        AdaptiveThresholdOptimizer,
+        optimize_thresholds,
+        ThresholdResult
+    )
+    ATO_AVAILABLE = True
+except ImportError:
+    try:
+        # Try local import for development
+        from threshold_optimizer import (
+            AdaptiveThresholdOptimizer,
+            optimize_thresholds,
+            ThresholdResult
+        )
+        ATO_AVAILABLE = True
+    except ImportError:
+        ATO_AVAILABLE = False
 
 
 # Initialize session state
@@ -90,6 +121,13 @@ def init_session_state():
         st.session_state.monitor_data = []
     if 'ensemble_results' not in st.session_state:
         st.session_state.ensemble_results = None
+    # Threshold Optimizer session state (v2.1.1)
+    if 'ato_result' not in st.session_state:
+        st.session_state.ato_result = None
+    if 'ato_df' not in st.session_state:
+        st.session_state.ato_df = None
+    if 'ato_instance' not in st.session_state:
+        st.session_state.ato_instance = None
 
 
 def check_dependencies():
@@ -143,15 +181,21 @@ def home_page():
     
     st.markdown("---")
     
+    # What's new banner
+    st.markdown('<div class="new-feature">', unsafe_allow_html=True)
+    st.markdown("🆕 **New in v2.1.1**: Adaptive Threshold Optimizer (ATO) - Data-driven threshold selection for DE analysis!")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     # Welcome message
     st.markdown("""
     ### Welcome to RAPTOR!
     
-    This interactive dashboard provides access to all RAPTOR ML features:
+    This interactive dashboard provides access to all RAPTOR features:
     
     - **🤖 ML Recommender**: Get AI-powered pipeline recommendations
+    - **🎯 Threshold Optimizer**: Data-driven DE threshold optimization *(NEW!)*
     - **📊 Resource Monitor**: Track system resources in real-time
-    - **🎯 Ensemble Analysis**: Combine results from multiple pipelines
+    - **🔬 Ensemble Analysis**: Combine results from multiple pipelines
     - **📈 Benchmarks**: Compare pipeline performance
     - **⚙️ Settings**: Configure preferences and models
     """)
@@ -159,7 +203,7 @@ def home_page():
     # Check system status
     st.markdown('<p class="sub-header">System Status</p>', unsafe_allow_html=True)
     
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     
     with col1:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
@@ -176,9 +220,14 @@ def home_page():
             st.markdown('<div class="metric-card">', unsafe_allow_html=True)
             st.metric("ML Model", "⚠️ Not Found")
             st.markdown('</div>', unsafe_allow_html=True)
-            st.info("Train a model from the ML Recommender page or run: `python example_ml_workflow.py`")
     
     with col3:
+        ato_status = "✅ Available" if ATO_AVAILABLE else "⚠️ Not Found"
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.metric("Threshold Optimizer", ato_status)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with col4:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.metric("Dashboard", "✅ Active")
         st.markdown('</div>', unsafe_allow_html=True)
@@ -191,8 +240,9 @@ def home_page():
     
     1. **Upload your data** on the ML Recommender page
     2. **Get a recommendation** with one click
-    3. **Explore ensemble analysis** to combine pipeline results
-    4. **Monitor resources** during pipeline execution
+    3. **Optimize thresholds** for your DE results *(NEW!)*
+    4. **Explore ensemble analysis** to combine pipeline results
+    5. **Monitor resources** during pipeline execution
     
     #### Need Training Data?
     
@@ -206,6 +256,9 @@ def home_page():
     if st.session_state.recommendation:
         st.markdown('<p class="sub-header">Recent Activity</p>', unsafe_allow_html=True)
         st.success(f"✅ Last recommendation: Pipeline {st.session_state.recommendation['pipeline_id']} ({st.session_state.recommendation['confidence']:.1%} confidence)")
+    
+    if st.session_state.ato_result:
+        st.info(f"🎯 Last threshold optimization: |logFC| > {st.session_state.ato_result.logfc_cutoff:.3f}, {st.session_state.ato_result.n_significant_optimized} DE genes")
 
 
 def ml_recommender_page():
@@ -398,6 +451,461 @@ def ml_recommender_page():
                         st.code(traceback.format_exc())
 
 
+# ==============================================================================
+# THRESHOLD OPTIMIZER PAGE (NEW in v2.1.1)
+# ==============================================================================
+
+def threshold_optimizer_page():
+    """Adaptive Threshold Optimizer interface."""
+    st.markdown('<p class="main-header">🎯 Adaptive Threshold Optimizer</p>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="new-feature">', unsafe_allow_html=True)
+    st.markdown("🆕 **New in v2.1.1**: Data-driven threshold optimization for differential expression analysis")
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    if not ATO_AVAILABLE:
+        st.error("""
+        ⚠️ **Threshold Optimizer module not found!**
+        
+        Please ensure the `threshold_optimizer` module is installed:
+        ```python
+        pip install raptor-rnaseq>=2.1.1
+        ```
+        
+        Or copy the `threshold_optimizer/` folder to your RAPTOR installation.
+        """)
+        return
+    
+    st.markdown("""
+    The Adaptive Threshold Optimizer (ATO) provides **data-driven** thresholds for 
+    differential expression analysis, replacing arbitrary cutoffs with scientifically 
+    justified values.
+    
+    **Upload your DE results** from DESeq2, edgeR, or limma to get started.
+    """)
+    
+    st.markdown("---")
+    
+    # File upload section
+    st.markdown('<p class="sub-header">📁 Upload DE Results</p>', unsafe_allow_html=True)
+    
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        uploaded_file = st.file_uploader(
+            "Upload your differential expression results",
+            type=['csv', 'txt', 'tsv'],
+            help="Supported formats: CSV, TSV, TXT. Must contain log2FoldChange and pvalue columns."
+        )
+    
+    with col2:
+        st.markdown("**Required columns:**")
+        st.markdown("- `log2FoldChange` (or `logFC`)")
+        st.markdown("- `pvalue` (or `PValue`)")
+        st.markdown("")
+        st.markdown("**Optional columns:**")
+        st.markdown("- `padj`, `baseMean`, `lfcSE`")
+    
+    # Demo data option
+    use_demo = st.checkbox("Use demo data instead", value=False)
+    
+    df = None
+    
+    if use_demo:
+        # Generate synthetic demo data
+        np.random.seed(42)
+        n_genes = 10000
+        
+        # Most genes are null
+        null_logfc = np.random.normal(0, 0.2, int(n_genes * 0.85))
+        null_pval = np.random.uniform(0.05, 1, int(n_genes * 0.85))
+        
+        # Some DE genes
+        de_logfc = np.concatenate([
+            np.random.normal(1.5, 0.5, int(n_genes * 0.075)),
+            np.random.normal(-1.5, 0.5, int(n_genes * 0.075))
+        ])
+        de_pval = np.random.exponential(0.001, int(n_genes * 0.15))
+        
+        df = pd.DataFrame({
+            'log2FoldChange': np.concatenate([null_logfc, de_logfc]),
+            'pvalue': np.clip(np.concatenate([null_pval, de_pval]), 1e-300, 1),
+            'baseMean': np.random.exponential(1000, n_genes)
+        })
+        df.index = [f'Gene_{i}' for i in range(n_genes)]
+        
+        st.success("✅ Demo data loaded (10,000 synthetic genes)")
+    
+    elif uploaded_file is not None:
+        # Detect separator
+        content = uploaded_file.getvalue().decode('utf-8')
+        first_line = content.split('\n')[0]
+        
+        if '\t' in first_line:
+            sep = '\t'
+        elif ',' in first_line:
+            sep = ','
+        else:
+            sep = '\t'
+        
+        # Load data
+        try:
+            df = pd.read_csv(StringIO(content), sep=sep, index_col=0)
+            st.success(f"✅ Loaded {len(df)} genes from {uploaded_file.name}")
+        except Exception as e:
+            st.error(f"Error loading file: {e}")
+            return
+    
+    if df is None:
+        st.info("👆 Upload a file or check 'Use demo data' to get started")
+        return
+    
+    st.markdown("---")
+    
+    # Analysis settings
+    st.markdown('<p class="sub-header">⚙️ Analysis Settings</p>', unsafe_allow_html=True)
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        goal = st.selectbox(
+            "Analysis Goal",
+            options=['discovery', 'balanced', 'validation'],
+            index=0,
+            help="""
+            - **Discovery**: Maximize true positives (FDR control)
+            - **Balanced**: Balance sensitivity and specificity  
+            - **Validation**: Minimize false positives (FWER control)
+            """
+        )
+    
+    with col2:
+        logfc_method = st.selectbox(
+            "LogFC Method",
+            options=['auto', 'mad', 'mixture', 'power', 'percentile'],
+            index=0,
+            help="""
+            - **auto**: Consensus of all methods (recommended)
+            - **mad**: MAD-based robust estimation
+            - **mixture**: Gaussian mixture model
+            - **power**: Power-based minimum effect
+            - **percentile**: 95th percentile of null
+            """
+        )
+    
+    with col3:
+        col3a, col3b = st.columns(2)
+        with col3a:
+            n1 = st.number_input("Samples (Group 1)", min_value=2, max_value=100, value=3)
+        with col3b:
+            n2 = st.number_input("Samples (Group 2)", min_value=2, max_value=100, value=3)
+    
+    # Run optimization
+    if st.button("🚀 Optimize Thresholds", type="primary"):
+        
+        with st.spinner("Running threshold optimization..."):
+            try:
+                ato = AdaptiveThresholdOptimizer(df, goal=goal, verbose=False)
+                result = ato.optimize(logfc_method=logfc_method, n1=n1, n2=n2)
+                
+                # Store in session state
+                st.session_state.ato_result = result
+                st.session_state.ato_df = ato.df
+                st.session_state.ato_instance = ato
+                
+            except Exception as e:
+                st.error(f"Error during optimization: {e}")
+                import traceback
+                st.code(traceback.format_exc())
+                return
+        
+        st.success("✅ Optimization complete!")
+    
+    # Display results if available
+    if st.session_state.ato_result is not None:
+        result = st.session_state.ato_result
+        ato_df = st.session_state.ato_df
+        ato = st.session_state.ato_instance
+        
+        st.markdown("---")
+        st.markdown('<p class="sub-header">📊 Optimization Results</p>', unsafe_allow_html=True)
+        
+        # Key metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            st.metric(
+                "Recommended |logFC| cutoff",
+                f"{result.logfc_cutoff:.3f}",
+                delta=f"{result.logfc_cutoff - 1.0:+.3f} vs traditional",
+                delta_color="inverse"
+            )
+        
+        with col2:
+            st.metric(
+                "Recommended padj cutoff",
+                f"{result.padj_cutoff}",
+                delta=f"{result.padj_method}"
+            )
+        
+        with col3:
+            st.metric(
+                "DE genes (optimized)",
+                result.n_significant_optimized,
+                delta=f"{result.n_significant_optimized - result.n_significant_traditional:+d}"
+            )
+        
+        with col4:
+            st.metric(
+                "π₀ estimate",
+                f"{result.pi0_estimate:.3f}",
+                help="Proportion of true null hypotheses"
+            )
+        
+        # Detailed reasoning
+        with st.expander("📋 Detailed Reasoning", expanded=True):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.markdown("**LogFC Cutoff**")
+                st.markdown(f"- Method: {result.logfc_method}")
+                st.markdown(f"- {result.logfc_reasoning}")
+            
+            with col2:
+                st.markdown("**P-value Adjustment**")
+                st.markdown(f"- Method: {result.padj_method}")
+                st.markdown(f"- {result.padj_reasoning}")
+        
+        # Visualizations
+        st.markdown("---")
+        st.markdown('<p class="sub-header">📈 Visualizations</p>', unsafe_allow_html=True)
+        
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "Volcano Plot", "LogFC Distribution", "P-value Distribution", "Threshold Comparison"
+        ])
+        
+        with tab1:
+            # Volcano plot
+            logfc = ato_df['logfc'].values
+            padj = ato_df['padj_optimized'].values if 'padj_optimized' in ato_df.columns else ato_df['padj'].values
+            
+            min_padj = padj[padj > 0].min() if (padj > 0).any() else 1e-300
+            padj_safe = np.where(padj == 0, min_padj / 10, padj)
+            neg_log_padj = -np.log10(padj_safe)
+            
+            sig_up = (logfc > result.logfc_cutoff) & (padj < result.padj_cutoff)
+            sig_down = (logfc < -result.logfc_cutoff) & (padj < result.padj_cutoff)
+            not_sig = ~(sig_up | sig_down)
+            
+            fig = go.Figure()
+            
+            fig.add_trace(go.Scatter(
+                x=logfc[not_sig], y=neg_log_padj[not_sig],
+                mode='markers', marker=dict(color='gray', size=5, opacity=0.5),
+                name=f'Not significant ({not_sig.sum()})',
+                text=ato_df.index[not_sig],
+                hovertemplate='<b>%{text}</b><br>logFC: %{x:.3f}<br>-log10(padj): %{y:.2f}<extra></extra>'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=logfc[sig_up], y=neg_log_padj[sig_up],
+                mode='markers', marker=dict(color='firebrick', size=8, opacity=0.7),
+                name=f'Upregulated ({sig_up.sum()})',
+                text=ato_df.index[sig_up],
+                hovertemplate='<b>%{text}</b><br>logFC: %{x:.3f}<br>-log10(padj): %{y:.2f}<extra></extra>'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=logfc[sig_down], y=neg_log_padj[sig_down],
+                mode='markers', marker=dict(color='steelblue', size=8, opacity=0.7),
+                name=f'Downregulated ({sig_down.sum()})',
+                text=ato_df.index[sig_down],
+                hovertemplate='<b>%{text}</b><br>logFC: %{x:.3f}<br>-log10(padj): %{y:.2f}<extra></extra>'
+            ))
+            
+            fig.add_hline(y=-np.log10(result.padj_cutoff), line_dash="dash", line_color="black", opacity=0.5)
+            fig.add_vline(x=result.logfc_cutoff, line_dash="dash", line_color="black", opacity=0.5)
+            fig.add_vline(x=-result.logfc_cutoff, line_dash="dash", line_color="black", opacity=0.5)
+            
+            fig.update_layout(
+                title=f'Volcano Plot (|logFC| > {result.logfc_cutoff:.3f}, padj < {result.padj_cutoff})',
+                xaxis_title='log2 Fold Change',
+                yaxis_title='-log10(adjusted p-value)',
+                template='plotly_white',
+                height=500
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with tab2:
+            # LogFC histogram
+            fig = go.Figure()
+            
+            fig.add_trace(go.Histogram(
+                x=ato_df['logfc'], nbinsx=100,
+                name='LogFC Distribution', marker_color='steelblue', opacity=0.7
+            ))
+            
+            fig.add_vline(x=result.logfc_cutoff, line_dash="dash", line_color="green",
+                         annotation_text=f"Optimized: {result.logfc_cutoff:.2f}")
+            fig.add_vline(x=-result.logfc_cutoff, line_dash="dash", line_color="green")
+            fig.add_vline(x=1.0, line_dash="dot", line_color="red",
+                         annotation_text="Traditional: 1.0")
+            fig.add_vline(x=-1.0, line_dash="dot", line_color="red")
+            
+            fig.update_layout(
+                title='Log2 Fold Change Distribution',
+                xaxis_title='log2 Fold Change',
+                yaxis_title='Count',
+                template='plotly_white',
+                height=400
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with tab3:
+            # P-value histogram
+            pvals = ato_df['pvalue'].dropna()
+            
+            fig = go.Figure()
+            
+            fig.add_trace(go.Histogram(
+                x=pvals, nbinsx=50,
+                name='P-value Distribution', marker_color='steelblue', opacity=0.7
+            ))
+            
+            fig.add_hline(y=len(pvals) / 50 * result.pi0_estimate, line_dash="dash", line_color="red",
+                         annotation_text=f"π₀ = {result.pi0_estimate:.3f}")
+            
+            fig.update_layout(
+                title='P-value Distribution',
+                xaxis_title='P-value',
+                yaxis_title='Count',
+                template='plotly_white',
+                height=400
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with tab4:
+            # Threshold comparison heatmap
+            comparison = ato.compare_thresholds(
+                logfc_values=[0.25, 0.5, 0.75, 1.0, 1.5, 2.0],
+                padj_values=[0.01, 0.05, 0.1]
+            )
+            
+            pivot = comparison.pivot(index='padj_cutoff', columns='logFC_cutoff', values='n_significant')
+            
+            fig = px.imshow(
+                pivot,
+                labels=dict(x='|logFC| cutoff', y='padj cutoff', color='DE genes'),
+                color_continuous_scale='YlOrRd',
+                aspect='auto'
+            )
+            
+            for i, row in enumerate(pivot.index):
+                for j, col in enumerate(pivot.columns):
+                    fig.add_annotation(
+                        x=j, y=i,
+                        text=str(int(pivot.loc[row, col])),
+                        showarrow=False,
+                        font=dict(color='white' if pivot.loc[row, col] > pivot.values.max()/2 else 'black')
+                    )
+            
+            fig.update_layout(
+                title='Number of DE Genes by Threshold Combination',
+                template='plotly_white',
+                height=400
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            st.dataframe(comparison, use_container_width=True)
+        
+        # Significant genes table
+        st.markdown("---")
+        st.markdown('<p class="sub-header">🧬 Significant Genes</p>', unsafe_allow_html=True)
+        
+        sig_genes = ato.get_significant_genes()
+        
+        st.markdown(f"**{len(sig_genes)} genes** pass optimized thresholds")
+        
+        # Sort options
+        sort_col = st.selectbox(
+            "Sort by",
+            options=['pvalue', 'logfc', 'padj_optimized'],
+            index=0
+        )
+        
+        sig_genes_sorted = sig_genes.sort_values(
+            sort_col, 
+            key=abs if sort_col == 'logfc' else None, 
+            ascending=sort_col != 'logfc'
+        )
+        
+        st.dataframe(
+            sig_genes_sorted[['logfc', 'pvalue', 'padj_optimized']].head(100),
+            use_container_width=True
+        )
+        
+        # Download buttons
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            csv = sig_genes.to_csv()
+            st.download_button(
+                "📥 Download Significant Genes (CSV)",
+                csv,
+                "significant_genes_optimized.csv",
+                "text/csv"
+            )
+        
+        with col2:
+            summary_text = result.summary()
+            st.download_button(
+                "📥 Download Summary Report",
+                summary_text,
+                "threshold_optimization_report.txt",
+                "text/plain"
+            )
+        
+        with col3:
+            full_csv = ato_df.to_csv()
+            st.download_button(
+                "📥 Download Full Results (CSV)",
+                full_csv,
+                "de_results_with_optimized_padj.csv",
+                "text/csv"
+            )
+        
+        # Methods text for publication
+        st.markdown("---")
+        st.markdown('<p class="sub-header">📝 Methods Text for Publication</p>', unsafe_allow_html=True)
+        
+        methods_text = f"""
+**Threshold Optimization**
+
+Significance thresholds for differential expression were determined using the 
+Adaptive Threshold Optimizer (ATO) from RAPTOR v2.1.1 with the '{goal}' goal setting. 
+The analysis estimated π₀ = {result.pi0_estimate:.3f}, indicating that approximately 
+{(1-result.pi0_estimate)*100:.1f}% of tested genes showed true differential expression. 
+Based on the data characteristics, the {result.padj_method} method was selected for 
+p-value adjustment, and a data-driven log2 fold change cutoff of |logFC| > {result.logfc_cutoff:.3f} 
+was determined using the {result.logfc_method} approach. Genes were considered differentially 
+expressed if they met both the logFC and adjusted p-value (< {result.padj_cutoff}) thresholds, 
+yielding {result.n_significant_optimized} DE genes.
+"""
+        
+        st.code(methods_text, language=None)
+        
+        st.download_button(
+            "📥 Download Methods Text",
+            methods_text,
+            "methods_threshold_optimization.txt",
+            "text/plain"
+        )
+
+
 def resource_monitor_page():
     """Resource monitoring interface."""
     st.markdown('<p class="main-header">📊 Resource Monitor</p>', unsafe_allow_html=True)
@@ -505,7 +1013,7 @@ def resource_monitor_page():
 
 def ensemble_page():
     """Ensemble analysis interface."""
-    st.markdown('<p class="main-header">🎯 Ensemble Analysis</p>', unsafe_allow_html=True)
+    st.markdown('<p class="main-header">🔬 Ensemble Analysis</p>', unsafe_allow_html=True)
     
     st.markdown("""
     Combine results from multiple pipelines to create high-confidence gene lists.
@@ -731,6 +1239,20 @@ def settings_page():
     theme = st.selectbox("Color Theme:", ["Light", "Dark", "Auto"])
     auto_refresh = st.checkbox("Auto-refresh monitoring", value=True)
     
+    st.markdown("### Threshold Optimizer Settings (v2.1.1)")
+    
+    default_goal = st.selectbox(
+        "Default Analysis Goal:",
+        ["discovery", "balanced", "validation"],
+        index=0
+    )
+    
+    default_logfc_method = st.selectbox(
+        "Default LogFC Method:",
+        ["auto", "mad", "mixture", "power", "percentile"],
+        index=0
+    )
+    
     if st.button("Save Settings"):
         settings = {
             'model_type': model_type,
@@ -740,7 +1262,9 @@ def settings_page():
             'n_threads': n_threads,
             'memory_gb': memory_gb,
             'theme': theme,
-            'auto_refresh': auto_refresh
+            'auto_refresh': auto_refresh,
+            'ato_default_goal': default_goal,
+            'ato_default_logfc_method': default_logfc_method
         }
         
         # Save to file
@@ -760,27 +1284,45 @@ def main():
     
     page = st.sidebar.radio(
         "Navigation",
-        ["🏠 Home", "🤖 ML Recommender", "📊 Resource Monitor", "🎯 Ensemble Analysis", "📈 Benchmarks", "⚙️ Settings"]
+        [
+            "🏠 Home", 
+            "🤖 ML Recommender", 
+            "🎯 Threshold Optimizer",  # NEW in v2.1.1
+            "📊 Resource Monitor", 
+            "🔬 Ensemble Analysis", 
+            "📈 Benchmarks", 
+            "⚙️ Settings"
+        ]
     )
     
     st.sidebar.markdown("---")
     st.sidebar.markdown("### About")
     st.sidebar.info("""
-    **RAPTOR v2.1.0**
+    **RAPTOR v2.1.1**
     
     RNA-seq Analysis Pipeline Testing & Optimization Resource
     
+    🆕 New: Adaptive Threshold Optimizer
+    
     Created by Ayeh Bolouki
     """)
+    
+    # ATO status indicator
+    if ATO_AVAILABLE:
+        st.sidebar.success("🎯 Threshold Optimizer: Ready")
+    else:
+        st.sidebar.warning("🎯 Threshold Optimizer: Not installed")
     
     # Route to appropriate page
     if page == "🏠 Home":
         home_page()
     elif page == "🤖 ML Recommender":
         ml_recommender_page()
+    elif page == "🎯 Threshold Optimizer":
+        threshold_optimizer_page()
     elif page == "📊 Resource Monitor":
         resource_monitor_page()
-    elif page == "🎯 Ensemble Analysis":
+    elif page == "🔬 Ensemble Analysis":
         ensemble_page()
     elif page == "📈 Benchmarks":
         benchmarks_page()

@@ -4,7 +4,7 @@ RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
 Setup configuration for PyPI distribution
 
 Author: Ayeh Bolouki
-Version: 2.1.0
+Version: 2.1.1
 """
 
 from setuptools import setup, find_packages
@@ -19,11 +19,11 @@ def read_file(filename):
 # Read version from __init__.py
 def get_version():
     """Extract version from raptor/__init__.py"""
-    with open('raptor/__init__.py', 'r',encoding='utf-8') as f:
+    with open('raptor/__init__.py', 'r', encoding='utf-8') as f:
         for line in f:
             if line.startswith('__version__'):
                 return line.split('=')[1].strip().strip('"').strip("'")
-    return '2.1.0'  # Fallback version
+    return '2.1.1'  # Fallback version
 
 # Core dependencies (minimal installation)
 INSTALL_REQUIRES = [
@@ -91,7 +91,7 @@ setup(
     # Basic package information
     name='raptor-rnaseq',
     version=get_version(),
-    description='RNA-seq Analysis Pipeline Testing and Optimization Resource with ML-powered recommendations',
+    description='RNA-seq Analysis Pipeline Testing and Optimization Resource with ML-powered recommendations and adaptive threshold optimization',
     long_description=read_file('README.md'),
     long_description_content_type='text/markdown',
     
@@ -188,6 +188,8 @@ setup(
         'data-quality',
         'dashboard',
         'interactive',
+        'threshold-optimization',
+        'adaptive-threshold',
     ],
     
     # Zip safe

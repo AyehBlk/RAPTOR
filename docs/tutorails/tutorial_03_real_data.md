@@ -1,4 +1,4 @@
-# Tutorial 03: Real Data Analysis with RAPTOR v2.1.0
+# Tutorial 03: Real Data Analysis with RAPTOR v2.1.1
 
 **Level**: Intermediate  
 **Time**: 2-4 hours  
@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 What You'll Learn
+##  What You'll Learn
 
 Real-world analysis techniques:
 - ✅ Prepare and quality-check your own data
@@ -16,6 +16,20 @@ Real-world analysis techniques:
 - ✅ Generate publication-ready results
 - ✅ Troubleshoot common real-data issues
 - ✅ Validate and interpret results confidently
+- ✅ **NEW in v2.1.1**: Apply data-driven threshold optimization
+
+---
+
+## 🆕 What's New in v2.1.1
+
+**Adaptive Threshold Optimizer (ATO)** for publication-ready analysis:
+
+```bash
+# After running your pipeline, optimize thresholds
+raptor optimize-thresholds --results degs_all.csv --goal balanced --output ato_results/
+```
+
+ATO replaces arbitrary |logFC| > 1 with data-driven thresholds and generates **publication methods text** automatically. See [Tutorial 07](tutorial_07_threshold_optimizer.md) for details.
 
 ---
 
@@ -23,7 +37,7 @@ Real-world analysis techniques:
 
 **Required**:
 - Completed [Tutorial 01](tutorial_01_getting_started.md) and [Tutorial 02](tutorial_02_benchmarking.md)
-- RAPTOR v2.1.0 fully installed
+- RAPTOR v2.1.1 fully installed
 - Your own RNA-seq data (count matrix or FASTQ files)
 - Understanding of your experimental design
 
@@ -93,7 +107,7 @@ EOF
 
 ### Step 4: Initial Quality Assessment
 
-**This is NEW in v2.1.0 and CRITICAL for real data!**
+**This is NEW in v2.1.1 and CRITICAL for real data!**
 
 ```bash
 raptor assess-quality --counts raw_data/counts.csv \
@@ -379,7 +393,7 @@ raptor run --pipeline STAR-DESeq2 \
 
 ### Monitor Analysis Progress
 
-**Real-time monitoring (NEW in v2.1.0)**:
+**Real-time monitoring (NEW in v2.1.1)**:
 
 ```bash
 # In another terminal
@@ -532,6 +546,44 @@ wc -l analysis_results/main_analysis/degs_significant.csv
 2. Verify experimental design is correct
 3. Consider ensemble analysis
 4. Review ML assumptions
+
+### Step 5: Optimize Thresholds with ATO (NEW in v2.1.1)
+
+After getting results, optimize your significance thresholds:
+
+```bash
+raptor optimize-thresholds --results analysis_results/main_analysis/degs_all.csv \
+                           --goal balanced \
+                           --output analysis_results/threshold_optimization/
+```
+
+**Why use ATO?**
+- Replace arbitrary |logFC| > 1 with data-driven threshold
+- Generate publication-ready methods text
+- Justify your thresholds to reviewers
+
+**View ATO results**:
+```bash
+cat analysis_results/threshold_optimization/ato_summary.json
+```
+
+```json
+{
+  "optimal_logfc_threshold": 0.847,
+  "pi0_estimate": 0.782,
+  "fdr_threshold": 0.05,
+  "n_significant": 623,
+  "analysis_goal": "balanced",
+  "methods_text": "Differential expression significance..."
+}
+```
+
+**Apply ATO threshold**:
+```bash
+raptor apply-threshold --results analysis_results/main_analysis/degs_all.csv \
+                       --logfc-threshold 0.847 \
+                       --output analysis_results/ato_filtered_degs.csv
+```
 
 ---
 
@@ -754,27 +806,42 @@ Creates Excel file with multiple sheets:
 
 ```bash
 raptor generate-methods --analysis analysis_results/main_analysis/ \
+                        --include-ato \
                         --output methods_section.txt
 ```
 
-**Example output**:
+**Example output** (with ATO):
 ```
 RNA-seq Differential Expression Analysis
 
 Quality control and differential expression analysis were performed using 
-RAPTOR v2.1.0 (Bolouki et al., 2025). Raw count data were quality-filtered 
+RAPTOR v2.1.1 (Bolouki et al., 2025). Raw count data were quality-filtered 
 using thresholds of minimum library size >500,000 reads and gene detection 
 rate >70%. The STAR-DESeq2 pipeline was selected based on machine learning 
 recommendations (confidence: 89%). 
 
 Reads were aligned to the [species] genome ([version]) using STAR v2.7.10b 
 with default parameters. Gene-level counts were quantified using featureCounts 
-v2.0.3. Differential expression analysis was performed using DESeq2 v1.38.0. 
-Genes with adjusted p-value <0.05 (Benjamini-Hochberg correction) and 
-|log2 fold change| ≥1 were considered differentially expressed.
+v2.0.3. Differential expression analysis was performed using DESeq2 v1.38.0.
+
+Significance thresholds were determined using the Adaptive Threshold Optimizer 
+(ATO) from RAPTOR v2.1.1. The proportion of true null hypotheses (π₀) was 
+estimated at 0.782 using the Storey method. Based on the 'balanced' analysis 
+goal, an optimal |log₂FC| threshold of 0.847 was determined. This data-driven 
+threshold, combined with an FDR threshold of 0.050, yielded 623 significant 
+differentially expressed genes.
 
 [Analysis completed with n=X genes detected, n=Y significantly 
 differentially expressed]
+```
+
+### ATO Methods Text (NEW in v2.1.1)
+
+If you used threshold optimization, get the methods text separately:
+
+```bash
+cat analysis_results/threshold_optimization/methods_text.txt
+# Copy directly to your paper's methods section
 ```
 
 ---
@@ -879,7 +946,7 @@ raptor run --pipeline STAR-DESeq2 \
 
 ---
 
-## 💡 Best Practices Summary
+##  Best Practices Summary
 
 ### Before Analysis
 1. ✅ Quality-assess your data
@@ -897,9 +964,10 @@ raptor run --pipeline STAR-DESeq2 \
 ### After Analysis
 1. ✅ Validate key findings
 2. ✅ Check QC metrics
-3. ✅ Compare to expectations
-4. ✅ Perform functional enrichment
-5. ✅ Prepare publication materials
+3. ✅ Optimize thresholds with ATO (v2.1.1)
+4. ✅ Compare to expectations
+5. ✅ Perform functional enrichment
+6. ✅ Prepare publication materials with methods text
 
 ---
 
@@ -920,6 +988,11 @@ raptor run --pipeline STAR-DESeq2 \
 - Handle challenging datasets
 - [→ tutorial_06_ensemble.md](tutorial_06_ensemble.md)
 
+**Tutorial 07: Threshold Optimization** 🎯 (NEW)
+- Master data-driven threshold selection
+- Generate publication methods text
+- [→ tutorial_07_threshold_optimizer.md](tutorial_07_threshold_optimizer.md)
+
 ---
 
 ##  Reference Documentation
@@ -927,6 +1000,7 @@ raptor run --pipeline STAR-DESeq2 \
 - **[PROFILE_RECOMMEND.md](../PROFILE_RECOMMEND.md)**: Data profiling guide
 - **[QUALITY_GUIDE.md](../QUALITY_GUIDE.md)**: Quality assessment details
 - **[ML_GUIDE.md](../ML_GUIDE.md)**: ML recommendations explained
+- **[THRESHOLD_OPTIMIZER.md](../THRESHOLD_OPTIMIZER.md)**: ATO complete guide
 - **[RESOURCE_MONITOR_GUIDE.md](../RESOURCE_MONITOR_GUIDE.md)**: Resource optimization
 - **[TROUBLESHOOTING.md](../TROUBLESHOOTING.md)**: Common issues
 - **[API.md](../API.md)**: Python API reference
@@ -945,11 +1019,14 @@ raptor profile --counts data.csv --recommend
 # Run analysis
 raptor run --pipeline RECOMMENDED --counts data.csv --metadata meta.txt
 
+# Optimize thresholds (NEW in v2.1.1)
+raptor optimize-thresholds --results degs_all.csv --goal balanced
+
 # Monitor progress
 raptor dashboard --monitor results/
 
-# Generate report
-raptor report --analysis results/ --format publication
+# Generate report (with ATO methods)
+raptor report --analysis results/ --format publication --include-ato
 
 # Ensemble analysis
 raptor ensemble --counts data.csv --method weighted
@@ -969,7 +1046,7 @@ raptor export --analysis results/ --format xlsx
 
 ---
 
-## ✅ Tutorial Complete!
+##  Tutorial Complete!
 
 You should now be able to:
 - [ ] Quality-assess real RNA-seq data
@@ -977,7 +1054,8 @@ You should now be able to:
 - [ ] Handle complex experimental designs
 - [ ] Monitor and optimize resource usage
 - [ ] Interpret results confidently
-- [ ] Generate publication-ready outputs
+- [ ] Optimize thresholds with ATO (v2.1.1)
+- [ ] Generate publication-ready outputs with methods text
 - [ ] Troubleshoot common issues
 - [ ] Validate and ensemble results
 
@@ -986,6 +1064,6 @@ You should now be able to:
 ---
 
 **Tutorial 03 - Real Data Analysis**  
-*RAPTOR v2.1.0*  
+*RAPTOR v2.1.1*  
 Created by Ayeh Bolouki  
-Last updated: November 2025
+Last updated: December 2025

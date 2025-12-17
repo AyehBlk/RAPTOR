@@ -1,8 +1,20 @@
-#  RAPTOR v2.1.0 Dashboard Guide
+# 🦖 RAPTOR v2.1.1 Dashboard Guide
 
 **Interactive Web Interface for RNA-seq Analysis**
 
 The RAPTOR Dashboard provides a powerful, no-code interface for RNA-seq pipeline selection and analysis. Perfect for users who prefer visual, interactive workflows!
+
+---
+
+## 🆕 What's New in v2.1.1
+
+###  Threshold Optimizer Page
+A brand new dashboard page for **data-driven threshold selection**:
+- Upload DE results from any pipeline
+- Optimize significance thresholds automatically
+- Interactive volcano plots with optimized cutoffs
+- Download publication-ready methods text
+- Compare multiple adjustment methods
 
 ---
 
@@ -14,12 +26,13 @@ The RAPTOR Dashboard provides a powerful, no-code interface for RNA-seq pipeline
 4. [Data Upload](#data-upload)
 5. [Data Profiling](#data-profiling)
 6. [ML Recommendations](#ml-recommendations)
-7. [Pipeline Comparison](#pipeline-comparison)
-8. [Results Visualization](#results-visualization)
-9. [Advanced Features](#advanced-features)
-10. [Multi-User Setup](#multi-user-setup)
-11. [Customization](#customization)
-12. [Troubleshooting](#troubleshooting)
+7. [🎯 Threshold Optimizer](#threshold-optimizer) - **NEW!**
+8. [Pipeline Comparison](#pipeline-comparison)
+9. [Results Visualization](#results-visualization)
+10. [Advanced Features](#advanced-features)
+11. [Multi-User Setup](#multi-user-setup)
+12. [Customization](#customization)
+13. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -54,7 +67,7 @@ raptor dashboard --results /path/to/raptor_results/
 raptor dashboard --config my_config.yaml
 ```
 
-**That's it!** Your browser will open automatically. 🎉
+**That's it!** Your browser will open automatically. 
 
 ---
 
@@ -65,6 +78,7 @@ raptor dashboard --config my_config.yaml
 ✅ **Data Upload** - Drag & drop count matrices  
 ✅ **Visual Profiling** - Interactive data exploration  
 ✅ **ML Recommendations** - Get pipeline suggestions  
+✅ **🎯 Threshold Optimizer** - Data-driven significance thresholds (**NEW!**)  
 ✅ **Real-Time Analysis** - Monitor running pipelines  
 ✅ **Result Visualization** - Interactive plots and tables  
 ✅ **Report Generation** - Export publication-ready reports  
@@ -99,6 +113,8 @@ raptor dashboard
   Local URL: http://localhost:8501
   Network URL: http://192.168.1.100:8501
 
+  ✅ Threshold Optimizer: Available (v2.1.1)
+
   For help, visit: https://github.com/AyehBlk/RAPTOR
 ```
 
@@ -108,12 +124,13 @@ The dashboard opens with:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│  🦖 RAPTOR Dashboard v2.1.0                     │
+│  🦖 RAPTOR Dashboard v2.1.1                     │
 │  RNA-seq Analysis Pipeline Selection            │
 ├─────────────────────────────────────────────────┤
 │                                                  │
 │  📁 Upload Data                                  │
 │  📊 Profile & Recommend                          │
+│  🎯 Threshold Optimizer  ← NEW!                  │
 │  🔬 Run Analysis                                 │
 │  📈 View Results                                 │
 │  ⚙️  Settings                                    │
@@ -126,6 +143,7 @@ The dashboard opens with:
 Click **"Take Tour"** for an interactive walkthrough:
 - Upload sample data
 - Get recommendations
+- Optimize thresholds (**NEW!**)
 - View results
 - Generate reports
 
@@ -144,26 +162,6 @@ Click **"Take Tour"** for an interactive walkthrough:
 - `metadata.csv` - Sample information
 
 **Or click "Browse Files"** to select manually.
-
-### File Format Validation
-
-The dashboard automatically checks:
-- ✅ Correct format (CSV/TSV)
-- ✅ Genes as rows, samples as columns
-- ✅ No missing values
-- ✅ Metadata matches count matrix
-- ✅ Valid column names
-
-**If issues found:**
-```
-  Validation Issues Found:
-
-1. Missing sample in metadata: Sample_7
-2. Non-integer values detected in counts
-3. 5 genes have all zeros
-
- Fix these issues or click "Ignore" to proceed
-```
 
 ### Supported Formats
 
@@ -188,96 +186,21 @@ Sample3,Treatment,1,Batch2
 - Compressed (GZ) - automatically decompressed
 - RDS files (from R) - with conversion
 
-### Data Preview
-
-After upload, you'll see:
-
-```
-✅ Data Loaded Successfully!
-
- Dataset Overview:
-   • Genes: 20,134
-   • Samples: 12
-   • Conditions: 2 (Control, Treatment)
-   • Total Counts: 245,678,901
-
- Preview (first 5 rows, 3 columns):
-┌──────────────────┬──────────┬──────────┬──────────┐
-│ gene_id          │ Sample1  │ Sample2  │ Sample3  │
-├──────────────────┼──────────┼──────────┼──────────┤
-│ ENSG00000000003  │ 523      │ 612      │ 498      │
-│ ENSG00000000005  │ 89       │ 95       │ 102      │
-│ ENSG00000000419  │ 2341     │ 2567     │ 2234     │
-└──────────────────┴──────────┴──────────┴──────────┘
-
-[Continue to Profiling →]
-```
-
 ---
 
-##  Data Profiling
+## 📊 Data Profiling
 
 Click **"Profile & Recommend"** to analyze your data.
 
 ### Interactive Profiling
 
 **The dashboard shows:**
+- Library Size Distribution
+- Sample Clustering (PCA)
+- Correlation Heatmap
+- Quality Metrics
 
-#### 1. Library Size Distribution
-
-```
-Library Sizes (Million Reads)
-    ↑
-30M │     ▂▄█▆▃
-25M │   ▃█████▆▂
-20M │  ▅████████▄
-15M │ ▇███████████▇
-10M │██████████████
-    └───────────────→ Samples
-    
- Statistics:
-   Mean: 24.5M
-   Median: 25.1M
-   CV: 12.3% ✅ Good variation
-```
-
-#### 2. Sample Clustering (PCA)
-
-```
-Interactive PCA Plot
-(Click to zoom, drag to rotate)
-
-    PC2 (15%)
-    ↑
-    │    ●Control
-    │  ●●●
-    │●●●
-    │      ▲▲▲Treatment
-    │    ▲▲▲
-    └─────────────→ PC1 (68%)
-
- Samples cluster by condition ✅
-```
-
-#### 3. Correlation Heatmap
-
-```
-Sample Correlation
-(Hover for values)
-
-         S1   S2   S3   S4   S5   S6
-    S1 [1.0  0.95 0.93 0.45 0.42 0.48]
-    S2 [0.95 1.0  0.94 0.43 0.44 0.46]
-    S3 [0.93 0.94 1.0  0.41 0.43 0.45]
-    S4 [0.45 0.43 0.41 1.0  0.96 0.94]
-    S5 [0.42 0.44 0.43 0.96 1.0  0.95]
-    S6 [0.48 0.46 0.45 0.94 0.95 1.0 ]
-
-   Within-group: High ✅
-   Between-group: Low ✅
-```
-
-#### 4. Quality Metrics
+### Quality Metrics
 
 ```
 Data Quality Assessment
@@ -292,53 +215,13 @@ Data Quality Assessment
 │ ⚠️  Outlier Samples:     75/100    │
 │ ✅ Batch Effects:        95/100    │
 └────────────────────────────────────┘
-
-⚠️  Warning: Sample_7 is a potential outlier
-   Consider reviewing or excluding
-```
-
-### Detailed Statistics
-
-**Expandable sections:**
-
-```
-▼ Biological Coefficient of Variation (BCV)
-  Value: 0.42
-  Category: Medium ✅
-  
-  What this means:
-  Your data shows moderate biological variation,
-  typical for well-controlled experiments. Most
-  pipelines will perform well.
-  
-  📖 Learn more about BCV
-
-▼ Sequencing Depth
-  Mean: 24.5M reads
-  Category: High ✅
-  
-  What this means:
-  Excellent sequencing depth. You have sufficient
-  coverage for accurate quantification of most genes.
-  
-   View depth distribution
-
-▼ Zero Inflation
-  Percentage: 42%
-  Category: Normal ✅
-  
-  What this means:
-  Typical proportion of zero counts for RNA-seq data.
-  No special handling required.
 ```
 
 ---
 
-##  ML Recommendations
+## 🤖 ML Recommendations
 
 After profiling, the dashboard shows ML-powered recommendations:
-
-### Recommendation Panel
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -350,415 +233,205 @@ After profiling, the dashboard shows ML-powered recommendations:
 │    ML Confidence: 89% 🟢 HIGH                           │
 │    Overall Score: 0.88/1.00                             │
 │                                                          │
-│     Expected Runtime: ~22 minutes                     │
-│     Expected Memory: ~12 GB                           │
-│     Expected Accuracy: F1 = 0.88                      │
-│                                                          │
 │    ✓ Excellent for your data characteristics           │
 │    ✓ Handles medium BCV well (yours: 0.42)             │
 │    ✓ Fast turnaround time                              │
-│    ✓ Low resource requirements                         │
-│    ✓ 85-90% accuracy typical                           │
 │                                                          │
-│    [Why this pipeline? ▼] [Run Analysis →]            │
-│                                                          │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  #2 Alternative: Pipeline 1 (STAR-RSEM-DESeq2)        │
-│                                                          │
-│    ML Confidence: 82% 🟢 HIGH                           │
-│    Overall Score: 0.85/1.00                             │
-│                                                          │
-│     Expected Runtime: ~3.5 hours                      │
-│     Expected Memory: ~45 GB                           │
-│     Expected Accuracy: F1 = 0.92                      │
-│                                                          │
-│    Consider if:                                         │
-│    • You need highest accuracy                         │
-│    • You have sufficient resources                     │
-│    • Time is not critical                              │
-│                                                          │
-│    [Details ▼] [Run Analysis →]                        │
-│                                                          │
-├─────────────────────────────────────────────────────────┤
-│                                                          │
-│  #3 Alternative: Pipeline 4 (Kallisto-Sleuth)         │
-│                                                          │
-│    ML Confidence: 78% 🟡 MEDIUM                         │
-│    Overall Score: 0.82/1.00                             │
-│                                                          │
-│    Fastest option if speed is priority                 │
+│    💡 Next step: Optimize thresholds with ATO          │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
-
-[View All 8 Pipelines →] [Compare Recommendations →]
-```
-
-### Understanding Confidence Scores
-
-Click **"Why this pipeline?"** to see:
-
-```
- ML Model Explanation
-
-Top Features Influencing Recommendation:
-
-1. Sample Size (n=12)           Impact: +12%
-   ├─ Moderate size favors balanced pipelines
-   └─ Salmon-edgeR optimal for 6-20 samples
-
-2. BCV (0.42 - Medium)         Impact: +18%
-   ├─ Not too high, not too low
-   └─ Salmon-edgeR handles this well
-
-3. Sequencing Depth (24.5M)    Impact: +15%
-   ├─ High depth = good accuracy potential
-   └─ Salmon quasi-mapping efficient
-
-4. Library Size CV (12.3%)     Impact: +8%
-   ├─ Low variation = easier normalization
-   └─ All pipelines suitable
-
-5. Zero Inflation (42%)        Impact: +5%
-   ├─ Normal level
-   └─ No special considerations
-
- Model Confidence: 89%
-   (Based on similarity to 1,247 training examples)
-
- Similar successful projects:
-   • Project A: Cancer vs Normal (n=16, BCV=0.38)
-   • Project B: Treatment response (n=10, BCV=0.45)
-   • Project C: Time series (n=12, BCV=0.40)
-```
-
-### What-If Scenarios
-
-Interactive sliders to explore:
-
-```
- Explore Different Scenarios
-
-Sample Size: [■■■■■□□□□□] 12 samples
-├─ Current: Pipeline 3 recommended
-├─ If 6 samples: Pipeline 6 recommended
-└─ If 50 samples: Pipeline 4 recommended
-
-BCV: [■■■■■□□□□□] 0.42 (Medium)
-├─ Current: Pipeline 3 recommended
-├─ If 0.2 (Low): Pipeline 4 recommended  
-└─ If 0.7 (High): Pipeline 1 recommended
-
-Resource Limit: [■■■■■■□□□□] 16 GB
-├─ Current: Multiple options available
-├─ If 8 GB: Pipeline 3 or 4 only
-└─ If 64 GB: All pipelines available
 ```
 
 ---
 
-##  Pipeline Comparison
+## 🎯 Threshold Optimizer
 
-Click **"Compare All Pipelines"** for detailed comparison:
+**NEW in v2.1.1!** The Threshold Optimizer page provides data-driven threshold selection for differential expression analysis.
 
-### Comparison Table
+### Accessing the Threshold Optimizer
 
-```
-Pipeline Comparison (Interactive - Click to sort)
+Click **"🎯 Threshold Optimizer"** in the sidebar navigation.
 
-Pipeline              Score  Confidence  Runtime  Memory  Accuracy
-─────────────────────────────────────────────────────────────────
-3. Salmon-edgeR       0.88   89% 🟢      22m     12 GB   0.88
-1. STAR-RSEM-DESeq2   0.85   82% 🟢      3.5h    45 GB   0.92
-5. STAR-HTSeq-limma   0.83   79% 🟡      3.2h    42 GB   0.89
-4. Kallisto-Sleuth    0.82   78% 🟡      15m     6 GB    0.83
-2. HISAT2-StringTie   0.75   71% 🟡      2.1h    28 GB   0.82
-6. STAR-NOISeq        0.72   68% 🟡      3.0h    38 GB   0.80
-7. Bowtie2-RSEM       0.70   65% 🟡      2.8h    32 GB   0.81
-8. HISAT2-Cufflinks   0.62   58% 🟡      4.2h    35 GB   0.75
-
-[Export Table] [Detailed View] [Custom Weights]
-```
-
-### Visual Comparisons
-
-**Speed vs Accuracy:**
-```
-Interactive Scatter Plot
-(Hover for details, click for info)
-
-Accuracy
-    ↑
-1.0 │       ●1
-0.9 │     ●5 ●3
-0.8 │   ●2   ●4
-0.7 │ ●8
-    └───────────────→ Runtime (log)
-      10m   1h   4h
-
-Click any point for pipeline details
-```
-
-**Resource Efficiency:**
-```
-Memory Usage vs Accuracy
-
-Memory (GB)
-    ↑
-50  │ ●1
-40  │ ●5 ●6
-30  │ ●2 ●7 ●8
-20  │
-10  │ ●3
-5   │ ●4
-    └───────────────→ Accuracy
-    0.7   0.8   0.9   1.0
-```
-
-### Custom Weighting
-
-```
- Adjust Your Priorities
-
-Accuracy:    [■■■■■■□□□□] 60%
-Speed:       [■■■□□□□□□□] 30%
-Memory:      [■■□□□□□□□□] 10%
-
-[Apply Weights] → Recommendations update in real-time!
-```
-
----
-
-##  Results Visualization
-
-After running analysis (or loading previous results):
-
-### Results Dashboard
+### Page Overview
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  ANALYSIS RESULTS                                     │
+│  🎯 Adaptive Threshold Optimizer                        │
+│  Data-Driven Threshold Selection                        │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
-│ Analysis: Salmon-edgeR                                  │
-│ Completed: 2025-11-19 14:30:15                         │
-│ Runtime: 22 minutes 14 seconds                         │
+│  📤 Upload DE Results                                    │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  Drag and drop your DE results file here         │    │
+│  │  (CSV, TSV, or TXT with logFC, pvalue columns)   │    │
+│  └─────────────────────────────────────────────────┘    │
 │                                                          │
-│  1,247 genes differentially expressed                │
-│    • 623 up-regulated                                   │
-│    • 624 down-regulated                                 │
-│                                                          │
-│ [Summary] [Plots] [Table] [Export] [Report]           │
+│  🎲 Or generate demo data: [Generate Demo Data]         │
 │                                                          │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Interactive Plots
+### Step-by-Step Usage
 
-#### Volcano Plot
+#### Step 1: Upload or Generate Data
+
+**Upload your DE results:**
+- Supports DESeq2, edgeR, limma output formats
+- Auto-detects column names (log2FoldChange, logFC, pvalue, etc.)
+- Preview data before analysis
+
+**Or use demo data:**
 ```
-Interactive Volcano Plot
-(Zoom, pan, hover for gene names)
+🎲 Generate Demo Data
 
--log10(FDR)
-    ↑
-8   │     ●
-6   │   ●●●●●
-4   │  ●●●●●●●
-2   │●●●●●●●●●●
-    └───────────────→ log2(Fold Change)
-   -4  -2   0   2   4
+Number of genes: [10000    ▼]
 
-🔴 Up-regulated (623)
-🔵 Down-regulated (624)
-⚫ Not significant
+[Generate Demo Data]
 
-[Download Plot] [Customize] [Gene Labels]
-```
-
-#### MA Plot
-```
-MA Plot
-(Click genes for details)
-
-log2(FC)
-    ↑
-4   │  ●●●
-2   │●●●●●●
-0   │━━━━━━━
--2  │●●●●●●
--4  │  ●●●
-    └───────────────→ log10(Mean Expression)
-    0   2   4   6
-
-[Download] [Export Gene List]
+✅ Generated 10,000 genes with:
+   • 800 true DE genes (8%)
+   • π₀ ≈ 0.92
+   • Mixed effect sizes
 ```
 
-#### Heatmap
-```
-Top 50 Differentially Expressed Genes
-
-              Control           Treatment
-           S1  S2  S3  S4   S5  S6  S7  S8
-Gene1    [██ ██ ██ ██] [░░ ░░ ░░ ░░] -3.2
-Gene2    [██ ██ ██ ██] [░░ ░░ ░░ ░░] -2.8
-...
-Gene49   [░░ ░░ ░░ ░░] [██ ██ ██ ██] +2.9
-Gene50   [░░ ░░ ░░ ░░] [██ ██ ██ ██] +3.1
-
-[Customize] [Cluster] [Download]
-```
-
-### Interactive Data Table
+#### Step 2: Configure Analysis
 
 ```
-Differential Expression Results
-(Search, filter, sort - all interactive)
+⚙️ Analysis Settings
 
-Search: [_______________] 
+Analysis Goal:
+◉ Discovery (maximize sensitivity)
+○ Balanced (standard analysis)  
+○ Validation (maximize specificity)
 
-Gene ID          log2FC  FDR        Mean Expr  Status
-──────────────────────────────────────────────────────
-ENSG00000111640  3.45    1.2e-08    1250       ● Up
-ENSG00000087086  3.21    2.3e-07    980        ● Up
-ENSG00000148584  -3.12   1.5e-07    1450       ● Down
-ENSG00000183878  -2.98   3.2e-06    820        ● Down
-...
+LogFC Method:
+[Auto (Consensus) ▼]
+• Auto (Consensus) - Recommended
+• MAD-based
+• Mixture Model
+• Power-based
+• Percentile
 
-Showing 1-20 of 1,247 results
+Column Mapping:
+LogFC Column:  [log2FoldChange ▼]
+P-value Column: [pvalue ▼]
+```
 
-[Export CSV] [Export Excel] [Copy to Clipboard]
+#### Step 3: Run Optimization
+
+```
+[🚀 Optimize Thresholds]
+
+⏳ Running optimization...
+   ├─ Estimating π₀... ✓
+   ├─ Calculating logFC threshold... ✓
+   ├─ Applying p-value adjustment... ✓
+   └─ Generating visualizations... ✓
+
+✅ Optimization Complete!
+```
+
+#### Step 4: View Results
+
+```
+📊 Optimization Results
+
+┌─────────────────────────────────────────────────────────┐
+│                    SUMMARY                               │
+├─────────────────────────────────────────────────────────┤
+│  📈 Optimal logFC Threshold:     0.73                   │
+│  📉 P-value Threshold:           0.05 (BH adjusted)     │
+│  🧬 Significant Genes:           1,247                  │
+│  📊 π₀ Estimate:                 0.82                   │
+│  🎯 Goal:                        Discovery              │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Interactive Visualizations
+
+#### Volcano Plot with Optimized Thresholds
+
+Interactive volcano plot showing:
+- Significant genes (up/down) highlighted
+- Optimized threshold lines
+- Hover for gene details
+- Zoom and pan controls
+
+#### P-value Distribution
+
+Histogram showing p-value distribution with π₀ estimation line.
+
+#### LogFC Distribution
+
+Distribution plot with optimized threshold marked.
+
+### Download Options
+
+```
+📥 Downloads
+
+┌─────────────────────────────────────────────────────────┐
+│  [📊 Download Optimized Results (CSV)]                  │
+│      • Full results with significance flags             │
+│                                                          │
+│  [📝 Download Methods Text]                              │
+│      • Publication-ready paragraph                       │
+│                                                          │
+│  [📋 Download Full Report (HTML)]                        │
+│      • Complete analysis report                          │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Methods Text Preview
+
+```
+📝 Publication Methods Text
+
+"Differential expression significance thresholds were 
+determined using the Adaptive Threshold Optimizer (ATO) 
+with the 'discovery' analysis goal. The proportion of 
+true null hypotheses (π₀) was estimated at 0.82 using 
+Storey's spline method. An adjusted p-value threshold 
+of 0.05 (Benjamini-Hochberg FDR correction) and log₂ 
+fold change threshold of 0.73 (determined by MAD-based 
+robust estimation from the data) were applied, 
+identifying 1,247 differentially expressed genes 
+(623 upregulated, 624 downregulated)."
+
+[Copy to Clipboard] [Download as TXT]
 ```
 
 ---
 
-##  Advanced Features
+## 📈 Advanced Features
 
-### 1. Multi-Dataset Comparison
+### 1. Ensemble Analysis
 
-```
-Compare Multiple Experiments
+Combine results from multiple pipelines for robust consensus.
 
-┌─────────────────────────────────────┐
-│ Loaded Datasets:                    │
-├─────────────────────────────────────┤
-│ ✓ Experiment_A (12 samples)         │
-│ ✓ Experiment_B (24 samples)         │
-│ ✓ Experiment_C (18 samples)         │
-├─────────────────────────────────────┤
-│ [Add Dataset] [Compare] [Meta-Analy]│
-└─────────────────────────────────────┘
-
-Venn Diagram: Overlapping DE Genes
-      
-       ┌─────────┐
-       │   A     │ 234
-    ┌──┼─────┬───┼──┐
-    │  │ 123 │89 │  │
-    │B └─────┴───┘ C│
-    │   167    145  │
-    └───────────────┘
-
-[Detailed Overlap] [Export Lists]
-```
-
-### 2. Real-Time Resource Monitoring
-
-```
- Live Resource Monitor
-
-CPU Usage:  [████████░░] 82%
-Memory:     [██████░░░░] 58% (7.2 / 12 GB)
-Disk I/O:   [███░░░░░░░] 34 MB/s
-
-Time Elapsed: 00:15:23
-Est. Remaining: 00:06:37
-
-Current Step: Differential Expression Testing
-Progress: [██████████░░░░] 73%
-
-[Detailed View] [History] [Alerts]
-```
-
-### 3. Ensemble Analysis
-
-```
- Ensemble Analysis Mode
-
-Run multiple pipelines and combine results:
-
-Selected Pipelines:
-☑ Pipeline 1: STAR-RSEM-DESeq2
-☑ Pipeline 3: Salmon-edgeR
-☑ Pipeline 4: Kallisto-Sleuth
-
-Ensemble Method:
-◉ Weighted Average (by accuracy)
-○ Majority Vote
-○ Conservative (intersection)
-○ Liberal (union)
-
-[Run Ensemble Analysis →]
-
-Results will show:
-• Consensus DE genes
-• Pipeline agreement scores
-• Confidence per gene
-• Robust findings
-```
-
-### 4. Parameter Optimization
+### 2. Automated Parameter Tuning
 
 ```
  Automated Parameter Tuning
 
-Optimize parameters for your data:
+💡 Tip: Use Threshold Optimizer for data-driven thresholds!
 
 Pipeline: [Salmon-edgeR ▼]
-
-Parameters to Optimize:
-☑ FDR Threshold [0.01 - 0.10]
-☑ Log2FC Threshold [0.5 - 2.0]
-☑ Min Count Filter [1 - 10]
-
-Optimization Method:
-◉ Grid Search (thorough)
-○ Bayesian Optimization (fast)
+Optimization Method: ◉ Grid Search ○ Bayesian
 
 [Start Optimization →]
-
-Est. Time: ~2 hours
 ```
 
-### 5. Cloud Deployment
+### 3. Cloud Deployment
 
-```
-☁️ Deploy to Cloud
-
-Platform: [AWS ▼]
-Region: [us-east-1 ▼]
-
-Instance Type: [r5.4xlarge ▼]
-├─ CPU: 16 cores
-├─ Memory: 128 GB
-└─ Cost: ~$1.20/hour
-
-☑ Use Spot Instances (70% savings)
-☑ Auto-shutdown when complete
-☑ Email notification
-
-Estimated Cost: $8-12 for this analysis
-
-[Configure] [Deploy →]
-```
+Deploy to AWS, GCP, or Azure for large-scale analyses.
 
 ---
 
-##  Multi-User Setup
+## 👥 Multi-User Setup
 
 ### Team Deployment
 
-**1. Server Setup:**
 ```bash
 # Deploy on server
 raptor dashboard \
@@ -766,122 +439,36 @@ raptor dashboard \
   --port 8501 \
   --auth-required \
   --multi-user
-
-# Configure authentication
-raptor dashboard config \
-  --add-user john@lab.edu --role admin \
-  --add-user mary@lab.edu --role analyst \
-  --add-user guest@lab.edu --role viewer
 ```
 
-**2. User Roles:**
+### User Roles
 
-| Role | Upload Data | Run Analysis | View Results | Admin |
-|------|-------------|--------------|--------------|-------|
+| Role | Upload Data | Run Analysis | Threshold Optimizer | Admin |
+|------|-------------|--------------|---------------------|-------|
 | Admin | ✅ | ✅ | ✅ | ✅ |
 | Analyst | ✅ | ✅ | ✅ | ❌ |
-| Viewer | ❌ | ❌ | ✅ | ❌ |
-
-**3. Collaboration Features:**
-
-```
-Share Analysis
-
-Analysis: experiment_2025_11_19
-
-Share with:
-☑ john@lab.edu (Can edit)
-☑ mary@lab.edu (Can view)
-
-Generate shareable link:
-https://raptor.lab.edu/share/abc123xyz
-
-[Copy Link] [Send Email]
-```
+| Viewer | ❌ | ❌ | ✅ (view only) | ❌ |
 
 ---
 
-##  Customization
+## 🎨 Customization
 
 ### Themes
 
-```
- Dashboard Settings
-
-Appearance:
-◉ Light Mode 
-○ Dark Mode
-○ Auto (system preference)
-
-Color Scheme:
-[Scientific Blue ▼]
-• Scientific Blue (default)
-• Forest Green
-• Sunset Orange
-• Monochrome
-• Custom...
-
-[Apply] [Reset to Default]
-```
+Light/Dark mode and custom color schemes available in Settings.
 
 ### Custom Plots
 
-```
-➕ Add Custom Visualization
-
-Plot Type: [Scatter Plot ▼]
-
-X-axis: [Mean Expression ▼]
-Y-axis: [Log2 Fold Change ▼]
-Color by: [FDR Category ▼]
-Size by: [Base Mean ▼]
-
-Filters:
-FDR < [0.05]
-|log2FC| > [1.0]
-
-[Preview] [Add to Dashboard]
-```
-
-### Export Templates
-
-```
-📄 Report Templates
-
-Built-in Templates:
-• Standard Report (PDF/HTML)
-• Publication Supplement
-• Lab Notebook Format
-• Custom Template...
-
-Custom Template Editor:
-[Load Template] [Edit] [Preview] [Save]
-
-Include:
-☑ Methods section
-☑ All plots
-☑ Summary statistics
-☑ Gene lists
-☑ QC metrics
-☐ Raw data tables
-
-[Generate Report →]
-```
+Add custom visualizations with filters and settings.
 
 ---
 
-##  Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
 #### Issue: Dashboard won't start
 
-**Error:**
-```
-OSError: [Errno 98] Address already in use
-```
-
-**Solution:**
 ```bash
 # Use different port
 raptor dashboard --port 8502
@@ -891,50 +478,31 @@ lsof -ti:8501 | xargs kill -9
 raptor dashboard
 ```
 
+#### Issue: Threshold Optimizer not available
+
+```bash
+# Reinstall/update RAPTOR
+pip install --upgrade raptor-rnaseq
+
+# Verify installation
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
+```
+
 #### Issue: Upload fails
 
-**Error:**
-```
-File validation failed: Invalid format
-```
-
-**Solution:**
 - Check file is CSV/TSV
 - Ensure UTF-8 encoding
 - No special characters in column names
 - Save as CSV from Excel before uploading
 
-#### Issue: Plots not showing
-
-**Error:**
-```
-Plot rendering failed
-```
-
-**Solution:**
-```bash
-# Clear browser cache
-# Or try different browser
-
-# Update dashboard
-pip install --upgrade raptor-rnaseq
-
-# Reinstall plotly
-pip install --upgrade plotly
-```
-
 #### Issue: Slow performance
 
-**Solution:**
 ```bash
 # Limit data displayed
 raptor dashboard --max-samples 50
 
 # Use summary mode
 raptor dashboard --lightweight
-
-# Increase memory
-raptor dashboard --server.maxMemory 4000
 ```
 
 ### Debug Mode
@@ -945,100 +513,66 @@ raptor dashboard --debug
 
 # Check logs
 tail -f ~/.raptor/dashboard.log
-
-# Get system info
-raptor dashboard --sysinfo
 ```
 
 ---
 
-##  Advanced Usage
-
-### API Integration
-
-Access dashboard programmatically:
+## 🔌 API Integration
 
 ```python
 from raptor.dashboard import DashboardAPI
+from raptor.threshold_optimizer import optimize_thresholds
 
 # Start dashboard
 api = DashboardAPI()
 api.start(port=8501)
 
-# Upload data programmatically
-api.upload_data(
-    counts='data/counts.csv',
-    metadata='data/metadata.csv'
-)
-
-# Get recommendations
-recommendations = api.get_recommendations()
-
-# Run analysis
-results = api.run_pipeline(pipeline_id=3)
+# Run threshold optimization programmatically
+import pandas as pd
+de_results = pd.read_csv('de_results.csv')
+result = optimize_thresholds(de_results, goal='discovery')
+print(f"Optimal thresholds: |logFC| > {result.logfc_threshold:.2f}")
 
 # Stop dashboard
 api.stop()
 ```
 
-### Custom Extensions
-
-```python
-# Add custom visualization
-from raptor.dashboard import add_custom_plot
-
-@add_custom_plot
-def my_custom_plot(data):
-    import plotly.graph_objects as go
-    
-    fig = go.Figure(data=go.Scatter(
-        x=data['x'],
-        y=data['y'],
-        mode='markers'
-    ))
-    
-    return fig
-
-# Appears in dashboard automatically!
-```
-
 ---
 
-##  Best Practices
+## 📚 Best Practices
 
 ### For Lab Managers
 
-1. **Set up team dashboard** on shared server
-2. **Configure user roles** appropriately
-3. **Regular backups** of analyses
-4. **Document standard workflows**
-5. **Train users** on dashboard features
+1. Set up team dashboard on shared server
+2. Configure user roles appropriately
+3. Document standard workflows
+4. Train users on Threshold Optimizer
 
 ### For Analysts
 
-1. **Always validate uploaded data**
-2. **Review QC plots** before proceeding
-3. **Understand ML confidence** scores
-4. **Compare multiple pipelines** when uncertain
-5. **Export and save** analyses regularly
+1. Always validate uploaded data
+2. Review QC plots before proceeding
+3. **Use Threshold Optimizer** for data-driven thresholds
+4. Compare multiple pipelines when uncertain
+5. Export and save analyses regularly
 
-### For Collaborators
+### For Publications
 
-1. **Share analyses** via links, not files
-2. **Use comments** to document decisions
-3. **Export reports** for publications
-4. **Keep analysis history**
+1. Use Threshold Optimizer for defensible thresholds
+2. Include the auto-generated methods text
+3. Export high-resolution figures
+4. Document all analysis parameters
 
 ---
 
-##  Learning Resources
+## 📖 Learning Resources
 
-### Video Tutorials
+### Documentation
 
-Coming soon:
-- Getting Started (5 min)
-- Advanced Features (15 min)
-- Team Setup (10 min)
+- [User Guide](USER_GUIDE.md)
+- [Threshold Optimizer Guide](THRESHOLD_OPTIMIZER.md) - **NEW!**
+- [API Reference](API.md)
+- [FAQ](FAQ.md)
 
 ### Interactive Demo
 
@@ -1047,15 +581,9 @@ Coming soon:
 raptor dashboard --demo
 ```
 
-### Documentation
-
-- [User Guide](USER_GUIDE.md)
-- [API Reference](API.md)
-- [FAQ](FAQ.md)
-
 ---
 
-##  Support
+## 🆘 Support
 
 **Dashboard not working?**
 
@@ -1066,12 +594,13 @@ raptor dashboard --demo
 
 ---
 
-##  Summary
+## 📋 Summary
 
 The RAPTOR Dashboard provides:
 - ✅ **No-code interface** for RNA-seq analysis
 - ✅ **Interactive visualizations** for data exploration
 - ✅ **ML-powered recommendations** with explanations
+- ✅ **🎯 Threshold Optimizer** for data-driven thresholds (**NEW!**)
 - ✅ **Real-time monitoring** of analyses
 - ✅ **Team collaboration** features
 - ✅ **Export capabilities** for publications
@@ -1082,9 +611,9 @@ The RAPTOR Dashboard provides:
 ---
 
 **Author:** Ayeh Bolouki  
-**Version:** 2.1.0  
+**Version:** 2.1.1  
 **License:** MIT
 
 ---
 
-*"Making RNA-seq accessible to everyone, one click at a time!"* 
+*"Making RNA-seq accessible to everyone, one click at a time!"* 🦖

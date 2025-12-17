@@ -1,5 +1,5 @@
 # ============================================================================
-# RAPTOR v2.1.0 - AWS CLOUD DEPLOYMENT CONFIGURATION
+# RAPTOR v2.1.1 - AWS CLOUD DEPLOYMENT CONFIGURATION
 # ============================================================================
 # 
 # This configuration is optimized for running RAPTOR on AWS cloud infrastructure.
@@ -11,6 +11,7 @@
 # - EC2 spot instances for cost savings
 # - Auto-scaling based on workload
 # - CloudWatch monitoring
+# - NEW: Adaptive Threshold Optimizer support
 #
 # Prerequisites:
 # - AWS account with appropriate permissions
@@ -25,7 +26,7 @@
 # GENERAL SETTINGS
 # ============================================================================
 general:
-  version: "2.1.0"
+  version: "2.1.1"
   verbose: true
   log_level: "INFO"
   output_dir: "s3://your-raptor-bucket/outputs"  # S3 path
@@ -229,23 +230,6 @@ cloud:
         adjustment: -16  # Remove 16 vCPUs
     
     # ========================================================================
-    # NETWORKING
-    # ========================================================================
-    networking:
-      # VPC configuration
-      vpc_id: null
-      subnets: []  # List of subnet IDs
-      
-      # Internet access
-      assign_public_ip: true
-      
-      # Bandwidth optimization
-      enhanced_networking: true
-      
-      # Data transfer
-      use_vpc_endpoint: true  # For S3 access without internet
-    
-    # ========================================================================
     # COST OPTIMIZATION
     # ========================================================================
     cost_optimization:
@@ -259,81 +243,99 @@ cloud:
           - "c5n.4xlarge"
           - "m5.4xlarge"
       
-      # Reserved instances
-      use_reserved_instances: false
-      
-      # Savings plans
-      use_savings_plans: false
-      
       # Budget alerts
       budget:
         enabled: true
         monthly_limit: 500  # USD
         alert_threshold: 80  # Alert at 80% of budget
 
-# ============================================================================
-# DATA PROFILING
-# ============================================================================
-profiling:
-  bcv_thresholds:
-    very_low: 0.2
-    low: 0.4
-    moderate: 0.6
-    high: 0.8
-  
-  depth_categories:
-    low: 10
-    moderate: 30
-    high: 50
-  
-  sample_size:
-    small: 6
-    medium: 12
-    large: 20
-  
-  # Cloud-optimized settings
-  min_counts_per_gene: 10
-  min_samples_per_gene: 3
-  filter_low_counts: true
-  
-  # Save to S3
-  generate_plots: true
-  save_profile: true
-  profile_format: "json"
+  # ========================================================================
+  # CONTAINER CONFIGURATION
+  # ========================================================================
+  container:
+    enabled: true
+    
+    # Docker image - UPDATED FOR v2.1.1
+    image: "ayehblk/raptor:2.1.1"
+    registry: "docker.io"
+    
+    # ECR (Elastic Container Registry) alternative
+    use_ecr: false
+    ecr_repository: "your-account.dkr.ecr.us-east-1.amazonaws.com/raptor"
+    
+    # Container resources
+    vcpus: 16
+    memory: 32768
+    
+    # Environment variables
+    environment:
+      RAPTOR_ENV: "production"
+      AWS_DEFAULT_REGION: "us-east-1"
+      RAPTOR_LOG_LEVEL: "INFO"
+    
+    pull_policy: "IfNotPresent"
+
+  # ========================================================================
+  # PARALLEL PROCESSING
+  # ========================================================================
+  parallel:
+    enabled: true
+    max_workers: 20  # AWS Batch will handle this
+    chunk_size: 1000
+    strategy: "data_parallel"
+
+  # ========================================================================
+  # DATA TRANSFER OPTIMIZATION
+  # ========================================================================
+  data_transfer:
+    method: "s3"
+    compression: true
+    compression_format: "gzip"
+    encryption: true
+    prefetch: true
+    prefetch_size_gb: 10
+    incremental_upload: true
+    upload_interval: 300  # 5 minutes
 
 # ============================================================================
-# ML RECOMMENDATION - CLOUD OPTIMIZED
+# ML RECOMMENDATION - CLOUD
 # ============================================================================
 ml_recommendation:
   enabled: true
   model_type: "random_forest"
-  
-  # Load model from S3
   model_path: "s3://your-raptor-bucket/models/raptor_rf_model.pkl"
-  scaler_path: "s3://your-raptor-bucket/models/raptor_scaler.pkl"
   
   prediction:
     confidence_threshold: 0.7
     top_n_recommendations: 3
-    explain_predictions: true
-  
-  # Save predictions to S3
-  performance:
-    track_metrics: true
-    save_metrics: true
-    metrics_file: "s3://your-raptor-bucket/metrics/ml_performance.json"
 
 # ============================================================================
-# QUALITY ASSESSMENT
+# ADAPTIVE THRESHOLD OPTIMIZER - CLOUD (NEW in v2.1.1)
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  goal: "discovery"
+  
+  default_logfc_method: "auto"
+  
+  # Cloud-optimized settings
+  visualization:
+    volcano_plot: true
+    optimization_summary: true
+    plot_format: "png"
+    dpi: 150  # Lower DPI for faster S3 upload
+  
+  output:
+    save_optimized_results: true
+    save_significant_genes: true
+    generate_methods_text: true
+    export_formats: ["csv"]  # Lighter formats for cloud
+
+# ============================================================================
+# QUALITY ASSESSMENT - CLOUD
 # ============================================================================
 quality_assessment:
   enabled: true
-  
-  metrics:
-    - "library_size"
-    - "detected_genes"
-    - "mitochondrial_content"
-    - "mapping_rate"
   
   thresholds:
     min_library_size: 1e6
@@ -342,10 +344,9 @@ quality_assessment:
     min_mapping_rate: 70
   
   generate_qc_report: true
-  qc_report_format: "html"
 
 # ============================================================================
-# RESOURCE MONITORING - CLOUDWATCH INTEGRATION
+# RESOURCE MONITORING - CLOUDWATCH
 # ============================================================================
 resource_monitoring:
   enabled: true
@@ -364,7 +365,6 @@ resource_monitoring:
     memory_threshold: 85
     alert_method: "cloudwatch"
   
-  # Log to CloudWatch
   save_metrics: true
   metrics_file: "cloudwatch"  # Special value for CloudWatch Logs
 
@@ -386,72 +386,6 @@ ensemble:
   generate_ensemble_report: true
 
 # ============================================================================
-# CONTAINER CONFIGURATION
-# ============================================================================
-cloud:
-  container:
-    enabled: true
-    
-    # Docker image
-    image: "ayehblk/raptor:2.1.0"
-    registry: "docker.io"
-    
-    # ECR (Elastic Container Registry) alternative
-    use_ecr: false
-    ecr_repository: "your-account.dkr.ecr.us-east-1.amazonaws.com/raptor"
-    
-    # Container resources
-    vcpus: 16
-    memory: 32768
-    
-    # Environment variables
-    environment:
-      RAPTOR_ENV: "production"
-      AWS_DEFAULT_REGION: "us-east-1"
-      RAPTOR_LOG_LEVEL: "INFO"
-    
-    # Volumes (for EFS if needed)
-    volumes: []
-    
-    pull_policy: "IfNotPresent"
-
-# ============================================================================
-# PARALLEL PROCESSING
-# ============================================================================
-cloud:
-  parallel:
-    enabled: true
-    max_workers: 20  # AWS Batch will handle this
-    chunk_size: 1000
-    strategy: "data_parallel"
-    
-    # Distributed computing
-    use_dask: false  # Optional: Dask for distributed computing
-    dask_scheduler: null
-
-# ============================================================================
-# DATA TRANSFER OPTIMIZATION
-# ============================================================================
-cloud:
-  data_transfer:
-    method: "s3"
-    
-    # Compression to reduce transfer costs
-    compression: true
-    compression_format: "gzip"
-    
-    # Encryption in transit
-    encryption: true
-    
-    # Prefetch data to local disk
-    prefetch: true
-    prefetch_size_gb: 10
-    
-    # Upload results incrementally
-    incremental_upload: true
-    upload_interval: 300  # 5 minutes
-
-# ============================================================================
 # BENCHMARKING - CLOUD SCALE
 # ============================================================================
 benchmarking:
@@ -463,6 +397,15 @@ benchmarking:
   
   save_benchmarks: true
   benchmark_dir: "s3://your-raptor-bucket/benchmark-results"
+
+# ============================================================================
+# STATISTICAL ANALYSIS
+# ============================================================================
+statistics:
+  fdr_threshold: 0.05
+  log_fold_change_threshold: 1.0
+  adjustment_method: "BH"
+  use_adaptive_thresholds: true  # Use ATO for data-driven thresholds
 
 # ============================================================================
 # OUTPUT SETTINGS - S3 OPTIMIZED
@@ -496,6 +439,7 @@ automated_reporting:
     - "data_profiling"
     - "quality_assessment"
     - "pipeline_recommendation"
+    - "threshold_optimization"  # NEW in v2.1.1
     - "differential_expression"
     - "resource_usage"
     - "cloud_metrics"
@@ -526,29 +470,6 @@ notifications:
     channel: "#bioinformatics"
 
 # ============================================================================
-# SECURITY & COMPLIANCE
-# ============================================================================
-security:
-  # Encryption
-  encrypt_at_rest: true
-  encrypt_in_transit: true
-  
-  # IAM
-  use_iam_roles: true
-  least_privilege: true
-  
-  # Audit logging
-  enable_cloudtrail: true
-  
-  # Data privacy
-  phi_mode: false  # Set true for HIPAA compliance
-  
-  # Network security
-  restrict_outbound: false
-  allowed_egress:
-    - "0.0.0.0/0"  # Change for production
-
-# ============================================================================
 # COST TRACKING
 # ============================================================================
 cost_tracking:
@@ -559,18 +480,14 @@ cost_tracking:
     Project: "RAPTOR"
     Environment: "Production"
     CostCenter: "Bioinformatics"
-    PI: "Dr. Smith"
+    Version: "2.1.1"
   
   # Cost reporting
   generate_cost_report: true
-  report_interval: "daily"  # daily, weekly, monthly
-  
-  # Budget alerts
-  alert_on_cost_overrun: true
-  cost_threshold: 50  # USD per day
+  report_interval: "daily"
 
 # ============================================================================
-# DEPLOYMENT NOTES
+# DEPLOYMENT NOTES - UPDATED FOR v2.1.1
 # ============================================================================
 # 
 # SETUP INSTRUCTIONS:
@@ -589,21 +506,16 @@ cost_tracking:
 #    - Min vCPUs: 0, Max vCPUs: 256
 #    - Enable spot instances
 # 
-# 4. Create job queue:
-#    aws batch create-job-queue \
-#      --job-queue-name raptor-job-queue \
-#      --compute-environment-order order=1,computeEnvironment=raptor-compute-env
+# 4. Build and push Docker image (v2.1.1):
+#    docker build -t raptor:2.1.1 .
+#    docker tag raptor:2.1.1 ayehblk/raptor:2.1.1
+#    docker push ayehblk/raptor:2.1.1
 # 
-# 5. Build and push Docker image:
-#    docker build -t raptor:2.1.0 .
-#    docker tag raptor:2.1.0 ayehblk/raptor:2.1.0
-#    docker push ayehblk/raptor:2.1.0
-# 
-# 6. Upload models and data to S3:
+# 5. Upload models and data to S3:
 #    aws s3 sync ./models s3://your-raptor-bucket/models
 #    aws s3 sync ./data s3://your-raptor-bucket/input-data
 # 
-# 7. Run RAPTOR job:
+# 6. Run RAPTOR job:
 #    raptor profile \
 #      --counts s3://your-raptor-bucket/input-data/counts.csv \
 #      --config config_cloud_aws.yaml \
@@ -612,13 +524,6 @@ cost_tracking:
 # COST ESTIMATION:
 # - c5.4xlarge spot: ~$0.20-0.40/hour
 # - S3 storage: ~$0.023/GB/month
-# - Data transfer: $0.09/GB out
 # - Typical RNA-seq analysis: $2-10 per sample
-# 
-# TROUBLESHOOTING:
-# - Check CloudWatch Logs: /aws/batch/raptor
-# - Monitor Batch jobs: AWS Batch Console
-# - S3 access issues: Check IAM role permissions
-# - Spot instance interruptions: Enable retry strategy
 # 
 # ============================================================================

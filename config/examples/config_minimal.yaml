@@ -1,5 +1,5 @@
 # ============================================================================
-# RAPTOR v2.1.0 - MINIMAL CONFIGURATION
+# RAPTOR v2.1.1 - MINIMAL CONFIGURATION
 # ============================================================================
 # 
 # This is a minimal configuration for basic RAPTOR usage.
@@ -12,7 +12,7 @@
 # GENERAL SETTINGS
 # ============================================================================
 general:
-  version: "2.1.0"
+  version: "2.1.1"
   verbose: true
   log_level: "INFO"
   output_dir: "./raptor_output"
@@ -69,6 +69,27 @@ ml_recommendation:
     top_n_recommendations: 3
 
 # ============================================================================
+# ADAPTIVE THRESHOLD OPTIMIZER - BASIC (NEW in v2.1.1)
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  goal: "discovery"  # discovery, balanced, validation
+  
+  # Use auto method for logFC (consensus of all methods)
+  default_logfc_method: "auto"
+  
+  # Basic visualization
+  visualization:
+    volcano_plot: true
+    optimization_summary: true
+    plot_format: "png"
+  
+  # Output
+  output:
+    save_significant_genes: true
+    generate_methods_text: true
+
+# ============================================================================
 # QUALITY ASSESSMENT - BASIC
 # ============================================================================
 quality_assessment:
@@ -98,6 +119,9 @@ statistics:
   fdr_threshold: 0.05
   log_fold_change_threshold: 1.0
   adjustment_method: "BH"
+  
+  # Let ATO determine optimal thresholds (recommended)
+  use_adaptive_thresholds: true
 
 # ============================================================================
 # PIPELINE SETTINGS
@@ -129,6 +153,7 @@ automated_reporting:
     - "executive_summary"
     - "data_profiling"
     - "pipeline_recommendation"
+    - "threshold_optimization"  # NEW in v2.1.1
     - "differential_expression"
   
   interpretation:

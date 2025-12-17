@@ -1,5 +1,5 @@
 # ============================================================================
-# RAPTOR v2.1.0 - ADVANCED ML CONFIGURATION
+# RAPTOR v2.1.1 - ADVANCED ML CONFIGURATION
 # ============================================================================
 # 
 # This configuration is optimized for machine learning enthusiasts and 
@@ -18,7 +18,7 @@
 # GENERAL SETTINGS
 # ============================================================================
 general:
-  version: "2.1.0"
+  version: "2.1.1"
   verbose: true
   log_level: "DEBUG"  # Detailed logging for ML experiments
   output_dir: "./ml_experiments"
@@ -355,6 +355,64 @@ ml_recommendation:
       - "runtime"
 
 # ============================================================================
+# ADAPTIVE THRESHOLD OPTIMIZER - ADVANCED (NEW in v2.1.1)
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  goal: "balanced"
+  
+  # Enable all methods for comprehensive analysis
+  padj_methods:
+    benjamini_hochberg: true
+    benjamini_yekutieli: true
+    storey_qvalue: true
+    holm: true
+    hochberg: true
+    bonferroni: true
+  
+  logfc_methods:
+    auto: true
+    mad: true
+    mixture: true
+    power: true
+    percentile: true
+  
+  default_logfc_method: "auto"
+  
+  # Advanced π₀ estimation
+  pi0_estimation:
+    enabled: true
+    methods:
+      - "storey"
+      - "pounds"
+      - "histogram"
+    default_method: "storey"
+  
+  # Comprehensive comparison
+  comparison:
+    enabled: true
+    logfc_values: [0.1, 0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 2.5]
+    padj_values: [0.001, 0.005, 0.01, 0.05, 0.1]
+    generate_heatmap: true
+  
+  # Full visualization suite
+  visualization:
+    volcano_plot: true
+    logfc_distribution: true
+    pvalue_distribution: true
+    threshold_heatmap: true
+    optimization_summary: true
+    adjustment_comparison: true
+    plot_format: "png"
+    dpi: 300
+  
+  output:
+    save_optimized_results: true
+    save_significant_genes: true
+    generate_methods_text: true
+    export_formats: ["csv", "xlsx", "json"]
+
+# ============================================================================
 # ADVANCED DATA QUALITY ASSESSMENT
 # ============================================================================
 quality_assessment:
@@ -449,6 +507,7 @@ automated_reporting:
     - "feature_importance"
     - "model_comparison"
     - "performance_metrics"
+    - "threshold_optimization"  # NEW in v2.1.1
     - "predictions_analysis"
   
   # Detailed ML visualizations
@@ -460,6 +519,7 @@ automated_reporting:
     feature_importance: true
     shap_summary: true
     prediction_distribution: true
+    threshold_optimization: true  # NEW in v2.1.1
 
 # ============================================================================
 # NOTES FOR ML RESEARCHERS
@@ -474,4 +534,5 @@ automated_reporting:
 # 5. Consider ensemble methods for production deployment
 # 6. Always validate on held-out test set
 # 7. Use SHAP values to understand model decisions
+# 8. NEW: Use threshold_optimizer for data-driven DE thresholds
 # ============================================================================

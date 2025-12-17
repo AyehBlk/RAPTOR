@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAPTOR v2.1.0 Example Script: ML-Based Pipeline Recommendation
+RAPTOR v2.1.1 Example Script: ML-Based Pipeline Recommendation
 
 Demonstrates the machine learning-based pipeline recommendation system that
 uses Random Forest or Gradient Boosting to predict optimal pipelines.
@@ -45,7 +45,7 @@ def print_banner():
     """Print RAPTOR banner."""
     print("""
     ╔══════════════════════════════════════════════════════════════╗
-    ║       🦖 RAPTOR v2.1.0 - ML Pipeline Recommendation         ║
+    ║       🦖 RAPTOR v2.1.1 - ML Pipeline Recommendation         ║
     ║                                                              ║
     ║   Machine Learning-Powered Pipeline Selection                ║
     ╚══════════════════════════════════════════════════════════════╝
@@ -253,7 +253,7 @@ def run_ml_recommendation(counts_file, metadata_file=None, model_type='random_fo
     # Prepare output
     output = {
         'timestamp': datetime.now().isoformat(),
-        'raptor_version': '2.1.0',
+        'raptor_version': '2.1.1',
         'model_type': model_type,
         'profile_summary': {
             'n_samples': profile['design']['n_samples'],

@@ -1,8 +1,8 @@
-#  RAPTOR v2.1.0 Troubleshooting Guide
+# 🔧 RAPTOR v2.1.1 Troubleshooting Guide
 
 **RNA-seq Analysis Pipeline Testing and Optimization Resource**
 
-A comprehensive guide to diagnosing and resolving common issues with RAPTOR v2.1.0.
+A comprehensive guide to diagnosing and resolving common issues with RAPTOR v2.1.1.
 
 ---
 
@@ -11,17 +11,27 @@ A comprehensive guide to diagnosing and resolving common issues with RAPTOR v2.1
 1. [Installation Issues](#installation-issues)
 2. [Configuration Problems](#configuration-problems)
 3. [ML Recommendation Issues](#ml-recommendation-issues)
-4. [Dashboard Problems](#dashboard-problems)
-5. [Pipeline Execution Errors](#pipeline-execution-errors)
-6. [Resource Monitoring Issues](#resource-monitoring-issues)
-7. [Ensemble Analysis Problems](#ensemble-analysis-problems)
-8. [Data Quality Issues](#data-quality-issues)
-9. [Cloud Deployment Issues](#cloud-deployment-issues)
-10. [Performance Problems](#performance-problems)
+4. [🎯 Threshold Optimizer Issues](#threshold-optimizer-issues) - **NEW!**
+5. [Dashboard Problems](#dashboard-problems)
+6. [Pipeline Execution Errors](#pipeline-execution-errors)
+7. [Resource Monitoring Issues](#resource-monitoring-issues)
+8. [Ensemble Analysis Problems](#ensemble-analysis-problems)
+9. [Data Quality Issues](#data-quality-issues)
+10. [Cloud Deployment Issues](#cloud-deployment-issues)
+11. [Performance Problems](#performance-problems)
+12. [Getting Help](#getting-help)
 
 ---
 
-##  Installation Issues
+## 🆕 What's New in v2.1.1 Troubleshooting
+
+- Added [Threshold Optimizer Issues](#threshold-optimizer-issues) section
+- Updated installation verification for ATO
+- Added ATO-specific dashboard troubleshooting
+
+---
+
+## 📦 Installation Issues
 
 ### Issue: pip install fails
 
@@ -44,7 +54,7 @@ python --version  # Should be 3.8+
 
 3. **Install from GitHub:**
 ```bash
-pip install git+https://github.com/AyehBlk/RAPTOR.git@v2.1.0
+pip install git+https://github.com/AyehBlk/RAPTOR.git@v2.1.1
 ```
 
 4. **Use virtual environment:**
@@ -78,41 +88,36 @@ pip install scikit-learn==1.3.0 pandas==2.0.0
 pip install raptor-rnaseq
 ```
 
-3. **Use requirements file:**
-```bash
-pip install -r requirements.txt
-```
-
 ---
 
-### Issue: Missing system dependencies
+### Issue: Threshold Optimizer not available (NEW)
 
 **Symptoms:**
 ```bash
-ImportError: libgomp.so.1: cannot open shared object file
+ModuleNotFoundError: No module named 'raptor.threshold_optimizer'
 ```
 
 **Solutions:**
 
-**Ubuntu/Debian:**
+1. **Update RAPTOR:**
 ```bash
-sudo apt-get update
-sudo apt-get install build-essential libgomp1
+pip install --upgrade raptor-rnaseq
 ```
 
-**CentOS/RHEL:**
+2. **Verify installation:**
 ```bash
-sudo yum install gcc gcc-c++ libgomp
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
 ```
 
-**macOS:**
+3. **Check version:**
 ```bash
-brew install gcc libomp
+python -c "import raptor; print(raptor.__version__)"
+# Should show 2.1.1
 ```
 
 ---
 
-##  Configuration Problems
+## ⚙️ Configuration Problems
 
 ### Issue: Config file not found
 
@@ -133,34 +138,29 @@ raptor config --create
 raptor analyze --config /path/to/config.yaml
 ```
 
-3. **Check working directory:**
-```bash
-pwd  # Should be in project root
-ls -la  # Should see config.yaml
-```
-
 ---
 
-### Issue: Invalid configuration
+### Issue: Invalid threshold_optimizer config (NEW)
 
 **Symptoms:**
 ```bash
-ValueError: Invalid pipeline name: slamonm
+ValueError: Invalid threshold_optimizer configuration
 ```
 
 **Solutions:**
 
-1. **Validate config:**
-```bash
-raptor config --validate
+1. **Check config structure:**
+```yaml
+threshold_optimizer:
+  enabled: true
+  goal: "discovery"  # Must be: discovery, balanced, or validation
+  default_logfc_method: "auto"
 ```
 
-2. **Check pipeline names:**
-```yaml
-pipelines:
-  - "salmon"  # Correct
-  - "star"    # Correct
-  # NOT "slamonm" or "str"
+2. **Validate goal value:**
+```python
+# Valid goals
+valid_goals = ["discovery", "balanced", "validation"]
 ```
 
 3. **Use config template:**
@@ -170,36 +170,7 @@ raptor config --template > config.yaml
 
 ---
 
-### Issue: Path errors in config
-
-**Symptoms:**
-```bash
-FileNotFoundError: /data/fastq/sample.fq.gz not found
-```
-
-**Solutions:**
-
-1. **Use absolute paths:**
-```yaml
-data:
-  fastq_dir: "/home/user/project/data/fastq"  # Not "~/data/fastq"
-```
-
-2. **Verify paths exist:**
-```bash
-ls -l /data/fastq/  # Check before running
-```
-
-3. **Use wildcards correctly:**
-```yaml
-data:
-  fastq_pattern: "*_R{1,2}.fastq.gz"  # Correct
-  # NOT: "*.fastq.gz"  # Too broad
-```
-
----
-
-##  ML Recommendation Issues
+## 🤖 ML Recommendation Issues
 
 ### Issue: Model not found
 
@@ -220,12 +191,6 @@ raptor ml train --data training_data.csv
 raptor ml download --model default
 ```
 
-3. **Specify model path:**
-```yaml
-ml_recommendation:
-  model_path: "/path/to/model.pkl"
-```
-
 ---
 
 ### Issue: Low confidence predictions
@@ -237,61 +202,254 @@ Warning: Low confidence (45%) - manual review recommended
 
 **Solutions:**
 
-1. **Provide more metadata:**
-```yaml
-metadata:
-  organism: "Homo sapiens"
-  tissue_type: "brain"
-  read_length: 150
-  sequencing_depth: "50M"
-  library_prep: "polyA"
-```
-
-2. **Retrain with similar data:**
-```bash
-raptor ml train --data my_similar_projects.csv
-```
-
-3. **Use ensemble mode:**
-```yaml
-ml_recommendation:
-  use_ensemble: true
-  min_confidence: 0.6
-```
+1. **Provide more metadata**
+2. **Use ensemble mode**
+3. **Consider using Threshold Optimizer for data-driven thresholds** (NEW in v2.1.1)
 
 ---
 
-### Issue: Prediction takes too long
+## 🎯 Threshold Optimizer Issues (NEW)
+
+### Issue: ATO module not found
 
 **Symptoms:**
-```
-ML prediction running for > 5 minutes...
+```bash
+ImportError: cannot import name 'AdaptiveThresholdOptimizer'
 ```
 
 **Solutions:**
 
-1. **Reduce feature extraction:**
-```yaml
-ml_recommendation:
-  quick_mode: true
-  skip_advanced_features: true
+1. **Update to v2.1.1:**
+```bash
+pip install --upgrade raptor-rnaseq
 ```
 
-2. **Use cached predictions:**
-```yaml
-ml_recommendation:
-  cache_predictions: true
+2. **Verify version:**
+```bash
+python -c "import raptor; print(raptor.__version__)"
+# Must be 2.1.1 or higher
 ```
 
-3. **Increase timeout:**
-```yaml
-ml_recommendation:
-  timeout: 600  # 10 minutes
+3. **Check import:**
+```python
+from raptor.threshold_optimizer import AdaptiveThresholdOptimizer, optimize_thresholds
 ```
 
 ---
 
-##  Dashboard Problems
+### Issue: Column not found in data
+
+**Symptoms:**
+```bash
+KeyError: 'log2FoldChange' not found in columns
+```
+
+**Solutions:**
+
+1. **Check column names:**
+```python
+import pandas as pd
+df = pd.read_csv('results.csv')
+print(df.columns.tolist())
+```
+
+2. **Specify correct column names:**
+```python
+ato = AdaptiveThresholdOptimizer(
+    df,
+    logfc_col='logFC',      # edgeR uses 'logFC'
+    pvalue_col='PValue'     # edgeR uses 'PValue'
+)
+```
+
+3. **Common column names by tool:**
+```python
+# DESeq2
+logfc_col='log2FoldChange', pvalue_col='pvalue'
+
+# edgeR
+logfc_col='logFC', pvalue_col='PValue'
+
+# limma
+logfc_col='logFC', pvalue_col='P.Value'
+```
+
+---
+
+### Issue: π₀ estimation fails
+
+**Symptoms:**
+```bash
+Warning: π₀ estimation failed, using default value 0.9
+```
+
+**Solutions:**
+
+1. **Check p-value distribution:**
+```python
+import matplotlib.pyplot as plt
+plt.hist(df['pvalue'].dropna(), bins=50)
+plt.show()
+# Should show uniform distribution with spike at 0
+```
+
+2. **Ensure sufficient data:**
+```python
+# Need at least 100 genes with valid p-values
+valid_pvalues = df['pvalue'].dropna()
+print(f"Valid p-values: {len(valid_pvalues)}")  # Should be >100
+```
+
+3. **Check for NA values:**
+```python
+print(f"NA p-values: {df['pvalue'].isna().sum()}")
+# Remove or impute NA values
+```
+
+4. **Try different π₀ method:**
+```python
+result = ato.optimize(goal='discovery', pi0_method='histogram')
+```
+
+---
+
+### Issue: LogFC threshold is too extreme
+
+**Symptoms:**
+```
+Optimal logFC threshold: 5.2  # Seems too high
+Significant genes: 3  # Very few genes
+```
+
+**Solutions:**
+
+1. **Check data distribution:**
+```python
+print(f"LogFC range: {df['log2FoldChange'].min():.2f} to {df['log2FoldChange'].max():.2f}")
+print(f"LogFC std: {df['log2FoldChange'].std():.2f}")
+```
+
+2. **Try different method:**
+```python
+# Use percentile method for extreme distributions
+result = ato.optimize(goal='discovery', logfc_method='percentile')
+```
+
+3. **Use manual threshold:**
+```python
+# If auto methods fail, set reasonable default
+result = ato.optimize(goal='discovery')
+if result.logfc_threshold > 3:
+    print("Warning: Using fallback threshold")
+    # Consider using result.logfc_threshold = 1.0
+```
+
+---
+
+### Issue: No significant genes found
+
+**Symptoms:**
+```
+Significant genes: 0
+```
+
+**Solutions:**
+
+1. **Check thresholds:**
+```python
+print(f"LogFC threshold: {result.logfc_threshold}")
+print(f"P-value threshold: {result.pvalue_threshold}")
+```
+
+2. **Try more permissive goal:**
+```python
+# Change from validation to discovery
+result = ato.optimize(goal='discovery')  # More permissive
+```
+
+3. **Check data quality:**
+```python
+# Ensure p-values are not all 1.0 or NA
+print(df['pvalue'].describe())
+```
+
+4. **Verify data is differential expression results:**
+```python
+# Should have logFC and pvalue columns with proper values
+print(df[['log2FoldChange', 'pvalue']].head())
+```
+
+---
+
+### Issue: Methods text not generated
+
+**Symptoms:**
+```python
+print(result.methods_text)
+# Output: None or empty string
+```
+
+**Solutions:**
+
+1. **Check result object:**
+```python
+print(type(result))  # Should be ThresholdResult
+print(result)  # View all fields
+```
+
+2. **Access directly:**
+```python
+from raptor.threshold_optimizer import AdaptiveThresholdOptimizer
+ato = AdaptiveThresholdOptimizer(df, 'log2FoldChange', 'pvalue')
+result = ato.optimize(goal='balanced')
+print(result.methods_text)  # Should have text
+```
+
+3. **Generate manually:**
+```python
+methods = f"""Thresholds determined using ATO v2.1.1 with '{result.goal}' goal.
+LogFC threshold: {result.logfc_threshold:.3f}
+P-value threshold: {result.pvalue_threshold}
+Significant genes: {result.n_significant}"""
+```
+
+---
+
+### Issue: Dashboard ATO page not working
+
+**Symptoms:**
+```
+Dashboard loads but Threshold Optimizer page shows error
+```
+
+**Solutions:**
+
+1. **Check ATO availability:**
+```bash
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('OK')"
+```
+
+2. **Update RAPTOR:**
+```bash
+pip install --upgrade raptor-rnaseq
+```
+
+3. **Clear browser cache:**
+- Chrome: Ctrl+Shift+Del
+- Firefox: Ctrl+Shift+Del
+
+4. **Restart dashboard:**
+```bash
+# Kill existing process
+lsof -ti:8501 | xargs kill -9
+
+# Restart
+raptor dashboard
+```
+
+---
+
+## 📊 Dashboard Problems
 
 ### Issue: Dashboard won't start
 
@@ -312,10 +470,29 @@ raptor dashboard --port 8502
 lsof -ti:8501 | xargs kill -9
 ```
 
-3. **Use different host:**
-```bash
-raptor dashboard --host 0.0.0.0 --port 8501
+---
+
+### Issue: Threshold Optimizer page missing (NEW)
+
+**Symptoms:**
 ```
+No "🎯 Threshold Optimizer" option in sidebar
+```
+
+**Solutions:**
+
+1. **Verify v2.1.1:**
+```bash
+python -c "import raptor; print(raptor.__version__)"
+```
+
+2. **Update RAPTOR:**
+```bash
+pip install --upgrade raptor-rnaseq
+```
+
+3. **Check dashboard version:**
+Look for "v2.1.1" in dashboard header
 
 ---
 
@@ -338,73 +515,9 @@ raptor analyze --config config.yaml
 raptor dashboard --results /path/to/results
 ```
 
-3. **Check output path:**
-```yaml
-output:
-  base_dir: "./raptor_results"  # Ensure this exists
-```
-
 ---
 
-### Issue: Plots not rendering
-
-**Symptoms:**
-```
-Error loading plot: JavaScript heap out of memory
-```
-
-**Solutions:**
-
-1. **Reduce plot complexity:**
-```yaml
-dashboard:
-  max_points_per_plot: 1000
-  simplify_plots: true
-```
-
-2. **Clear browser cache:**
-- Chrome: Ctrl+Shift+Del
-- Firefox: Ctrl+Shift+Del
-- Safari: Cmd+Option+E
-
-3. **Update browsers:**
-```bash
-# Latest Chrome, Firefox, or Safari recommended
-```
-
----
-
-### Issue: Dashboard slow/unresponsive
-
-**Symptoms:**
-```
-Dashboard loads but interactions are slow
-```
-
-**Solutions:**
-
-1. **Limit data displayed:**
-```yaml
-dashboard:
-  max_samples_displayed: 50
-  lazy_loading: true
-```
-
-2. **Increase memory:**
-```bash
-raptor dashboard --server.maxUploadSize 1000
-```
-
-3. **Use lighter theme:**
-```yaml
-dashboard:
-  theme: "minimal"
-  disable_animations: true
-```
-
----
-
-##  Pipeline Execution Errors
+## 🔬 Pipeline Execution Errors
 
 ### Issue: Pipeline fails immediately
 
@@ -426,11 +539,6 @@ star --version
 export PATH=$PATH:/path/to/salmon/bin
 ```
 
-3. **Install missing tools:**
-```bash
-conda install -c bioconda salmon star kallisto
-```
-
 ---
 
 ### Issue: Out of memory
@@ -446,7 +554,6 @@ java.lang.OutOfMemoryError: Java heap space
 ```yaml
 resources:
   max_memory: "32GB"
-  java_opts: "-Xmx24g"
 ```
 
 2. **Reduce parallelism:**
@@ -455,74 +562,9 @@ resources:
   threads: 8  # Reduce from 16
 ```
 
-3. **Process samples in batches:**
-```yaml
-execution:
-  batch_size: 10
-  sequential_mode: true
-```
-
 ---
 
-### Issue: Pipeline hangs/freezes
-
-**Symptoms:**
-```
-Pipeline running for hours with no progress...
-```
-
-**Solutions:**
-
-1. **Enable verbose logging:**
-```yaml
-logging:
-  level: "DEBUG"
-  log_file: "raptor_debug.log"
-```
-
-2. **Check system resources:**
-```bash
-top  # Check CPU/memory
-df -h  # Check disk space
-```
-
-3. **Set timeout:**
-```yaml
-execution:
-  max_runtime: 3600  # 1 hour per sample
-  timeout_action: "skip"
-```
-
----
-
-### Issue: Index not found
-
-**Symptoms:**
-```bash
-Error: Genome index not found at /data/genome/index
-```
-
-**Solutions:**
-
-1. **Build index:**
-```bash
-raptor index --genome genome.fa --gtf genes.gtf
-```
-
-2. **Download pre-built:**
-```bash
-raptor index --download hg38
-```
-
-3. **Specify correct path:**
-```yaml
-reference:
-  index: "/data/genomes/hg38/salmon_index"
-```
-
----
-
-##  Resource Monitoring Issues
+## 📈 Resource Monitoring Issues
 
 ### Issue: Monitoring not starting
 
@@ -538,85 +580,15 @@ Warning: Resource monitoring disabled
 pip install psutil>=5.9.0
 ```
 
-2. **Enable monitoring:**
+2. **Enable in config:**
 ```yaml
 resource_monitoring:
   enabled: true
-  interval: 10
-```
-
-3. **Check permissions:**
-```bash
-# On Linux, may need to run with elevated permissions
-sudo raptor analyze --config config.yaml
 ```
 
 ---
 
-### Issue: Inaccurate metrics
-
-**Symptoms:**
-```
-CPU: 0%, Memory: 0% (clearly wrong)
-```
-
-**Solutions:**
-
-1. **Restart monitoring:**
-```bash
-raptor monitor --restart
-```
-
-2. **Update psutil:**
-```bash
-pip install --upgrade psutil
-```
-
-3. **Platform-specific fix:**
-
-**macOS:**
-```bash
-sudo purge  # Clear cached memory stats
-```
-
-**Linux:**
-```bash
-sync; echo 3 > /proc/sys/vm/drop_caches
-```
-
----
-
-### Issue: Monitoring overhead
-
-**Symptoms:**
-```
-Analysis slower with monitoring enabled
-```
-
-**Solutions:**
-
-1. **Reduce monitoring frequency:**
-```yaml
-resource_monitoring:
-  interval: 60  # Check every 60 seconds instead of 10
-```
-
-2. **Disable detailed tracking:**
-```yaml
-resource_monitoring:
-  track_per_process: false
-  detailed_metrics: false
-```
-
-3. **Use lightweight mode:**
-```yaml
-resource_monitoring:
-  lightweight_mode: true
-```
-
----
-
-##  Ensemble Analysis Problems
+## 🎭 Ensemble Analysis Problems
 
 ### Issue: Ensemble fails to combine
 
@@ -630,83 +602,20 @@ Error: Cannot combine results from different pipelines
 1. **Ensure consistent settings:**
 ```yaml
 ensemble:
-  normalize_method: "TMM"  # Same for all pipelines
-  filter_low_counts: true
+  normalize_method: "TMM"
 ```
 
-2. **Check output formats:**
-```bash
-# All pipelines must produce compatible output
-ls raptor_results/salmon/
-ls raptor_results/kallisto/
-```
-
-3. **Validate individually first:**
-```bash
-raptor analyze --pipeline salmon --validate-only
-raptor analyze --pipeline kallisto --validate-only
-```
-
----
-
-### Issue: Ensemble results inconsistent
-
-**Symptoms:**
-```
-Warning: High variance between pipeline results
-```
-
-**Solutions:**
-
-1. **Check input data quality:**
-```bash
-raptor qc --fastq data/fastq/
-```
-
-2. **Review pipeline parameters:**
+2. **Use ATO for uniform thresholds (NEW):**
 ```yaml
-ensemble:
-  outlier_detection: true
-  consensus_threshold: 0.7
-```
-
-3. **Investigate discrepancies:**
-```python
-from raptor.ensemble import compare_pipelines
-compare_pipelines(['salmon', 'kallisto', 'star'])
+threshold_optimizer:
+  enabled: true
+  ensemble_mode:
+    uniform_thresholds: true
 ```
 
 ---
 
-### Issue: Missing pipeline results
-
-**Symptoms:**
-```bash
-Error: Ensemble requires ≥2 pipelines, found 1
-```
-
-**Solutions:**
-
-1. **Run missing pipelines:**
-```bash
-raptor analyze --pipeline kallisto --ensemble-mode
-```
-
-2. **Check for failed pipelines:**
-```bash
-ls raptor_results/*/
-grep "ERROR" raptor.log
-```
-
-3. **Lower minimum requirement:**
-```yaml
-ensemble:
-  min_pipelines: 2  # Ensure this matches your runs
-```
-
----
-
-##  Data Quality Issues
+## 📊 Data Quality Issues
 
 ### Issue: Low quality scores
 
@@ -722,80 +631,16 @@ Warning: Quality score 45/100 - data may be problematic
 raptor qc --fastq data/ --detailed
 ```
 
-2. **Check FastQC reports:**
-```bash
-fastqc data/fastq/*.fastq.gz
-```
-
-3. **Trim low-quality reads:**
-```yaml
-preprocessing:
-  trim_adapters: true
-  quality_threshold: 20
-  min_length: 36
-```
-
----
-
-### Issue: Contamination detected
-
-**Symptoms:**
-```
-Warning: Possible contamination - 15% reads unmapped
-```
-
-**Solutions:**
-
-1. **Run contamination screen:**
-```bash
-raptor qc --screen-contamination
-```
-
-2. **Check species:**
-```yaml
-quality_assessment:
-  expected_species: "Homo sapiens"
-  contamination_threshold: 0.05
-```
-
-3. **Filter contaminated reads:**
-```bash
-# Use tools like BBDuk or Kraken2
-```
-
----
-
-### Issue: Batch effects detected
-
-**Symptoms:**
-```
-Warning: Significant batch effects detected
-```
-
-**Solutions:**
-
-1. **Include batch info:**
-```yaml
-metadata:
-  batch_column: "sequencing_run"
-  correct_batch: true
-```
-
-2. **Use ComBat:**
+2. **Consider ATO for appropriate thresholds:**
 ```python
-from raptor.quality import correct_batch_effects
-corrected_data = correct_batch_effects(data, batch_info)
-```
-
-3. **Include in design:**
-```yaml
-analysis:
-  design: "~ batch + condition"
+# ATO can help select thresholds appropriate for your data quality
+from raptor.threshold_optimizer import optimize_thresholds
+result = optimize_thresholds(de_results, goal='discovery')
 ```
 
 ---
 
-##  Cloud Deployment Issues
+## ☁️ Cloud Deployment Issues
 
 ### Issue: Authentication failed
 
@@ -809,155 +654,22 @@ Error: Unable to authenticate with AWS
 **AWS:**
 ```bash
 aws configure
-# Enter Access Key ID and Secret Access Key
 ```
 
 **GCP:**
 ```bash
 gcloud auth login
-gcloud config set project PROJECT_ID
-```
-
-**Azure:**
-```bash
-az login
-az account set --subscription SUBSCRIPTION_ID
 ```
 
 ---
 
-### Issue: Insufficient permissions
-
-**Symptoms:**
-```bash
-Error: Access denied to S3 bucket
-```
-
-**Solutions:**
-
-1. **Check IAM permissions:**
-```bash
-aws iam get-user
-aws iam list-attached-user-policies --user-name USERNAME
-```
-
-2. **Add required permissions:**
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [{
-    "Effect": "Allow",
-    "Action": [
-      "s3:GetObject",
-      "s3:PutObject",
-      "batch:SubmitJob"
-    ],
-    "Resource": "*"
-  }]
-}
-```
-
----
-
-### Issue: Instance launch failed
-
-**Symptoms:**
-```bash
-Error: Could not launch instance - quota exceeded
-```
-
-**Solutions:**
-
-1. **Request quota increase:**
-```bash
-# AWS
-aws service-quotas request-service-quota-increase \
-  --service-code batch --quota-code L-34F8E9F6 \
-  --desired-value 100
-```
-
-2. **Use different region:**
-```yaml
-cloud:
-  aws:
-    region: "us-west-2"  # Try different region
-```
-
-3. **Use smaller instances:**
-```yaml
-cloud:
-  aws:
-    instance_type: "m5.large"  # Instead of m5.4xlarge
-```
-
----
-
-### Issue: High cloud costs
-
-**Symptoms:**
-```
-Unexpected AWS bill of $500 for 100 samples
-```
-
-**Solutions:**
-
-1. **Use spot instances:**
-```yaml
-cloud:
-  aws:
-    use_spot: true
-    max_spot_price: 0.50
-```
-
-2. **Set budget alerts:**
-```bash
-aws budgets create-budget --budget file://budget.json
-```
-
-3. **Enable auto-shutdown:**
-```yaml
-cloud:
-  auto_shutdown: true
-  max_idle_time: 1800  # 30 minutes
-```
-
----
-
-### Issue: Data transfer slow
-
-**Symptoms:**
-```
-Data upload: 0.5 MB/s (expected 10+ MB/s)
-```
-
-**Solutions:**
-
-1. **Use transfer acceleration:**
-```yaml
-cloud:
-  aws:
-    s3_transfer_acceleration: true
-```
-
-2. **Compress data:**
-```bash
-tar -czf data.tar.gz data/
-```
-
-3. **Parallel uploads:**
-```bash
-aws s3 sync data/ s3://bucket/ --parallel
-```
-
----
-
-##  Performance Problems
+## 🚀 Performance Problems
 
 ### Issue: Analysis very slow
 
 **Symptoms:**
 ```
-Expected: 2 hours, Actual: 12 hours for 50 samples
+Expected: 2 hours, Actual: 12 hours
 ```
 
 **Solutions:**
@@ -965,87 +677,24 @@ Expected: 2 hours, Actual: 12 hours for 50 samples
 1. **Increase parallelism:**
 ```yaml
 resources:
-  threads: 32  # Use more cores
-  parallel_samples: 8
+  threads: 32
 ```
 
 2. **Use faster pipelines:**
 ```yaml
 pipelines:
   - "salmon"  # Faster than STAR
-  - "kallisto"  # Faster than RSEM
 ```
 
-3. **Reduce replicates:**
-```yaml
-parameter_optimization:
-  bootstrap_iterations: 50  # Instead of 100
-```
-
----
-
-### Issue: High memory usage
-
-**Symptoms:**
-```
-System using 95% RAM, causing swapping
-```
-
-**Solutions:**
-
-1. **Limit memory per process:**
-```yaml
-resources:
-  max_memory_per_job: "8GB"
-```
-
-2. **Process in batches:**
-```yaml
-execution:
-  batch_size: 5
-  sequential_mode: true
-```
-
-3. **Use memory-efficient tools:**
-```yaml
-pipelines:
-  - "salmon"  # More memory-efficient than STAR
+3. **ATO is fast (NEW):**
+```python
+# ATO optimization takes <1 second
+result = optimize_thresholds(df, goal='balanced')
 ```
 
 ---
 
-### Issue: Disk space running out
-
-**Symptoms:**
-```bash
-Error: No space left on device
-```
-
-**Solutions:**
-
-1. **Clean up intermediate files:**
-```yaml
-output:
-  keep_intermediate: false
-  auto_cleanup: true
-```
-
-2. **Compress outputs:**
-```yaml
-output:
-  compress_outputs: true
-  compression_level: 9
-```
-
-3. **Monitor disk usage:**
-```bash
-du -sh raptor_results/
-df -h
-```
-
----
-
-##  Getting Help
+## 🆘 Getting Help
 
 ### Before Asking for Help
 
@@ -1059,7 +708,6 @@ cat raptor_error.log
 ```yaml
 logging:
   level: "DEBUG"
-  verbose: true
 ```
 
 3. **Collect system info:**
@@ -1067,7 +715,11 @@ logging:
 raptor --version
 python --version
 pip list | grep raptor
-uname -a
+```
+
+4. **Verify ATO (v2.1.1):**
+```bash
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('ATO: OK')"
 ```
 
 ### Reporting Issues
@@ -1089,16 +741,11 @@ cat config.yaml
 tail -n 50 raptor_error.log
 ```
 
-4. **System info:**
-```bash
-raptor sysinfo
-```
-
-5. **Steps to reproduce:**
-```
-1. Set up config.yaml with...
-2. Run: raptor analyze...
-3. Error occurs at...
+4. **For ATO issues, include:**
+```python
+print(df.columns.tolist())
+print(df.shape)
+print(df[['logfc_col', 'pvalue_col']].describe())
 ```
 
 ### Support Channels
@@ -1109,17 +756,18 @@ raptor sysinfo
 
 ---
 
-##  Additional Resources
+## 📚 Additional Resources
 
 - [Installation Guide](INSTALLATION.md)
 - [Configuration Guide](CONFIGURATION.md)
+- [Threshold Optimizer Guide](THRESHOLD_OPTIMIZER.md) - **NEW!**
 - [API Documentation](API.md)
 - [FAQ](FAQ.md)
 
 ---
 
 **Author:** Ayeh Bolouki   
-**Version:** 2.1.0  
+**Version:** 2.1.1  
 **License:** MIT
 
 ---

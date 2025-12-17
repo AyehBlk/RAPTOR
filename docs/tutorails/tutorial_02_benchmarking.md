@@ -1,4 +1,4 @@
-# Tutorial 02: Advanced Benchmarking with RAPTOR v2.1.0
+# Tutorial 02: Advanced Benchmarking with RAPTOR v2.1.1
 
 **Level**: Intermediate  
 **Time**: 3-6 hours (mostly compute time)  
@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 What You'll Learn
+##  What You'll Learn
 
 Advanced benchmarking techniques:
 - ✅ Compare all 8 RNA-seq pipelines on your data
@@ -15,6 +15,20 @@ Advanced benchmarking techniques:
 - ✅ Apply ensemble methods for robust results
 - ✅ Generate publication-ready comparison reports
 - ✅ Monitor resource usage in real-time
+- ✅ **NEW in v2.1.1**: Use data-driven threshold optimization across pipelines
+
+---
+
+## 🆕 What's New in v2.1.1
+
+**Adaptive Threshold Optimizer (ATO)** integration with benchmarking:
+
+```bash
+# Apply uniform data-driven thresholds across all benchmarked pipelines
+raptor benchmark --counts data.csv --metadata meta.txt --use-ato --ato-goal balanced
+```
+
+ATO ensures **fair comparison** by using the same statistically-justified thresholds across all pipelines, rather than arbitrary |logFC| > 1 cutoffs. Publication reports now include auto-generated methods text.
 
 ---
 
@@ -22,7 +36,7 @@ Advanced benchmarking techniques:
 
 **Required**:
 - Completed [Tutorial 01: Getting Started](tutorial_01_getting_started.md)
-- RAPTOR v2.1.0 with all 8 pipelines installed
+- RAPTOR v2.1.1 with all 8 pipelines installed
 - At least 8 GB RAM and 4 CPU cores
 - 3-6 hours for full benchmark
 
@@ -30,6 +44,14 @@ Advanced benchmarking techniques:
 - Ground truth data or biological replicates
 - 16 GB RAM for faster processing
 - Understanding of statistical concepts (FDR, fold change)
+
+**Verify ATO is available** (v2.1.1):
+```bash
+raptor --version
+# Should show: RAPTOR v2.1.1
+
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
+```
 
 ---
 
@@ -152,6 +174,29 @@ Or use the dashboard:
 raptor dashboard --monitor benchmark_results/
 ```
 
+### Step 3: Apply Uniform Thresholds with ATO (NEW in v2.1.1)
+
+For **fair comparison**, apply the same data-driven thresholds across all pipelines:
+
+```bash
+raptor benchmark --counts counts_benchmark.csv \
+                 --metadata metadata.txt \
+                 --output benchmark_results/ \
+                 --threads 4 \
+                 --use-ato \
+                 --ato-goal balanced
+```
+
+Or post-hoc after running benchmark:
+
+```bash
+raptor apply-ato --benchmark benchmark_results/ \
+                 --goal balanced \
+                 --output benchmark_ato/
+```
+
+This ensures all pipelines use the **same statistically-justified threshold** rather than arbitrary |logFC| > 1.
+
 ---
 
 ##  Part 2: Analyzing Benchmark Results
@@ -166,6 +211,7 @@ benchmark_results/
 ├── ml_ranking.json              # ML-based pipeline scores
 ├── concordance_matrix.png       # How similar are pipelines?
 ├── performance_comparison.png   # Side-by-side metrics
+├── ato_thresholds.json          # (v2.1.1) Data-driven thresholds
 ├── ensemble_results/            # Combined analysis
 │   ├── degs_consensus.csv      # Genes found by multiple pipelines
 │   └── ensemble_ranking.csv    # Weighted gene rankings
@@ -195,7 +241,8 @@ google-chrome benchmark_results/summary_report.html
 3. **Concordance Analysis**: How well pipelines agree
 4. **Ensemble Results**: Combined robust findings
 5. **Resource Usage**: Computational requirements
-6. **Recommendations**: Which pipeline(s) to trust
+6. **Threshold Optimization** (v2.1.1): ATO results and methods text
+7. **Recommendations**: Which pipeline(s) to trust
 
 ### Check ML Rankings
 
@@ -323,7 +370,7 @@ ENSG00000013,1,0.13,Outlier in one sample
 
 ---
 
-##  Part 4: Ensemble Analysis - Combining Pipelines
+## 🔗 Part 4: Ensemble Analysis - Combining Pipelines
 
 ### Why Use Ensemble?
 
@@ -399,6 +446,46 @@ Best for:
 - When you don't trust ML scores
 - Publication-ready results (widely accepted method)
 
+### Method 4: Ensemble with ATO (NEW in v2.1.1)
+
+Apply uniform data-driven thresholds for fair ensemble analysis:
+
+```bash
+raptor ensemble --benchmark benchmark_results/ \
+                --method weighted \
+                --use-ato \
+                --ato-goal balanced \
+                --output ensemble_ato/
+```
+
+**What ATO adds to ensemble**:
+- All pipelines use the **same statistically-justified threshold**
+- Results include auto-generated **methods text** for publications
+- Fair comparison (no pipeline advantages from threshold choice)
+
+```python
+# Python API for ensemble with ATO
+from raptor.ensemble_analysis import EnsembleAnalyzer
+from raptor.threshold_optimizer import optimize_thresholds
+
+# Combine all pipeline results
+combined_results = pd.concat([p1, p2, p3, p4])
+
+# Get uniform threshold
+ato_result = optimize_thresholds(combined_results, goal='balanced')
+uniform_threshold = ato_result.logfc_threshold
+
+# Apply to ensemble
+ensemble = EnsembleAnalyzer(benchmark_results)
+results = ensemble.run(
+    method='weighted',
+    logfc_threshold=uniform_threshold
+)
+
+# Get methods text
+print(ato_result.methods_text)
+```
+
 ### Compare Ensemble Methods
 
 ```bash
@@ -414,8 +501,9 @@ raptor compare-ensemble --benchmark benchmark_results/ \
 | **Consensus** | High confidence list | Simple, conservative | May miss true positives |
 | **Weighted** | Leveraging ML insights | Uses pipeline quality | Depends on ML accuracy |
 | **RankProduct** | Publication | Widely accepted, robust | Computationally intensive |
+| **ATO-Weighted** | Publications (v2.1.1) | Data-driven thresholds | Requires v2.1.1 |
 
-**Recommendation**: Use weighted for exploration, consensus for validation, rankprod for publications.
+**Recommendation**: Use weighted for exploration, consensus for validation, rankprod or ATO-weighted for publications.
 
 ---
 
@@ -480,7 +568,8 @@ raptor benchmark --pipelines Kallisto-DESeq2,Salmon-DESeq2,Kallisto-edgeR \
 ```bash
 raptor benchmark --pipelines STAR-DESeq2,Salmon-DESeq2,HISAT2-DESeq2 \
                  --threads 4 \
-                 --ensemble weighted
+                 --ensemble weighted \
+                 --use-ato
 ```
 
 ---
@@ -578,6 +667,27 @@ raptor report --benchmark benchmark_results/ \
 - Ensemble results
 - Quality metrics
 - Computational requirements
+- **ATO methods text** (v2.1.1) - ready to copy to your paper!
+
+### ATO Methods Text (NEW in v2.1.1)
+
+If you used `--use-ato`, the report includes publication-ready methods text:
+
+```bash
+cat benchmark_results/ato_methods.txt
+```
+
+**Example output**:
+```
+Differential expression significance thresholds were determined using 
+the Adaptive Threshold Optimizer (ATO) from RAPTOR v2.1.1. The 
+proportion of true null hypotheses (π₀) was estimated at 0.847 using 
+the Storey method. Based on the 'balanced' analysis goal, an optimal 
+|log₂FC| threshold of 0.732 was determined. This data-driven threshold, 
+combined with an FDR threshold of 0.050, yielded 127 significant genes. 
+The same threshold was applied uniformly across all 8 pipelines to 
+ensure fair comparison.
+```
 
 ### Create Supplementary Figures
 
@@ -611,6 +721,7 @@ Creates spreadsheet with tabs:
 - Ensemble Results
 - Performance Metrics
 - Concordance Matrix
+- ATO Thresholds (v2.1.1)
 
 ---
 
@@ -677,28 +788,40 @@ raptor profile --counts yourdata.csv --recommend --detailed
 raptor benchmark --counts yourdata.csv --threads 8
 ```
 
-### 3. Use Ensemble for Robust Results
+### 3. Use ATO for Fair Comparison (v2.1.1)
 ```bash
-# Combine top 3-5 pipelines
-raptor ensemble --method weighted --min-pipelines 3
+# Apply uniform data-driven thresholds
+raptor benchmark --counts yourdata.csv --use-ato --ato-goal balanced
 ```
 
-### 4. Monitor Resources
+### 4. Use Ensemble for Robust Results
+```bash
+# Combine top 3-5 pipelines
+raptor ensemble --method weighted --min-pipelines 3 --use-ato
+```
+
+### 5. Monitor Resources
 ```bash
 # Especially for large datasets
 raptor benchmark --monitor-resources --log-interval 30
 ```
 
-### 5. Validate Results
+### 6. Validate Results
 ```bash
 # Use cross-validation or ground truth if available
 raptor validate --ground-truth known_genes.csv
 ```
 
-### 6. Document Everything
+### 7. Document Everything
 ```bash
 # Save commands and parameters
 raptor benchmark ... > analysis_log.txt 2>&1
+```
+
+### 8. Include Methods Text in Publications
+```bash
+# Get auto-generated methods text
+cat benchmark_results/ato_methods.txt  # Copy to your paper
 ```
 
 ---
@@ -757,6 +880,17 @@ raptor ml-explain --profile profile.json --verbose
 raptor benchmark --pipelines YOUR_CHOICE
 ```
 
+### "ATO threshold seems wrong" (v2.1.1)
+
+```bash
+# Try different goals
+raptor benchmark --use-ato --ato-goal discovery   # More permissive
+raptor benchmark --use-ato --ato-goal validation  # More stringent
+
+# Check π₀ estimate
+cat benchmark_results/ato_thresholds.json
+```
+
 ---
 
 ##  What's Next?
@@ -781,6 +915,11 @@ raptor benchmark --pipelines YOUR_CHOICE
 - Handle edge cases
 - [→ tutorial_06_ensemble.md](tutorial_06_ensemble.md)
 
+**Tutorial 07: Threshold Optimization** 🎯 (NEW)
+- Master data-driven threshold selection
+- Generate publication methods text
+- [→ tutorial_07_threshold_optimizer.md](tutorial_07_threshold_optimizer.md)
+
 ---
 
 ##  Reference Documentation
@@ -788,6 +927,7 @@ raptor benchmark --pipelines YOUR_CHOICE
 - **[BENCHMARKING.md](../BENCHMARKING.md)**: Complete benchmarking guide
 - **[ENSEMBLE_GUIDE.md](../ENSEMBLE_GUIDE.md)**: Ensemble analysis details
 - **[ML_GUIDE.md](../ML_GUIDE.md)**: Machine learning explanations
+- **[THRESHOLD_OPTIMIZER.md](../THRESHOLD_OPTIMIZER.md)**: ATO complete guide
 - **[RESOURCE_MONITOR_GUIDE.md](../RESOURCE_MONITOR_GUIDE.md)**: Resource monitoring
 - **[API.md](../API.md)**: Python API for custom analysis
 
@@ -799,11 +939,17 @@ raptor benchmark --pipelines YOUR_CHOICE
 # Full benchmark
 raptor benchmark --counts data.csv --metadata meta.txt --threads 4
 
+# Benchmark with ATO (v2.1.1)
+raptor benchmark --counts data.csv --metadata meta.txt --use-ato --ato-goal balanced
+
 # Quick comparison (top 3)
 raptor compare --pipelines top3 --counts data.csv
 
 # Ensemble analysis
 raptor ensemble --benchmark results/ --method weighted
+
+# Ensemble with ATO (v2.1.1)
+raptor ensemble --benchmark results/ --method weighted --use-ato
 
 # View ML rankings
 cat results/ml_ranking.json
@@ -819,11 +965,14 @@ raptor validate --benchmark results/ --ground-truth truth.csv
 
 # Export for publication
 raptor export --benchmark results/ --format xlsx
+
+# Get ATO methods text (v2.1.1)
+cat results/ato_methods.txt
 ```
 
 ---
 
-##  Need Help?
+## 🆘 Need Help?
 
 - **Questions**: [FAQ.md](../FAQ.md)
 - **Issues**: [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
@@ -838,17 +987,19 @@ Did you:
 - [ ] Run full benchmark on test data
 - [ ] Understand concordance analysis
 - [ ] Try ensemble methods (consensus, weighted, rankprod)
+- [ ] Try ensemble with ATO (v2.1.1)
 - [ ] Monitor resource usage
 - [ ] Generate comparison reports
 - [ ] Interpret ML rankings
 - [ ] Know how to validate results
 - [ ] Create publication-ready figures
+- [ ] Know how to get ATO methods text
 
 **Excellent work! You're now a RAPTOR power user! 🦖**
 
 ---
 
 **Tutorial 02 - Advanced Benchmarking**  
-*RAPTOR v2.1.0*  
+*RAPTOR v2.1.1*  
 Created by Ayeh Bolouki  
-Last updated: November 2025
+Last updated: December 2025

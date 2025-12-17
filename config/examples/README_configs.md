@@ -1,10 +1,49 @@
-# RAPTOR v2.1.0 Configuration Examples
+# RAPTOR v2.1.1 Configuration Examples
 
 This directory contains example configuration files for different RAPTOR usage scenarios. Each configuration is optimized for specific use cases and workflows.
 
 ---
 
-## 📁Available Configurations
+## 🆕 What's New in v2.1.1
+
+### Adaptive Threshold Optimizer (ATO)
+All configurations now include the **Adaptive Threshold Optimizer** - a data-driven approach to selecting significance thresholds for differential expression analysis.
+
+**Key Benefits:**
+- Replace arbitrary thresholds (|logFC| > 1, padj < 0.05) with scientifically justified values
+- Multiple p-value adjustment methods (BH, BY, Storey q-value, Holm, Bonferroni)
+- Five logFC optimization methods (MAD, mixture model, power-based, percentile, consensus)
+- π₀ estimation for true null proportion
+- Publication-ready methods text generation
+- Interactive visualizations in the dashboard
+
+**Quick Enable:**
+```yaml
+threshold_optimizer:
+  enabled: true
+  goal: "discovery"  # discovery, balanced, or validation
+```
+
+---
+
+##  Installation
+
+Before using any configuration, install RAPTOR:
+
+```bash
+# From PyPI (recommended)
+pip install raptor-rnaseq
+
+# With all features
+pip install raptor-rnaseq[all]
+
+# Verify ATO is available
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
+```
+
+---
+
+##  Available Configurations
 
 ### 1. **config.yaml** - Complete Reference Configuration
 **Purpose**: Full configuration file with all possible settings documented
@@ -14,7 +53,13 @@ This directory contains example configuration files for different RAPTOR usage s
 - Reference for available options
 - Customizing your own configuration
 
-**Features**: All v2.1.0 features enabled with detailed documentation
+**Features**: All v2.1.1 features enabled with detailed documentation
+
+**NEW in v2.1.1**:
+- ✅ Adaptive Threshold Optimizer section
+- ✅ π₀ estimation settings
+- ✅ Multiple p-value adjustment methods
+- ✅ LogFC optimization methods
 
 **Computational Requirements**:
 - CPU: 8 cores
@@ -42,6 +87,7 @@ raptor profile --counts data.csv --config config.yaml
 - ✅ ML recommendations
 - ✅ Quality assessment
 - ✅ Resource monitoring
+- ✅ Adaptive Threshold Optimizer (basic) - **NEW!**
 - ❌ Ensemble analysis
 - ❌ Parameter optimization
 - ❌ Cloud integration
@@ -81,6 +127,7 @@ raptor profile --counts data.csv --config config_minimal.yaml
 - ✅ SHAP explanations
 - ✅ Comprehensive model evaluation
 - ✅ Experiment tracking (MLflow ready)
+- ✅ Advanced Threshold Optimizer - **NEW!**
 
 **Computational Requirements**:
 - CPU: 12 cores (16+ recommended)
@@ -127,6 +174,7 @@ raptor profile --counts data.csv --config config_ml_advanced.yaml --use-ml
 - ✅ CloudWatch monitoring
 - ✅ Auto-scaling
 - ✅ Container deployment
+- ✅ Threshold Optimizer (cloud-optimized) - **NEW!**
 
 **Computational Requirements**:
 - Instance: c5.4xlarge (16 vCPU, 32 GB RAM)
@@ -147,8 +195,8 @@ aws configure
 # S3 bucket created
 aws s3 mb s3://your-raptor-bucket
 
-# Docker image available
-docker pull ayehblk/raptor:2.1.0
+# Docker image available (updated for v2.1.1)
+docker pull ayehblk/raptor:2.1.1
 ```
 
 **Command**:
@@ -189,6 +237,14 @@ raptor profile \
 - ✅ Reproducibility documentation
 - ✅ Statistical rigor
 - ✅ Supplementary materials
+- ✅ **Adaptive Threshold Optimizer with methods text** - **NEW!**
+
+**NEW in v2.1.1 - Threshold Justification**:
+- Auto-generates publication-ready methods paragraph
+- Documents threshold selection rationale
+- Addresses common reviewer concerns about "arbitrary" thresholds
+- Includes π₀ estimation documentation
+- Compares multiple adjustment methods
 
 **Computational Requirements**:
 - CPU: 8 cores
@@ -205,7 +261,8 @@ raptor profile \
 - High-resolution figures (PNG, PDF, SVG)
 - Comprehensive HTML/PDF reports
 - Supplementary tables (all DE genes, enrichment results)
-- Methods section text
+- **Threshold optimization rationale** - NEW!
+- Methods section text (including ATO paragraph)
 - Software version documentation
 - Analysis provenance tracking
 
@@ -214,10 +271,12 @@ raptor profile \
 raptor profile --counts data.csv --config config_publication_ready.yaml
 ```
 
-**Publication Checklist**:
+**Publication Checklist** (Updated for v2.1.1):
 - ☑️ Random seed set (reproducibility)
 - ☑️ QC metrics documented
 - ☑️ Pipeline selection justified
+- ☑️ **Threshold selection justified (ATO)** - NEW!
+- ☑️ **π₀ estimation documented** - NEW!
 - ☑️ Statistical methods described
 - ☑️ Multiple testing correction applied
 - ☑️ Effect sizes reported
@@ -226,8 +285,12 @@ raptor profile --counts data.csv --config config_publication_ready.yaml
 - ☑️ Code available
 - ☑️ Data archived (GEO/SRA)
 
-**Citation**:
-Includes automated citation generation for RAPTOR and dependencies.
+**Example Methods Text (Auto-generated)**:
+> "Significance thresholds were determined using the Adaptive Threshold Optimizer. 
+> The proportion of true null hypotheses (π₀) was estimated at 0.82 using Storey's 
+> method. An adjusted p-value threshold of 0.05 (Benjamini-Hochberg) and log₂ fold 
+> change threshold of 0.73 (determined by MAD-based estimation) were applied, 
+> identifying 1,247 differentially expressed genes."
 
 ---
 
@@ -249,6 +312,13 @@ Includes automated citation generation for RAPTOR and dependencies.
 - ✅ Concordance assessment
 - ✅ Confidence scoring
 - ✅ Discordance analysis
+- ✅ **Unified threshold optimization across pipelines** - **NEW!**
+
+**NEW in v2.1.1 - Ensemble Threshold Optimization**:
+- Apply uniform ATO-optimized thresholds across all pipelines
+- Combine π₀ estimates from multiple pipelines
+- ATO confidence integrated into ensemble scoring
+- Fair comparison with consistent thresholds
 
 **Computational Requirements**:
 - CPU: 12-16 cores
@@ -288,6 +358,91 @@ raptor ensemble --counts data.csv --config config_ensemble.yaml
 - Concordance heatmaps
 - Confidence scores per gene
 - Discordance analysis report
+- **Threshold optimization summary** - NEW!
+
+---
+
+### 7. **pipelines.yaml** - Pipeline Definitions
+**Purpose**: Detailed configurations for all 8 RNA-seq analysis pipelines
+
+**NEW in v2.1.1**:
+- Each pipeline now includes `threshold_optimizer_support` section
+- Documents compatible output formats for ATO
+- Specifies column mappings (logFC, pvalue, padj)
+
+**Supported Pipelines**:
+| Pipeline | Components | ATO Output Format |
+|----------|------------|-------------------|
+| 1 | STAR-RSEM-DESeq2 | deseq2 |
+| 2 | HISAT2-StringTie-Ballgown | ballgown |
+| 3 | Salmon-edgeR | edger |
+| 4 | Kallisto-DESeq2 | deseq2 |
+| 5 | STAR-featureCounts-limma | limma |
+| 6 | Salmon-NOISeq | noiseq |
+| 7 | Bowtie2-RSEM-EBSeq | ebseq |
+| 8 | HISAT2-Cufflinks-Cuffdiff | cuffdiff |
+
+---
+
+## 🎯 Adaptive Threshold Optimizer Guide
+
+### Analysis Goals
+
+| Goal | Use Case | Error Control | Typical Use |
+|------|----------|---------------|-------------|
+| **discovery** | Exploratory analysis | FDR (permissive) | Initial screening |
+| **balanced** | Publication | FDR (standard) | Most analyses |
+| **validation** | Clinical/confirmation | FWER (stringent) | Biomarker validation |
+
+### P-value Adjustment Methods
+
+| Method | Type | When to Use |
+|--------|------|-------------|
+| Benjamini-Hochberg | FDR | Standard choice, most analyses |
+| Benjamini-Yekutieli | FDR | Correlated tests |
+| Storey q-value | FDR | More power with π₀ estimation |
+| Holm | FWER | Strong control, validation |
+| Hochberg | FWER | Less conservative than Holm |
+| Bonferroni | FWER | Most conservative |
+
+### LogFC Methods
+
+| Method | Description | Best For |
+|--------|-------------|----------|
+| auto | Consensus of all methods | Default recommendation |
+| mad | MAD-based robust estimation | High variability data |
+| mixture | Gaussian mixture model | Bimodal distributions |
+| power | Power-based minimum effect | Known sample sizes |
+| percentile | 95th percentile of null | Simple, robust |
+
+### Quick Configuration Examples
+
+```yaml
+# Discovery mode (exploratory)
+threshold_optimizer:
+  enabled: true
+  goal: "discovery"
+  default_logfc_method: "auto"
+
+# Publication mode (balanced)
+threshold_optimizer:
+  enabled: true
+  goal: "balanced"
+  visualization:
+    volcano_plot: true
+    plot_format: "png"
+    dpi: 300
+  output:
+    generate_methods_text: true
+
+# Validation mode (clinical)
+threshold_optimizer:
+  enabled: true
+  goal: "validation"
+  padj_methods:
+    holm: true
+    bonferroni: true
+```
 
 ---
 
@@ -312,6 +467,10 @@ raptor ensemble --counts data.csv --config config_ensemble.yaml
 ```yaml
 # Start with minimal.yaml
 # Then enable features as needed:
+
+threshold_optimizer:
+  enabled: true
+  goal: "balanced"  # Add threshold optimization
 
 ml_recommendation:
   enabled: true  # Add ML recommendations
@@ -340,44 +499,23 @@ raptor profile \
   --lfc-threshold 1.5
 ```
 
----
-
-##  Best Practices
-
-### 1. **Always Start Simple**
-Begin with `config_minimal.yaml` to understand your data, then move to advanced configs.
-
-### 2. **Document Your Choices**
-```yaml
-# In your custom config, add comments:
-fdr_threshold: 0.01  # More stringent due to large cohort
-```
-
-### 3. **Version Control Your Configs**
+### Use ATO from Command Line
 ```bash
-git add config_custom.yaml
-git commit -m "Analysis config for Project X"
-```
-
-### 4. **Test Before Production**
-```bash
-# Test with small dataset first
-raptor profile --counts test_data.csv --config config_ensemble.yaml
-```
-
-### 5. **Save Configs with Results**
-```bash
-# RAPTOR automatically saves the config used
-# Find it in: raptor_output/analysis_parameters.yaml
+# Quick threshold optimization
+raptor optimize-thresholds \
+  --input deseq2_results.csv \
+  --goal balanced \
+  --output optimized_results.csv
 ```
 
 ---
 
-##  Comparison Table
+## 📊 Comparison Table
 
 | Feature | Minimal | ML Advanced | Cloud AWS | Publication | Ensemble |
 |---------|---------|-------------|-----------|-------------|----------|
 | **ML Recommendation** | ✅ Basic | ✅ Advanced | ✅ Basic | ✅ Basic | ✅ Advanced |
+| **Threshold Optimizer** | ✅ Basic | ✅ Advanced | ✅ Basic | ✅ Full | ✅ Ensemble |
 | **Quality Assessment** | ✅ Basic | ✅ Advanced | ✅ Basic | ✅ Comprehensive | ✅ Basic |
 | **Resource Monitoring** | ✅ | ✅ | ✅ CloudWatch | ✅ | ✅ |
 | **Ensemble Analysis** | ❌ | ❌ | ❌ | Optional | ✅ |
@@ -385,9 +523,50 @@ raptor profile --counts test_data.csv --config config_ensemble.yaml
 | **Cloud Integration** | ❌ | ❌ | ✅ AWS | ❌ | ❌ |
 | **Biological Interpretation** | ❌ | ❌ | ✅ Basic | ✅ Comprehensive | ✅ Basic |
 | **Publication Figures** | Basic | Advanced | Basic | 300 DPI | Advanced |
+| **Methods Text Generation** | ❌ | ❌ | ❌ | ✅ | ❌ |
 | **Time (typical)** | 1-2h | 4-24h | 2-4h | 3-6h | 4-8h |
 | **RAM Required** | 16 GB | 32-64 GB | 32 GB | 32 GB | 48-64 GB |
 | **Complexity** | ⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
+
+---
+
+##  Best Practices
+
+### 1. **Always Start Simple**
+Begin with `config_minimal.yaml` to understand your data, then move to advanced configs.
+
+### 2. **Use Adaptive Thresholds**
+Don't use arbitrary thresholds! Enable ATO for data-driven cutoffs:
+```yaml
+threshold_optimizer:
+  enabled: true
+  goal: "balanced"
+```
+
+### 3. **Document Your Choices**
+```yaml
+# In your custom config, add comments:
+threshold_optimizer:
+  goal: "validation"  # Clinical study requires stringent control
+```
+
+### 4. **Version Control Your Configs**
+```bash
+git add config_custom.yaml
+git commit -m "Analysis config for Project X"
+```
+
+### 5. **Test Before Production**
+```bash
+# Test with small dataset first
+raptor profile --counts test_data.csv --config config_ensemble.yaml
+```
+
+### 6. **Save Configs with Results**
+```bash
+# RAPTOR automatically saves the config used
+# Find it in: raptor_output/analysis_parameters.yaml
+```
 
 ---
 
@@ -404,6 +583,9 @@ raptor generate-config --output default_config.yaml
 
 ### Common Questions
 
+**Q: What thresholds should I use?**
+A: Enable the Adaptive Threshold Optimizer! It will determine data-driven thresholds based on your specific dataset.
+
 **Q: Can I combine multiple configs?**
 A: Yes! Use `--config` multiple times. Later configs override earlier ones:
 ```bash
@@ -419,21 +601,26 @@ A: Use `config_minimal.yaml` or reduce `default_threads` in your config.
 **Q: Can I use ensemble + cloud?**
 A: Absolutely! Combine settings from both configs.
 
+**Q: How do I cite the threshold optimization?**
+A: Use the auto-generated methods text from `config_publication_ready.yaml`.
+
 ---
 
 ##  Additional Resources
 
 - **RAPTOR Documentation**: See `docs/` folder
+- **Threshold Optimizer Docs**: `docs/THRESHOLD_OPTIMIZER.md`
 - **Tutorials**: `docs/tutorials/`
 - **GitHub Issues**: https://github.com/AyehBlk/RAPTOR/issues
 - **Email**: ayehbolouki1988@gmail.com
 
 ---
 
-##  Version History
+## 📜 Version History
 
-- **v2.1.0** (2025-11): Initial example configs with 8 major new features
-- **v2.0.0** (2023): Base configuration system
+- **v2.1.1** (2025-12): Adaptive Threshold Optimizer, enhanced configs
+- **v2.1.0** (2025-06): PyPI release, initial example configs with 8 major new features
+- **v2.0.0** (2024): Base configuration system
 
 ---
 

@@ -1,7 +1,7 @@
-🦖 RAPTOR ULTIMATE  **NEW in v2.1.0**
+🦖 RAPTOR ULTIMATE  **NEW in v2.1.1**
 ══════════════════════════════════════════════════════════════
 
- TOTAL: 23 FILES (~600 KB)
+ TOTAL: 28 FILES (~700 KB)
 
 ═══════════════════════════════════════════════════════════════
  QUICK START (3 files)
@@ -14,36 +14,64 @@
  COMMAND: python install.py
 
 ═══════════════════════════════════════════════════════════════
- INTERACTIVE DASHBOARD (3 files) ⭐ **NEW in v2.1.0**
+ INTERACTIVE DASHBOARD (3 files) ⭐ **UPDATED in v2.1.1**
 
 ═══════════════════════════════════════════════════════════════
 
-4. dashboard.py                  - Web-based interface (48 KB)
+4. dashboard.py                  - Web-based interface (52 KB) - includes ATO page!
 5. launch_dashboard.py           - One-command launcher
 6. DASHBOARD_GUIDE.md            - Dashboard documentation
 
  COMMAND: python launch_dashboard.py
 
 ═══════════════════════════════════════════════════════════════
- ML RECOMMENDATION SYSTEM (4 files)**NEW in v2.1.0**
+🎯 THRESHOLD OPTIMIZER MODULE (3 files) **NEW in v2.1.1**
 
 ═══════════════════════════════════════════════════════════════
 
-7. ml_recommender.py             - Core ML engine (27 KB)
-8. synthetic_benchmarks.py       - Training data generator
-9. example_ml_workflow.py        - Complete demo
-10. ML_RECOMMENDER_README.md     - ML documentation
+7. threshold_optimizer/__init__.py  - Module exports
+8. threshold_optimizer/ato.py       - AdaptiveThresholdOptimizer class (35 KB)
+9. threshold_optimizer/visualization.py - Plotting functions (19 KB)
+
+ COMMAND: 
+python -c "
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+df = pd.read_csv('de_results.csv')
+result = optimize_thresholds(df, goal='discovery')
+print(f'Optimal |logFC| > {result.logfc_threshold:.2f}')
+print(result.methods_text)  # Publication-ready!
+"
+
+FEATURES:
+  ✓ Data-driven logFC threshold selection
+  ✓ Multiple p-value adjustment methods (BH, BY, Storey, Holm, Bonferroni)
+  ✓ π₀ estimation for true null proportion
+  ✓ Three analysis goals (discovery, balanced, validation)
+  ✓ Auto-generated publication methods text
+  ✓ Volcano plots with optimized thresholds
+  ✓ Dashboard integration
+
+═══════════════════════════════════════════════════════════════
+ ML RECOMMENDATION SYSTEM (4 files)
+
+═══════════════════════════════════════════════════════════════
+
+10. ml_recommender.py             - Core ML engine (27 KB)
+11. synthetic_benchmarks.py       - Training data generator
+12. example_ml_workflow.py        - Complete demo
+13. ML_RECOMMENDER_README.md      - ML documentation
 
  COMMAND: python example_ml_workflow.py
 
 ═══════════════════════════════════════════════════════════════
- DATA QUALITY ASSESSMENT (3 files) ⭐**NEW in v2.1.0**
+ DATA QUALITY ASSESSMENT (3 files)
 
 ═══════════════════════════════════════════════════════════════
 
-11. data_quality_assessment.py   - Quality & batch detection (29 KB)
-12. example_quality_assessment.py - Quality examples
-13. DATA_QUALITY_GUIDE.md        - Quality documentation
+14. data_quality_assessment.py   - Quality & batch detection (29 KB)
+15. example_quality_assessment.py - Quality examples
+16. DATA_QUALITY_GUIDE.md        - Quality documentation
 
  COMMAND: python example_quality_assessment.py
 
@@ -55,66 +83,80 @@ FEATURES:
   ✓ Actionable recommendations
 
 ═══════════════════════════════════════════════════════════════
- COMMAND-LINE INTERFACE (2 files)**NEW in v2.1.0**
+ COMMAND-LINE INTERFACE (2 files)
 
 ═══════════════════════════════════════════════════════════════
 
-14. raptor_ml_cli.py             - Enhanced CLI
-15. test_ml_system.py            - Test suite
+17. raptor_ml_cli.py             - Enhanced CLI
+18. test_ml_system.py            - Test suite
 
  COMMAND: python raptor_ml_cli.py --help
 
 ═══════════════════════════════════════════════════════════════
- DOCUMENTATION (8 files)**NEW in v2.1.0**
+ DOCUMENTATION (12 files) **UPDATED in v2.1.1**
 
 ═══════════════════════════════════════════════════════════════
 
-16. COMPLETE_README.md           - ⭐ MASTER GUIDE (17 KB)
-17. ULTIMATE_SUMMARY.md          - Complete overview (22 KB)
-18. QUALITY_ASSESSMENT_UPGRADE.md - Quality module docs ⭐ NEW
-19. QUICK_START.md               - 5-minute guide
-20. MANIFEST.md                  - File index & paths
-21. IMPLEMENTATION_SUMMARY.md    - Technical details
-22. ARCHITECTURE_DIAGRAM.md      - System architecture
-23. README.md                    - Package overview
+19. COMPLETE_README.md           - ⭐ MASTER GUIDE (15 KB)
+20. THRESHOLD_OPTIMIZER.md       - 🆕 ATO comprehensive guide (20 KB) **NEW!**
+21. QUICK_START.md               - 5-minute guide (includes ATO)
+22. CHANGELOG.md                 - Version history (v2.1.1)
+23. INSTALLATION.md              - Detailed installation
+24. DASHBOARD.md                 - Web interface guide (with ATO page)
+25. DOCUMENTATION_INDEX.md       - Documentation navigation
+26. MIGRATION_GUIDE.md           - v2.1.0 → v2.1.1 migration
+27. PIPELINES.md                 - Pipeline reference (with ATO compatibility)
+28. PROFILE_RECOMMEND.md         - Profiling & ML recommendations
+29. ENSEMBLE.md                  - Ensemble analysis (with ATO integration)
+30. TROUBLESHOOTING.md           - Problem solving (with ATO issues)
 
  READING ORDER:
-  1. COMPLETE_README.md (25 min) - Everything you need
-  2. QUICK_START.md (5 min) - Get running fast
-  3. QUALITY_ASSESSMENT_UPGRADE.md (15 min) - New features ⭐
-  4. DASHBOARD_GUIDE.md (20 min) - Web interface
+  1. QUICK_START.md (5 min) - Get running fast
+  2. THRESHOLD_OPTIMIZER.md (15 min) - 🎯 NEW ATO feature! ⭐
+  3. COMPLETE_README.md (25 min) - Everything you need
+  4. DASHBOARD.md (20 min) - Web interface + ATO page
   5. Others as needed
 
 ═══════════════════════════════════════════════════════════════
- WHAT'S INCLUDED in v2.1.0
+ WHAT'S INCLUDED in v2.1.1
 ═══════════════════════════════════════════════════════════════
 
- SYSTEM 1: ML-Based Recommendations
+🆕 SYSTEM 1: Adaptive Threshold Optimizer (NEW!)
+   ├─ Data-driven logFC thresholds
+   ├─ Multiple p-value adjustment methods
+   ├─ π₀ estimation
+   ├─ Three analysis goals
+   ├─ Publication methods text
+   └─ Dashboard integration
+
+ SYSTEM 2: ML-Based Recommendations
    ├─ 85-90% accuracy
    ├─ <0.1s predictions
    ├─ Confidence scoring (0-100%)
    ├─ 30+ intelligent features
    └─ RandomForest & GradientBoosting
 
- SYSTEM 2: Resource Monitoring
+ SYSTEM 3: Resource Monitoring
    ├─ CPU, Memory, Disk, GPU tracking
    ├─ <1% overhead
    ├─ Real-time visualization
    └─ Multi-pipeline comparison
 
- SYSTEM 3: Ensemble Analysis
+ SYSTEM 4: Ensemble Analysis
    ├─ 5 combination methods
    ├─ 20-30% fewer false positives
    ├─ Agreement analysis
-   └─ High-confidence genes
+   ├─ High-confidence genes
+   └─ 🆕 ATO integration for uniform thresholds
 
- SYSTEM 4: Interactive Dashboard
+ SYSTEM 5: Interactive Dashboard
    ├─ Web-based interface
    ├─ No coding required
    ├─ All features integrated
-   └─ Interactive visualizations
+   ├─ Interactive visualizations
+   └─ 🆕 Threshold Optimizer page
 
- SYSTEM 5: Quality Assessment
+ SYSTEM 6: Quality Assessment
    ├─ 6-component scoring
    ├─ Batch effect detection
    ├─ Outlier identification
@@ -136,9 +178,19 @@ python launch_dashboard.py
 # ML Recommendation:
 python raptor_ml_cli.py profile --counts data.csv --use-ml
 
+# 🎯 Threshold Optimization (NEW!):
+python -c "
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+df = pd.read_csv('de_results.csv')
+result = optimize_thresholds(df, goal='balanced')
+print(f'Optimal |logFC| > {result.logfc_threshold:.2f}')
+print(result.methods_text)  # Copy to paper!
+"
+
 # Quality Assessment:
 python -c "
-from data_quality_assessment import quick_quality_check
+from raptor.data_quality_assessment import quick_quality_check
 import pandas as pd
 counts = pd.read_csv('data.csv', index_col=0)
 report = quick_quality_check(counts, plot=True)
@@ -147,6 +199,7 @@ report = quick_quality_check(counts, plot=True)
 # Dashboard:
 python launch_dashboard.py
 # → Opens at http://localhost:8501
+# → Click "🎯 Threshold Optimizer" for ATO
 
 ═══════════════════════════════════════════════════════════════
  USAGE PATHS
@@ -156,84 +209,105 @@ PATH 1: BEGINNER (Dashboard) ⭐ RECOMMENDED
   Step 1: python install.py
   Step 2: python launch_dashboard.py
   Step 3: Use web interface
+  Step 4: Click "🎯 Threshold Optimizer" for DE results
   Time: 10 minutes | Coding: None
 
-PATH 2: COMMAND-LINE USER
+PATH 2: THRESHOLD-FOCUSED (NEW!) 🎯
+  Step 1: pip install raptor-rnaseq
+  Step 2: from raptor.threshold_optimizer import optimize_thresholds
+  Step 3: result = optimize_thresholds(de_results, goal='balanced')
+  Step 4: Copy result.methods_text to paper
+  Time: 5 minutes | Coding: Minimal
+
+PATH 3: COMMAND-LINE USER
   Step 1: pip install -r requirements_ml.txt
   Step 2: python example_ml_workflow.py
   Step 3: python raptor_ml_cli.py profile --counts data.csv --use-ml
   Time: 15 minutes | Coding: Basic CLI
 
-PATH 3: PYTHON DEVELOPER
+PATH 4: PYTHON DEVELOPER
   Step 1: pip install -r requirements_ml.txt
-  Step 2: from ml_recommender import MLPipelineRecommender
-  Step 3: Use Python API
+  Step 2: from raptor import MLPipelineRecommender
+  Step 3: from raptor.threshold_optimizer import optimize_thresholds
+  Step 4: Use Python API
   Time: 5 minutes | Coding: Full control
 
-PATH 4: QUALITY-FOCUSED
+PATH 5: QUALITY-FOCUSED
   Step 1: pip install -r requirements_ml.txt
-  Step 2: from data_quality_assessment import quick_quality_check
+  Step 2: from raptor.data_quality_assessment import quick_quality_check
   Step 3: report = quick_quality_check(counts, metadata, plot=True)
   Time: 5 minutes | Coding: Minimal
 
 ═══════════════════════════════════════════════════════════════
-DATA QUALITY ASSESSMENT MODULE in new version
+🎯 THRESHOLD OPTIMIZER MODULE (NEW in v2.1.1)
 ═══════════════════════════════════════════════════════════════
 
- DATA QUALITY ASSESSMENT MODULE
+ ADAPTIVE THRESHOLD OPTIMIZER (ATO)
 
 New Files:
-  • data_quality_assessment.py (29 KB)
-  • example_quality_assessment.py (11 KB)
-  • DATA_QUALITY_GUIDE.md (18 KB)
-  • QUALITY_ASSESSMENT_UPGRADE.md (15 KB)
+  • threshold_optimizer/__init__.py
+  • threshold_optimizer/ato.py (35 KB)
+  • threshold_optimizer/visualization.py (19 KB)
+  • THRESHOLD_OPTIMIZER.md (20 KB)
+  • MIGRATION_GUIDE.md (13 KB)
 
 Features:
-  ✓ 6-component quality scoring (0-100)
-     - Library quality
-     - Gene detection
-     - Outlier detection
-     - Variance structure
-     - Batch effects ⭐
-     - Biological signal
-
-  ✓ Batch Effect Detection
-     - Metadata-based (F-statistic)
-     - Unsupervised clustering
-     - Strength quantification
-     - Correction recommendations
-
-  ✓ Comprehensive Visualization
-     - 7-panel quality report
-     - PCA plots
-     - Score gauges
-     - Publication-quality
+  ✓ Data-driven threshold selection
+     - No more arbitrary |logFC| > 1
+     - Optimized for YOUR data
+  
+  ✓ P-value Adjustment Methods
+     - Benjamini-Hochberg (BH)
+     - Benjamini-Yekutieli (BY)
+     - Storey q-value
+     - Holm
+     - Hochberg
+     - Bonferroni
+  
+  ✓ LogFC Optimization Methods
+     - Auto/Consensus (default)
+     - MAD-based
+     - Mixture model
+     - Power-based
+     - Percentile
+  
+  ✓ Analysis Goals
+     - discovery (exploratory)
+     - balanced (publication)
+     - validation (stringent)
+  
+  ✓ Publication Support
+     - Auto-generated methods text
+     - Copy directly to paper!
 
 Usage:
-  from data_quality_assessment import quick_quality_check
-  report = quick_quality_check(counts, metadata, plot=True)
+  from raptor.threshold_optimizer import optimize_thresholds
+  result = optimize_thresholds(de_results, goal='balanced')
+  print(result.methods_text)
 
 ═══════════════════════════════════════════════════════════════
  STATISTICS
 ═══════════════════════════════════════════════════════════════
 
 Code:
-  • Python files: 10
-  • Total lines: ~6,000
+  • Python files: 13
+  • Total lines: ~8,000
   • Test coverage: Comprehensive
 
 Documentation:
-  • Markdown files: 11
-  • Total words: ~50,000
-  • Reading time: ~4 hours (all docs)
-  • Essential reading: ~1 hour
+  • Markdown files: 14
+  • Total words: ~60,000
+  • Reading time: ~5 hours (all docs)
+  • Essential reading: ~1.5 hours
 
 Features:
-  • Systems: 5 (ML, Monitor, Ensemble, Dashboard, Quality)
+  • Systems: 6 (ATO, ML, Monitor, Ensemble, Dashboard, Quality)
   • ML models: 2 (RandomForest, GradientBoosting)
   • Ensemble methods: 5
   • Quality components: 6
-  • Dashboard pages: 6
+  • Dashboard pages: 7 (includes ATO page)
+  • P-value methods: 6
+  • LogFC methods: 5
 
 ═══════════════════════════════════════════════════════════════
  VERIFICATION CHECKLIST
@@ -250,6 +324,11 @@ After installation:
   □ Can run quality assessment
   □ Can export results
 
+NEW in v2.1.1:
+  □ from raptor.threshold_optimizer import optimize_thresholds works
+  □ Dashboard shows "🎯 Threshold Optimizer" page
+  □ ATO generates methods text
+
 ═══════════════════════════════════════════════════════════════
  GETTING HELP
 ═══════════════════════════════════════════════════════════════
@@ -257,8 +336,8 @@ After installation:
 Documentation:
   • COMPLETE_README.md - Master guide
   • QUICK_START.md - Fast start
-  • QUALITY_ASSESSMENT_UPGRADE.md - New features
-  • DATA_QUALITY_GUIDE.md - Quality module
+  • THRESHOLD_OPTIMIZER.md - 🆕 ATO guide
+  • MIGRATION_GUIDE.md - Upgrade guide
 
 Examples:
   • example_ml_workflow.py - ML demo
@@ -272,16 +351,19 @@ Contact:
   • GitHub: https://github.com/AyehBlk/RAPTOR
 
 ═══════════════════════════════════════════════════════════════
- RAPTOR ULTIMATE v2.1.0 FEATURES
+ RAPTOR ULTIMATE v2.1.1 FEATURES
 ═══════════════════════════════════════════════════════════════
 
+✅ 🎯 Adaptive Threshold Optimizer (NEW!)
+✅ Data-driven logFC thresholds (NEW!)
+✅ Publication methods text (NEW!)
 ✅ AI-powered pipeline recommendations (87% accuracy)
 ✅ Real-time resource monitoring (<1% overhead)
 ✅ Ensemble analysis (5 methods, -33% false positives)
 ✅ Interactive web dashboard (no coding!)
-✅ Advanced quality assessment (6 components) ⭐ NEW
-✅ Batch effect detection (F-statistic) ⭐ NEW
-✅ Outlier identification (3 methods) ⭐ NEW
+✅ Advanced quality assessment (6 components)
+✅ Batch effect detection (F-statistic)
+✅ Outlier identification (3 methods)
 ✅ Comprehensive visualization
 ✅ Complete CLI & Python API
 ✅ Production-ready code
@@ -290,9 +372,9 @@ Contact:
 ═══════════════════════════════════════════════════════════════
 
 Created by Ayeh Bolouki
-Belgium, November 2025
+Belgium, December 2025
 
-🦖 RAPTOR - The Most Advanced RNA-seq Analysis System Available
+🦖 RAPTOR v2.1.1 - The Most Advanced RNA-seq Analysis System Available
 
 For updates: https://github.com/AyehBlk/RAPTOR
 

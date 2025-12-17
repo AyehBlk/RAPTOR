@@ -13,12 +13,26 @@
 - Interactive data exploration
 - Parameter tuning without re-running analysis
 - Generating reports from the dashboard
+- **NEW in v2.1.1**: Using the Threshold Optimizer tab
 
 ---
 
-## Prerequisites
+## 🆕 What's New in v2.1.1
 
-- RAPTOR v2.1.0+ installed
+**🎯 Threshold Optimizer Tab** - No-code threshold optimization:
+
+```
+Dashboard → 🎯 Threshold Optimizer tab
+  1. Upload DE results
+  2. Select columns
+  3. Choose goal (discovery/balanced/validation)
+  4. Click "Optimize"
+  5. Download results + methods text
+```
+
+No coding required! See [Step 4: Threshold Optimizer Tab](#step-4-threshold-optimizer-tab) below.
+
+- RAPTOR v2.1.1+ installed
 - Basic web browser skills
 - Completed Tutorial 1 (recommended)
 
@@ -32,7 +46,7 @@ Run analysis → Wait → See results → Want to try different parameters → R
 ```
  **Time-consuming and inefficient**
 
-### Dashboard (v2.1.0)
+### Dashboard (v2.1.1)
 ```
 Run analysis ONCE → Explore interactively → Try different thresholds → See results instantly
 ```
@@ -54,7 +68,7 @@ raptor dashboard --results results/
 
 **You'll see:**
 ```
-RAPTOR Interactive Dashboard v2.1.0
+RAPTOR Interactive Dashboard v2.1.1
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✓ Loading results from: results/
@@ -108,14 +122,15 @@ When you open the dashboard, you'll see:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Six Main Tabs:
+### Seven Main Tabs:
 
-1. ** Overview** - Summary of your analysis
-2. ** Recommendations** - Pipeline suggestions
-3. ** Explore Data** - Interactive plots
-4. ** Monitor** - Resource usage (live!)
-5. ** Parameters** - Tune thresholds
-6. ** Reports** - Generate documents
+1. **📊 Overview** - Summary of your analysis
+2. **🎯 Recommendations** - Pipeline suggestions
+3. **🔍 Explore Data** - Interactive plots
+4. **📈 Monitor** - Resource usage (live!)
+5. **⚙️ Parameters** - Tune thresholds
+6. **🎯 Threshold Optimizer** - Data-driven thresholds (NEW!)
+7. **📄 Reports** - Generate documents
 
 ---
 
@@ -191,6 +206,84 @@ See and compare pipeline recommendations:
 - Click "[Feature Importance]" for explanation
 - Use sliders to adjust resource constraints
 - Compare multiple recommendations side-by-side
+
+---
+
+## Step 4.5: 🎯 Threshold Optimizer Tab (NEW in v2.1.1)
+
+Data-driven threshold optimization without coding!
+
+### Interface Overview
+
+```
+┌───────────────────────────────────────────────────────┐
+│  🎯 Threshold Optimizer                               │
+├───────────────────────────────────────────────────────┤
+│                                                       │
+│  📤 Upload DE Results                                 │
+│  [Choose File] deseq2_results.csv                     │
+│                                                       │
+│  📊 Configure Columns                                 │
+│  logFC column:  [log2FoldChange ▼]                   │
+│  p-value column: [pvalue ▼]                          │
+│                                                       │
+│  🎯 Analysis Goal                                     │
+│  ○ Discovery (more permissive)                       │
+│  ● Balanced (recommended)                            │
+│  ○ Validation (stringent)                            │
+│                                                       │
+│  [🚀 Optimize Thresholds]                            │
+│                                                       │
+└───────────────────────────────────────────────────────┘
+```
+
+### Using the Threshold Optimizer
+
+1. **Upload your DE results** (CSV from DESeq2, edgeR, limma, etc.)
+
+2. **Select the correct columns**:
+   - logFC column: log2FoldChange (DESeq2), logFC (edgeR/limma)
+   - p-value column: pvalue (DESeq2), PValue (edgeR), P.Value (limma)
+
+3. **Choose analysis goal**:
+   - **Discovery**: More candidates, exploratory research
+   - **Balanced**: Standard FDR control (default)
+   - **Validation**: Fewer false positives, clinical/important
+
+4. **Click "Optimize Thresholds"**
+
+### Results Display
+
+```
+┌───────────────────────────────────────────────────────┐
+│  ✅ Optimization Complete                             │
+├───────────────────────────────────────────────────────┤
+│                                                       │
+│  📊 Results Summary                                   │
+│  ├─ Optimal |logFC| threshold: 0.847                 │
+│  ├─ π₀ estimate: 0.782                               │
+│  ├─ FDR threshold: 0.05                              │
+│  └─ Significant genes: 623                           │
+│                                                       │
+│  📝 Methods Text Preview:                            │
+│  ┌─────────────────────────────────────────────┐     │
+│  │ Differential expression significance         │     │
+│  │ thresholds were determined using the        │     │
+│  │ Adaptive Threshold Optimizer (ATO) from     │     │
+│  │ RAPTOR v2.1.1...                            │     │
+│  └─────────────────────────────────────────────┘     │
+│                                                       │
+│  [📥 Download Results] [📄 Download Methods Text]    │
+│                                                       │
+└───────────────────────────────────────────────────────┘
+```
+
+### Download Options
+
+- **Download Results**: CSV with significant genes using ATO thresholds
+- **Download Methods Text**: Ready-to-use text for your paper
+
+**Pro tip**: Copy the methods text directly to your manuscript!
 
 ---
 
@@ -652,6 +745,6 @@ You've learned to:
 ---
 
 **Tutorial by Ayeh Bolouki**  
-For RAPTOR v2.1.0
+For RAPTOR v2.1.1
 
 *"See your data come alive!"* 

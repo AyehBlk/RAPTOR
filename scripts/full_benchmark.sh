@@ -1,6 +1,6 @@
 #!/bin/bash
 # =============================================================================
-# RAPTOR Full Benchmark Script - Version 2.1.0
+# RAPTOR Full Benchmark Script - Version 2.1.1
 # =============================================================================
 # Comprehensive pipeline benchmarking workflow with:
 # - Real-time resource monitoring
@@ -183,7 +183,7 @@ esac
 # Header
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║      RAPTOR FULL BENCHMARK WORKFLOW v2.1.0                ║"
+echo "║      RAPTOR FULL BENCHMARK WORKFLOW v2.1.1                ║"
 echo "║      Comprehensive RNA-seq Pipeline Comparison            ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""

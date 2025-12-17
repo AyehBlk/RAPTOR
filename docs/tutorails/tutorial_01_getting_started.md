@@ -1,4 +1,4 @@
-# Tutorial 01: Getting Started with RAPTOR v2.1.0
+# Tutorial 01: Getting Started with RAPTOR v2.1.1
 
 **Level**: Beginner  
 **Time**: 30-45 minutes  
@@ -6,7 +6,7 @@
 
 ---
 
-## 📋 What You'll Learn
+##  What You'll Learn
 
 By the end of this tutorial, you'll be able to:
 - ✅ Run RAPTOR's ML-powered pipeline recommendations
@@ -14,19 +14,41 @@ By the end of this tutorial, you'll be able to:
 - ✅ Profile your data with quality assessment
 - ✅ Understand pipeline selection based on data characteristics
 - ✅ Compare multiple pipelines automatically
+- ✅ **NEW in v2.1.1**: Apply data-driven threshold optimization
+
+---
+
+## 🆕 What's New in v2.1.1
+
+**Adaptive Threshold Optimizer (ATO)** - Replace arbitrary thresholds with data-driven cutoffs:
+
+```bash
+# Quick ATO example
+raptor optimize-thresholds --results deseq2_results.csv --goal balanced
+```
+
+ATO determines optimal |logFC| thresholds based on YOUR data characteristics, not arbitrary values like "1.0". Learn more in [Tutorial 07](tutorial_07_threshold_optimizer.md).
 
 ---
 
 ##  Prerequisites
 
 **Required**:
-- RAPTOR v2.1.0 installed ([see INSTALLATION.md](../INSTALLATION.md))
+- RAPTOR v2.1.1 installed ([see INSTALLATION.md](../INSTALLATION.md))
 - Basic command line knowledge
 - Count matrix or FASTQ files
 
 **Optional**:
 - Python 3.9+ for advanced features
 - Web browser for dashboard
+
+**Verify ATO is available**:
+```bash
+raptor --version
+# Should show: RAPTOR v2.1.1
+
+python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"
+```
 
 ---
 
@@ -84,7 +106,7 @@ cat profile_report.txt
 You'll see something like:
 
 ```
-=== RAPTOR v2.1.0 Profile Report ===
+=== RAPTOR v2.1.1 Profile Report ===
 Dataset: counts_simple.csv
 
  DATA CHARACTERISTICS:
@@ -154,6 +176,12 @@ This opens in your web browser at `http://localhost:5000`
 - Download results tables
 - Export publication-ready figures
 
+**5. 🎯 Threshold Optimizer Tab** (NEW in v2.1.1):
+- Upload DE results
+- Select analysis goal (discovery/balanced/validation)
+- Get data-driven thresholds
+- Download methods text for publications
+
 ### Try It Out
 
 1. **Upload Data**:
@@ -174,7 +202,62 @@ This opens in your web browser at `http://localhost:5000`
 
 ---
 
-##  Part 3: Command-Line Workflow (Traditional)
+## 🎯 Part 3: Threshold Optimization (NEW in v2.1.1)
+
+After running your pipeline, optimize your significance thresholds:
+
+### Why Data-Driven Thresholds?
+
+Traditional approach uses arbitrary cutoffs:
+```python
+# Why 1.0? Why not 0.5 or 1.5? 🤷
+significant = results[(abs(results['logFC']) > 1.0) & (results['padj'] < 0.05)]
+```
+
+ATO determines optimal thresholds based on YOUR data:
+
+### Command Line
+
+```bash
+raptor optimize-thresholds --results results/degs.csv \
+                           --goal balanced \
+                           --output threshold_results/
+```
+
+### Python
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+de_results = pd.read_csv('results/degs.csv')
+
+result = optimize_thresholds(
+    de_results,
+    logfc_col='log2FoldChange',
+    pvalue_col='pvalue',
+    goal='balanced'
+)
+
+print(f"Optimal |logFC|: {result.logfc_threshold:.3f}")
+print(f"Significant genes: {result.n_significant}")
+print(f"\nMethods text:\n{result.methods_text}")
+```
+
+### Dashboard
+
+In the 🎯 Threshold Optimizer tab:
+1. Upload your DE results
+2. Select the appropriate columns
+3. Choose your goal
+4. Click "Optimize"
+5. Download results and methods text
+
+**Learn more**: [Tutorial 07: Threshold Optimization](tutorial_07_threshold_optimizer.md)
+
+---
+
+##  Part 4: Command-Line Workflow (Traditional)
 
 If you prefer command-line or need automation:
 
@@ -231,7 +314,7 @@ raptor run --pipeline STAR-DESeq2 \
 
 ---
 
-##  Part 4: Quality Assessment (New in v2.1.0)
+## ✅ Part 5: Quality Assessment (New in v2.1.0)
 
 Check if your data meets quality standards:
 
@@ -255,7 +338,7 @@ Open `quality_report.html` in your browser to see:
 
 ---
 
-##  Part 5: Compare Multiple Pipelines
+##  Part 6: Compare Multiple Pipelines
 
 Want to see how different pipelines perform?
 
@@ -315,6 +398,8 @@ GENE003,2333.3,0.12,0.8234,0.9234,FALSE
 - **padj < 0.05**: Statistically significant
 - **significant = TRUE**: Meets both criteria
 
+**Note**: With ATO (v2.1.1), your logFC threshold may differ from 1.0 based on your data!
+
 ---
 
 ##  Best Practices
@@ -331,19 +416,25 @@ raptor profile --counts yourdata.csv --recommend
 raptor assess-quality --counts yourdata.csv
 ```
 
-### 3. Use the Dashboard for Exploration
+### 3. Use Data-Driven Thresholds (v2.1.1)
+```bash
+# Replace arbitrary |logFC| > 1
+raptor optimize-thresholds --results degs.csv --goal balanced
+```
+
+### 4. Use the Dashboard for Exploration
 ```bash
 # Great for interactive analysis
 raptor dashboard
 ```
 
-### 4. Use Command Line for Automation
+### 5. Use Command Line for Automation
 ```bash
 # For pipelines and scripts
 raptor run --pipeline $(raptor recommend --counts data.csv --best)
 ```
 
-### 5. Compare When Unsure
+### 6. Compare When Unsure
 ```bash
 # If ML confidence < 75%, compare top 3
 raptor compare --pipelines top3 --counts data.csv
@@ -351,7 +442,7 @@ raptor compare --pipelines top3 --counts data.csv
 
 ---
 
-##  Common Issues & Solutions
+## ❓ Common Issues & Solutions
 
 ### "No recommendations available"
 **Problem**: Not enough data characteristics  
@@ -385,6 +476,14 @@ raptor ensemble --counts yourdata.csv --pipelines all
 # This combines multiple pipelines for robust results
 ```
 
+### Threshold seems too permissive/stringent
+**Problem**: Default ATO goal doesn't match your needs  
+**Solution**: Try different goals
+```bash
+raptor optimize-thresholds --results degs.csv --goal discovery   # More permissive
+raptor optimize-thresholds --results degs.csv --goal validation  # More stringent
+```
+
 ---
 
 ##  What's Next?
@@ -415,6 +514,16 @@ Now that you know the basics, continue learning:
 - Integrate with other tools
 - [→ tutorial_05_dashboard.md](tutorial_05_dashboard.md)
 
+### Tutorial 06: Ensemble Methods
+- Combine multiple pipelines for robust results
+- Use ATO with ensemble analysis
+- [→ tutorial_06_ensemble.md](tutorial_06_ensemble.md)
+
+### Tutorial 07: Threshold Optimization 🎯 (NEW)
+- Master data-driven threshold selection
+- Generate publication methods text
+- [→ tutorial_07_threshold_optimizer.md](tutorial_07_threshold_optimizer.md)
+
 ---
 
 ##  Reference Documentation
@@ -423,6 +532,7 @@ Now that you know the basics, continue learning:
 - **[ML_GUIDE.md](../ML_GUIDE.md)**: Machine learning details
 - **[DASHBOARD_GUIDE.md](../DASHBOARD_GUIDE.md)**: Dashboard features
 - **[QUALITY_GUIDE.md](../QUALITY_GUIDE.md)**: Quality assessment
+- **[THRESHOLD_OPTIMIZER.md](../THRESHOLD_OPTIMIZER.md)**: ATO complete guide
 - **[API.md](../API.md)**: Python API reference
 
 ---
@@ -442,6 +552,9 @@ raptor assess-quality --counts data.csv
 # Run recommended pipeline
 raptor run --pipeline STAR-DESeq2 --counts data.csv --groups ...
 
+# Optimize thresholds (NEW in v2.1.1)
+raptor optimize-thresholds --results degs.csv --goal balanced
+
 # Compare top 3 pipelines
 raptor compare --pipelines top3 --counts data.csv --groups ...
 
@@ -450,11 +563,14 @@ raptor benchmark --counts data.csv --groups ...
 
 # Ensemble analysis
 raptor ensemble --counts data.csv --groups ... --method weighted
+
+# Ensemble with ATO (v2.1.1)
+raptor ensemble --counts data.csv --groups ... --use-ato --ato-goal balanced
 ```
 
 ---
 
-##  Need Help?
+## 🆘 Need Help?
 
 - **Quick questions**: See [FAQ.md](../FAQ.md)
 - **Problems**: Check [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)
@@ -463,13 +579,15 @@ raptor ensemble --counts data.csv --groups ... --method weighted
 
 ---
 
-##  Checklist: Tutorial Complete!
+## ✅ Checklist: Tutorial Complete!
 
 Did you:
-- [ ] Install RAPTOR v2.1.0
+- [ ] Install RAPTOR v2.1.1
+- [ ] Verify ATO is available
 - [ ] Get ML recommendations for test data
 - [ ] Try the interactive dashboard
 - [ ] Run a quality assessment
+- [ ] Try threshold optimization (NEW!)
 - [ ] Compare multiple pipelines
 - [ ] Understand the output files
 - [ ] Know where to get help
@@ -479,6 +597,6 @@ Did you:
 ---
 
 **Tutorial 01 - Getting Started**  
-*RAPTOR v2.1.0*  
+*RAPTOR v2.1.1*  
 Created by Ayeh Bolouki  
-Last updated: November 2025
+Last updated: December 2025

@@ -1,8 +1,14 @@
-# RAPTOR v2.1.0 Tutorials
+# RAPTOR v2.1.1 Tutorials
 
 **Welcome to RAPTOR Tutorials!** 🦖
 
-Step-by-step guides to master RNA-seq pipeline selection with ML-powered recommendations, ensemble analysis, and interactive dashboards.
+Step-by-step guides to master RNA-seq pipeline selection with ML-powered recommendations, ensemble analysis, interactive dashboards, and **data-driven threshold optimization**.
+
+---
+
+## 🆕 What's New in v2.1.1
+
+**Tutorial 07: Adaptive Threshold Optimizer (ATO)** - Replace arbitrary |logFC| > 1 with statistically-grounded, data-driven thresholds. Includes auto-generated methods text for publications!
 
 ---
 
@@ -10,12 +16,13 @@ Step-by-step guides to master RNA-seq pipeline selection with ML-powered recomme
 
 | Tutorial | Level | Time | Focus |
 |----------|-------|------|-------|
-| [Tutorial 01: Getting Started](tutorial_01_getting_started.md) | Beginner | 30-45 min | ML recommendations, dashboard basics |
-| [Tutorial 02: Advanced Benchmarking](tutorial_02_benchmarking.md) | Intermediate | 3-6 hours | Compare pipelines, ensemble analysis |
-| [Tutorial 03: Real Data Analysis](tutorial_03_real_data.md) | Intermediate | 2-4 hours | Quality assessment, production workflows |
+| [Tutorial 01: Getting Started](tutorial_01_getting_started.md) | Beginner | 30-45 min | ML recommendations, dashboard, ATO intro |
+| [Tutorial 02: Advanced Benchmarking](tutorial_02_benchmarking.md) | Intermediate | 3-6 hours | Compare pipelines, ensemble, ATO |
+| [Tutorial 03: Real Data Analysis](tutorial_03_real_data.md) | Intermediate | 2-4 hours | Quality assessment, production, ATO workflow |
 | [Tutorial 04: ML Recommendations](tutorial_04_ml_recommendations.md) | Advanced | 1-2 hours | Understanding ML, custom models |
-| [Tutorial 05: Interactive Dashboard](tutorial_05_dashboard.md) | Intermediate | 1 hour | Web interface, visual analysis |
-| [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md) | Advanced | 2-3 hours | Combining pipelines, robust results |
+| [Tutorial 05: Interactive Dashboard](tutorial_05_dashboard.md) | Intermediate | 1 hour | Web interface, 🎯 Threshold Optimizer tab |
+| [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md) | Advanced | 2-3 hours | Combining pipelines, ATO integration |
+| **[Tutorial 07: Threshold Optimizer](tutorial_07_threshold_optimizer.md)** 🎯 | Intermediate | 45 min | **Data-driven thresholds (NEW!)** |
 
 ---
 
@@ -30,24 +37,28 @@ Step-by-step guides to master RNA-seq pipeline selection with ML-powered recomme
    - Explore the dashboard
    - Run a simple analysis
 
-2. [Tutorial 03: Real Data Analysis](tutorial_03_real_data.md)
+2. [Tutorial 07: Threshold Optimizer](tutorial_07_threshold_optimizer.md)  (v2.1.1 NEW!)
+   - Replace arbitrary thresholds
+   - Generate methods text
+
+3. [Tutorial 03: Real Data Analysis](tutorial_03_real_data.md)
    - Prepare your own data
    - Quality assessment
-   - Run production analysis
+   - Run production analysis with ATO
    - Interpret results
 
-**You'll learn**: Basic operations, quality checking, and how to analyze your data confidently.
+**You'll learn**: Basic operations, quality checking, data-driven thresholds, and how to analyze your data confidently.
 
 ---
 
-### **Wet-Lab Scientists (No Coding Required)**
+###  **Wet-Lab Scientists (No Coding Required)**
 
 **Recommended path**:
 1. [Tutorial 01: Getting Started](tutorial_01_getting_started.md) → Dashboard basics
-2. [Tutorial 05: Interactive Dashboard](tutorial_05_dashboard.md) → Master web interface
-3. [Tutorial 03: Real Data Analysis](tutorial_03_real_data.md) → Analyze real data
+2. [Tutorial 05: Interactive Dashboard](tutorial_05_dashboard.md) → Master web interface + 🎯 Threshold Optimizer tab
+3. [Tutorial 07: Threshold Optimizer](tutorial_07_threshold_optimizer.md) → Deep dive into ATO
 
-**You'll learn**: Point-and-click RNA-seq analysis with no command line needed.
+**You'll learn**: Point-and-click RNA-seq analysis with no command line needed, including data-driven thresholds.
 
 ---
 
@@ -56,10 +67,11 @@ Step-by-step guides to master RNA-seq pipeline selection with ML-powered recomme
 **Power user path**:
 1. [Tutorial 01: Getting Started](tutorial_01_getting_started.md) → Quick overview
 2. [Tutorial 02: Advanced Benchmarking](tutorial_02_benchmarking.md) → Compare all pipelines
-3. [Tutorial 04: ML Recommendations](tutorial_04_ml_recommendations.md) → Understand ML deeply
-4. [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md) → Advanced techniques
+3. [Tutorial 07: Threshold Optimizer](tutorial_07_threshold_optimizer.md) 🎯 → Data-driven thresholds
+4. [Tutorial 04: ML Recommendations](tutorial_04_ml_recommendations.md) → Understand ML deeply
+5. [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md) → Advanced techniques + ATO
 
-**You'll learn**: Full command-line control, ensemble strategies, and ML customization.
+**You'll learn**: Full command-line control, ensemble strategies, ML customization, and data-driven thresholds.
 
 ---
 
@@ -68,10 +80,10 @@ Step-by-step guides to master RNA-seq pipeline selection with ML-powered recomme
 **Rigorous analysis path**:
 1. [Tutorial 03: Real Data Analysis](tutorial_03_real_data.md) → Quality assessment
 2. [Tutorial 02: Advanced Benchmarking](tutorial_02_benchmarking.md) → Systematic comparison
-3. [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md) → Robust results
-4. [Tutorial 04: ML Recommendations](tutorial_04_ml_recommendations.md) → Validate ML choices
+3. [Tutorial 07: Threshold Optimizer](tutorial_07_threshold_optimizer.md) 🎯 → **Publication methods text**
+4. [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md) → Robust results with ATO
 
-**You'll learn**: Publication-ready workflows with validation and ensemble analysis.
+**You'll learn**: Publication-ready workflows with validation, ensemble analysis, and auto-generated methods text.
 
 ---
 
@@ -124,7 +136,17 @@ raptor assess-quality --counts data.csv --detailed
 
 ---
 
-## 📖 Tutorial Details
+### "I need to justify my thresholds for publication" 🎯 (NEW!)
+
+→ **[Tutorial 07](tutorial_07_threshold_optimizer.md)**: Complete tutorial (45 minutes)
+```bash
+raptor optimize-thresholds --results degs.csv --goal balanced
+# Generates: optimal threshold + methods text for your paper!
+```
+
+---
+
+##  Tutorial Details
 
 ### Tutorial 01: Getting Started ⭐ **START HERE**
 
@@ -181,7 +203,7 @@ raptor assess-quality --counts data.csv --detailed
 
 ---
 
-### Tutorial 04: ML Recommendations (NEW in v2.1.0)
+### Tutorial 04: ML Recommendations (NEW in v2.1.1)
 
 **What you'll learn**:
 - How ML recommendations work
@@ -200,7 +222,7 @@ raptor assess-quality --counts data.csv --detailed
 
 ---
 
-### Tutorial 05: Interactive Dashboard (NEW in v2.1.0)
+### Tutorial 05: Interactive Dashboard (NEW in v2.1.1)
 
 **What you'll learn**:
 - Complete dashboard guide
@@ -219,7 +241,7 @@ raptor assess-quality --counts data.csv --detailed
 
 ---
 
-### Tutorial 06: Ensemble Methods (NEW in v2.1.0)
+### Tutorial 06: Ensemble Methods (NEW in v2.1.1)
 
 **What you'll learn**:
 - Advanced ensemble strategies
@@ -330,7 +352,7 @@ Ask questions, share experiences:
 ### Prerequisites
 
 **All tutorials require**:
-- RAPTOR v2.1.0 installed ([INSTALLATION.md](../INSTALLATION.md))
+- RAPTOR v2.1.1 installed ([INSTALLATION.md](../INSTALLATION.md))
 - Basic command-line knowledge (except Tutorial 05)
 - RNA-seq data or tutorial datasets
 
@@ -345,7 +367,7 @@ Ask questions, share experiences:
 ```bash
 # Verify installation
 raptor --version
-# Should show: RAPTOR v2.1.0
+# Should show: RAPTOR v2.1.1
 
 # Check installed pipelines
 raptor check-install
@@ -368,7 +390,7 @@ raptor download-tutorial-data
 - **[PIPELINES.md](../PIPELINES.md)**: Pipeline descriptions
 - **[FAQ.md](../FAQ.md)**: Common questions
 
-### New v2.1.0 Features
+### New v2.1.1 Features
 - **[ML_GUIDE.md](../ML_GUIDE.md)**: ML recommendations explained
 - **[ENSEMBLE_GUIDE.md](../ENSEMBLE_GUIDE.md)**: Ensemble methods
 - **[DASHBOARD_GUIDE.md](../DASHBOARD_GUIDE.md)**: Web interface
@@ -446,11 +468,11 @@ We'd love to hear from you:
 
 ##  Tutorial Version History
 
-### v2.1.0 (Current)
+### v2.1.1 (Current)
 -  Added Tutorial 04: ML Recommendations
 -  Added Tutorial 05: Interactive Dashboard  
 -  Added Tutorial 06: Ensemble Methods
--  Updated Tutorial 01-03 for v2.1.0 features
+-  Updated Tutorial 01-03 for v2.1.1 features
 -  Added quality assessment to all tutorials
 -  Improved all examples and figures
 
@@ -474,7 +496,7 @@ We'd love to hear from you:
 **Happy Learning!🦖**
 
 *Created by Ayeh Bolouki*  
-*Last updated: November 2025*
+*Last updated: December 2025*
 
 ---
 
@@ -486,5 +508,6 @@ We'd love to hear from you:
 - 📕 [Tutorial 04: ML Recommendations](tutorial_04_ml_recommendations.md)
 - 📔 [Tutorial 05: Interactive Dashboard](tutorial_05_dashboard.md)
 - 📓 [Tutorial 06: Ensemble Methods](tutorial_06_ensemble.md)
+- 🎯 [Tutorial 07: Threshold Optimizer](tutorial_07_threshold_optimizer.md) **(NEW!)**
 - 🏠 [Main Documentation](../DOCS_README.md)
 - 💻 [GitHub Repository](https://github.com/AyehBlk/RAPTOR)

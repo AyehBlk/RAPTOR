@@ -1,5 +1,5 @@
 # ============================================================================
-# RAPTOR v2.1.0 Configuration File
+# RAPTOR v2.1.1 Configuration File
 # RNA-seq Analysis Pipeline Testing and Optimization Resource
 # ============================================================================
 # 
@@ -8,16 +8,17 @@
 # Email: ayehbolouki1988@gmail.com
 # License: MIT
 #
-# This file contains all configuration parameters for RAPTOR v2.1.0
+# This file contains all configuration parameters for RAPTOR v2.1.1
 # including ML recommendations, quality assessment, resource monitoring,
-# ensemble analysis, dashboard, parameter optimization, and cloud integration
+# ensemble analysis, dashboard, parameter optimization, cloud integration,
+# and the NEW Adaptive Threshold Optimizer (ATO)
 # ============================================================================
 
 # ============================================================================
 # GENERAL SETTINGS
 # ============================================================================
 general:
-  version: "2.1.0"
+  version: "2.1.1"
   verbose: true
   log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
   log_file: "raptor.log"
@@ -96,7 +97,7 @@ profiling:
   profile_format: "json"  # json, yaml, csv
 
 # ============================================================================
-# ML-BASED PIPELINE RECOMMENDATION (NEW in v2.1.0)
+# ML-BASED PIPELINE RECOMMENDATION (v2.1.0)
 # ============================================================================
 ml_recommendation:
   # Model settings
@@ -169,7 +170,87 @@ ml_recommendation:
     metrics_file: "ml_performance.json"
 
 # ============================================================================
-# ADVANCED DATA QUALITY ASSESSMENT (NEW in v2.1.0)
+# ADAPTIVE THRESHOLD OPTIMIZER (NEW in v2.1.1)
+# ============================================================================
+# Data-driven threshold optimization for differential expression analysis
+# Replaces arbitrary cutoffs with scientifically justified values
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  
+  # Analysis goal determines error control strategy
+  # - discovery: Maximize true positives (FDR control) - exploratory analysis
+  # - validation: Minimize false positives (FWER control) - clinical/confirmation
+  # - balanced: Balance sensitivity and specificity - publication
+  goal: "discovery"
+  
+  # P-value adjustment methods
+  padj_methods:
+    # FDR control methods
+    benjamini_hochberg: true    # Standard FDR (default for discovery)
+    benjamini_yekutieli: true   # FDR under any dependence
+    storey_qvalue: true         # FDR with π₀ estimation (more power)
+    
+    # FWER control methods (for validation)
+    holm: true                  # Step-down, more powerful than Bonferroni
+    hochberg: true              # Step-up, valid for PRDS
+    bonferroni: true            # Most conservative
+  
+  # LogFC cutoff optimization methods
+  logfc_methods:
+    auto: true                  # Consensus of all methods (recommended)
+    mad: true                   # MAD-based robust estimation
+    mixture: true               # Gaussian mixture model
+    power: true                 # Power-based minimum effect
+    percentile: true            # 95th percentile of null
+  
+  # Default method selection
+  default_logfc_method: "auto"  # auto, mad, mixture, power, percentile
+  
+  # π₀ estimation settings (proportion of true nulls)
+  pi0_estimation:
+    enabled: true
+    methods:
+      - "storey"                # Storey's spline method
+      - "pounds"                # Pounds & Cheng method
+      - "histogram"             # Histogram-based
+    default_method: "storey"
+    lambda_range: [0.05, 0.95]
+    smooth_df: 3
+  
+  # Sample size information (for power-based method)
+  sample_sizes:
+    n1: 3                       # Samples in group 1
+    n2: 3                       # Samples in group 2
+    alpha: 0.05                 # Significance level
+    power: 0.8                  # Desired power
+  
+  # Threshold comparison
+  comparison:
+    enabled: true
+    logfc_values: [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+    padj_values: [0.001, 0.01, 0.05, 0.1]
+    generate_heatmap: true
+  
+  # Visualization
+  visualization:
+    volcano_plot: true
+    logfc_distribution: true
+    pvalue_distribution: true
+    threshold_heatmap: true
+    optimization_summary: true
+    plot_format: "png"          # png, pdf, svg
+    dpi: 300
+  
+  # Output
+  output:
+    save_optimized_results: true
+    save_significant_genes: true
+    generate_methods_text: true  # Publication-ready methods paragraph
+    export_formats: ["csv", "xlsx"]
+
+# ============================================================================
+# ADVANCED DATA QUALITY ASSESSMENT (v2.1.0)
 # ============================================================================
 quality_assessment:
   enabled: true
@@ -219,7 +300,7 @@ quality_assessment:
   plot_diagnostics: true
 
 # ============================================================================
-# REAL-TIME RESOURCE MONITORING (NEW in v2.1.0)
+# REAL-TIME RESOURCE MONITORING (v2.1.0)
 # ============================================================================
 resource_monitoring:
   enabled: true
@@ -255,7 +336,7 @@ resource_monitoring:
   plot_realtime: false
 
 # ============================================================================
-# ENSEMBLE PIPELINE STRATEGY (NEW in v2.1.0)
+# ENSEMBLE PIPELINE STRATEGY (v2.1.0)
 # ============================================================================
 ensemble:
   enabled: false  # Enable manually for ensemble analysis
@@ -295,7 +376,7 @@ ensemble:
   plot_comparisons: true
 
 # ============================================================================
-# INTERACTIVE WEB DASHBOARD (NEW in v2.1.0)
+# INTERACTIVE WEB DASHBOARD (v2.1.0, updated v2.1.1)
 # ============================================================================
 dashboard:
   enabled: false  # Launch separately with streamlit
@@ -308,6 +389,7 @@ dashboard:
   # Features to enable
   features:
     - "pipeline_recommendation"
+    - "threshold_optimizer"      # NEW in v2.1.1
     - "quality_assessment"
     - "resource_monitoring"
     - "ensemble_analysis"
@@ -316,49 +398,31 @@ dashboard:
   
   # Data refresh
   auto_refresh: true
-  refresh_interval: 5  # seconds
+  refresh_interval: 30  # seconds
   
-  # Visualization settings
-  plots:
-    theme: "plotly"  # plotly, seaborn, matplotlib
-    color_scheme: "viridis"
-    interactive: true
-    export_formats: ["png", "svg", "pdf"]
+  # Cache settings
+  cache_enabled: true
+  cache_ttl: 3600
   
-  # Authentication (optional)
-  authentication:
-    enabled: false
-    username: "admin"
-    password_hash: null  # Set securely
+  # Theme
+  theme: "light"  # light, dark, auto
+  
+  # Access control
+  require_auth: false
+  allowed_ips: []
 
 # ============================================================================
-# AUTOMATED PARAMETER OPTIMIZATION (NEW in v2.1.0)
+# PARAMETER OPTIMIZATION (v2.1.0)
 # ============================================================================
 parameter_optimization:
-  enabled: false  # Enable when needed
+  enabled: false
   
-  # Optimization method
-  method: "bayesian"  # grid_search, random_search, bayesian, adaptive
-  
-  # Search space definition
+  # Parameters to optimize
   parameters:
-    # DESeq2 parameters
-    deseq2:
-      alpha: [0.01, 0.05, 0.1]
-      lfcThreshold: [0, 0.5, 1.0]
-      cooksCutoff: [true, false]
-    
-    # edgeR parameters
-    edger:
-      fdr: [0.01, 0.05, 0.1]
-      lfc: [0, 0.5, 1.0]
-      prior_count: [1, 2, 5]
-    
-    # limma parameters
-    limma:
-      p_value: [0.01, 0.05, 0.1]
-      lfc: [0, 0.5, 1.0]
-      trend: [true, false]
+    normalization: ["TMM", "RLE", "upper_quartile"]
+    filter_method: ["edgeR", "DESeq2", "CPM"]
+    test_method: ["QLF", "LRT", "exact"]
+    dispersion_method: ["tagwise", "common", "trended"]
   
   # Optimization settings
   grid_search:
@@ -392,7 +456,7 @@ parameter_optimization:
   plot_optimization: true
 
 # ============================================================================
-# AUTOMATED REPORTING WITH INTERPRETATION (NEW in v2.1.0)
+# AUTOMATED REPORTING WITH INTERPRETATION (v2.1.0, updated v2.1.1)
 # ============================================================================
 automated_reporting:
   enabled: true
@@ -408,6 +472,7 @@ automated_reporting:
     - "data_profiling"
     - "quality_assessment"
     - "pipeline_recommendation"
+    - "threshold_optimization"    # NEW in v2.1.1
     - "differential_expression"
     - "enrichment_analysis"
     - "resource_usage"
@@ -446,6 +511,7 @@ automated_reporting:
     enrichment_bar: true
     enrichment_dot: true
     network_graph: true
+    threshold_optimization: true  # NEW in v2.1.1
   
   # Report customization
   template: "default"  # default, minimal, detailed, publication
@@ -454,7 +520,7 @@ automated_reporting:
   timestamp: true
 
 # ============================================================================
-# CLOUD INTEGRATION & SCALABILITY (NEW in v2.1.0)
+# CLOUD INTEGRATION & SCALABILITY (v2.1.0)
 # ============================================================================
 cloud:
   enabled: false
@@ -494,7 +560,7 @@ cloud:
   # Container settings
   container:
     enabled: true
-    image: "ayehblk/raptor:2.1.0"
+    image: "ayehblk/raptor:2.1.1"
     registry: "docker.io"
     pull_policy: "IfNotPresent"
   
@@ -567,12 +633,13 @@ benchmarking:
 # ============================================================================
 statistics:
   # Differential expression thresholds
+  # NOTE: Use threshold_optimizer for data-driven thresholds (recommended)
   fdr_threshold: 0.05
   log_fold_change_threshold: 1.0
   p_value_threshold: 0.05
   
   # Multiple testing correction
-  adjustment_method: "BH"  # BH (Benjamini-Hochberg), bonferroni, holm, hochberg
+  adjustment_method: "BH"  # BH (Benjamini-Hochberg), bonferroni, holm, hochberg, BY, qvalue
   
   # Effect size filters
   min_base_mean: 10
@@ -584,6 +651,9 @@ statistics:
     enabled: false
     method: "combat"  # combat, limma, sva
     preserve_design: true
+  
+  # Use Adaptive Threshold Optimizer (v2.1.1)
+  use_adaptive_thresholds: true  # Recommended: let ATO determine optimal thresholds
 
 # ============================================================================
 # PIPELINE SETTINGS

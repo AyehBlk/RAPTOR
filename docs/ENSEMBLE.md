@@ -1,4 +1,4 @@
-#  RAPTOR v2.1.0 Ensemble Analysis Guide
+# 🎭 RAPTOR v2.1.1 Ensemble Analysis Guide
 
 **Combine Multiple Pipelines for Robust Results**
 
@@ -6,22 +6,41 @@ Ensemble analysis combines results from multiple RNA-seq pipelines to generate m
 
 ---
 
-##  Table of Contents
+## 🆕 What's New in v2.1.1
+
+### 🎯 Adaptive Threshold Optimizer (ATO) Integration
+
+- **Uniform Thresholds** - Apply data-driven thresholds across all pipelines
+- **Ensemble-Optimized Cutoffs** - Thresholds optimized for combined results
+- **Publication Methods Text** - Auto-generated for ensemble analyses
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+
+# After ensemble combination, optimize thresholds
+result = optimize_thresholds(ensemble_results, goal='balanced')
+print(f"Uniform threshold for all pipelines: |logFC| > {result.logfc_threshold:.2f}")
+```
+
+---
+
+## 📋 Table of Contents
 
 1. [Overview](#overview)
 2. [Why Use Ensemble Analysis](#why-use-ensemble-analysis)
 3. [Quick Start](#quick-start)
 4. [Ensemble Methods](#ensemble-methods)
-5. [Running Ensemble Analysis](#running-ensemble-analysis)
-6. [Interpreting Results](#interpreting-results)
-7. [Advanced Options](#advanced-options)
-8. [Best Practices](#best-practices)
-9. [Case Studies](#case-studies)
-10. [Troubleshooting](#troubleshooting)
+5. [🎯 ATO Integration](#ato-integration) - **NEW!**
+6. [Running Ensemble Analysis](#running-ensemble-analysis)
+7. [Interpreting Results](#interpreting-results)
+8. [Advanced Options](#advanced-options)
+9. [Best Practices](#best-practices)
+10. [Case Studies](#case-studies)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
-##  Overview
+## 🌟 Overview
 
 ### What is Ensemble Analysis?
 
@@ -29,8 +48,8 @@ Ensemble analysis runs multiple RNA-seq pipelines on the same data and combines 
 
 ```
 Pipeline 1 (STAR-RSEM-DESeq2)  ]
-Pipeline 3 (Salmon-edgeR)       ] → Ensemble → Robust
-Pipeline 4 (Kallisto-Sleuth)    ]   Analysis    Results
+Pipeline 3 (Salmon-edgeR)       ] → Ensemble → 🎯 ATO → Robust
+Pipeline 4 (Kallisto-DESeq2)    ]   Analysis   Thresholds  Results
 ```
 
 ### Key Benefits
@@ -38,12 +57,12 @@ Pipeline 4 (Kallisto-Sleuth)    ]   Analysis    Results
 ✅ **More Robust** - Reduces pipeline-specific biases  
 ✅ **Higher Confidence** - Genes found by multiple methods  
 ✅ **Publication-Ready** - Demonstrates rigorous validation  
+✅ **🎯 Optimized Thresholds** - Data-driven cutoffs (NEW in v2.1.1)  
 ✅ **Catches Errors** - Outlier detection  
-✅ **Comprehensive** - See full picture  
 
 ---
 
-##  Why Use Ensemble Analysis
+## 🤔 Why Use Ensemble Analysis
 
 ### When to Use Ensemble
 
@@ -51,7 +70,7 @@ Pipeline 4 (Kallisto-Sleuth)    ]   Analysis    Results
 ✅ **Publication Requirements** - Reviewers request validation  
 ✅ **Novel Experiments** - Unusual data, new conditions  
 ✅ **Conflicting Results** - Different pipelines disagree  
-✅ **Grant Applications** - Show methodological rigor  
+✅ **Need Defensible Thresholds** - Use ATO on combined results (NEW)
 
 ### When Single Pipeline is Fine
 
@@ -59,20 +78,29 @@ Pipeline 4 (Kallisto-Sleuth)    ]   Analysis    Results
 ❌ **Time Constraints** - Quick turnaround needed  
 ❌ **Limited Resources** - Computational constraints  
 ❌ **Standard Data** - Well-characterized experiments  
-❌ **Validated Methods** - Following established protocols  
 
 ---
 
-##  Quick Start
+## ⚡ Quick Start
 
-### Basic Ensemble
+### Basic Ensemble with ATO (NEW Recommended Workflow)
 
 ```bash
-# Run 3-pipeline ensemble (recommended)
+# 1. Run 3-pipeline ensemble
 raptor ensemble \
   --data data/fastq/ \
   --pipelines 1,3,4 \
   --output ensemble_results/
+
+# 2. Optimize thresholds with ATO (NEW!)
+python -c "
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+df = pd.read_csv('ensemble_results/consensus_genes.csv')
+result = optimize_thresholds(df, goal='balanced')
+print(f'Uniform threshold: |logFC| > {result.logfc_threshold:.2f}')
+result.results_df.to_csv('ensemble_results/optimized_consensus.csv')
+"
 ```
 
 ### Full Ensemble
@@ -82,6 +110,8 @@ raptor ensemble \
 raptor ensemble \
   --data data/fastq/ \
   --pipelines all \
+  --use-ato \
+  --ato-goal balanced \
   --output full_ensemble/
 ```
 
@@ -91,161 +121,208 @@ raptor ensemble \
 # Combine pre-computed results
 raptor ensemble combine \
   --results pipeline1_results/,pipeline3_results/,pipeline4_results/ \
+  --use-ato \
   --output ensemble_combined/
 ```
 
-**Time:** 3-8 hours depending on dataset size
-
 ---
 
-##  Ensemble Methods
+## 🔧 Ensemble Methods
 
 ### 1. Weighted Average (Default)
 
-**How it works:**
 Each pipeline gets a weight based on its performance. Results are averaged proportionally.
 
 ```python
-# Example weights
 weights = {
     'Pipeline 1': 0.40,  # Highest accuracy
     'Pipeline 3': 0.35,  # Fast and accurate
     'Pipeline 4': 0.25   # Ultra-fast
 }
-
-# Consensus score = weighted average
-consensus_score = (
-    0.40 * pipeline1_score +
-    0.35 * pipeline3_score +
-    0.25 * pipeline4_score
-)
 ```
 
 **Best for:** Most situations, balances all inputs
 
-**Usage:**
-```bash
-raptor ensemble \
-  --method weighted_average \
-  --auto-weights  # Automatic weight calculation
-```
-
 ### 2. Rank Product
 
-**How it works:**
 Combines ranks rather than raw values. Less sensitive to outliers.
-
-```python
-# Each pipeline ranks genes 1, 2, 3, ...
-# Rank product = geometric mean of ranks
-RP_gene = (rank_p1 * rank_p2 * rank_p3)^(1/3)
-
-# Lower rank product = more significant
-```
 
 **Best for:** Datasets with very different scales
 
-**Usage:**
-```bash
-raptor ensemble --method rank_product
-```
-
 ### 3. Vote Counting
 
-**How it works:**
 A gene is DE if majority of pipelines agree.
-
-```python
-# Simple majority
-if votes >= n_pipelines / 2:
-    gene_is_DE = True
-
-# Supermajority (stricter)
-if votes >= 2 * n_pipelines / 3:
-    gene_is_DE = True
-```
 
 **Best for:** Conservative analysis, high specificity
 
-**Usage:**
-```bash
-raptor ensemble \
-  --method vote_counting \
-  --threshold 0.5  # or 0.67 for supermajority
-```
-
 ### 4. Robust Rank Aggregation (RRA)
 
-**How it works:**
-Statistical method to combine ranked lists, accounts for list length differences.
-
-```python
-# Uses probability theory
-# Finds genes consistently ranked high
-rra_score = calculate_rra_statistic(ranks_across_pipelines)
-```
+Statistical method to combine ranked lists.
 
 **Best for:** Rigorous statistical combination
 
-**Usage:**
-```bash
-raptor ensemble --method rra
-```
-
 ### 5. Meta-Analysis
 
-**How it works:**
 Statistical meta-analysis combining effect sizes and p-values.
-
-```python
-# Combine using Fisher's method or Stouffer's Z
-combined_p = meta_analysis(p_values)
-combined_fc = weighted_mean(fold_changes, weights=1/se^2)
-```
 
 **Best for:** Publication-quality combined statistics
 
-**Usage:**
+---
+
+## 🎯 ATO Integration (NEW in v2.1.1)
+
+### Why Use ATO with Ensemble?
+
+**Problem:** Different pipelines may use different thresholds
+```
+Pipeline 1: |logFC| > 1.0, FDR < 0.05 → 1,234 genes
+Pipeline 3: |logFC| > 0.58, FDR < 0.05 → 1,567 genes  
+Pipeline 4: |logFC| > 1.0, FDR < 0.01 → 892 genes
+```
+
+**Solution:** ATO provides uniform, data-driven thresholds
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+
+# Apply to combined results
+result = optimize_thresholds(ensemble_combined, goal='balanced')
+# Now all pipelines use: |logFC| > 0.73, FDR < 0.05
+```
+
+### Configuration with ATO
+
+```yaml
+# ensemble_config.yaml (v2.1.1)
+ensemble:
+  pipelines:
+    - 1  # STAR-RSEM-DESeq2
+    - 3  # Salmon-edgeR
+    - 4  # Kallisto-DESeq2
+  
+  method: weighted_average
+  min_pipelines: 2
+
+  # NEW: ATO settings
+  threshold_optimizer:
+    enabled: true
+    goal: "balanced"           # discovery, balanced, validation
+    uniform_thresholds: true   # Apply same threshold to all pipelines
+    generate_methods_text: true
+```
+
+### ATO Workflow Options
+
+#### Option 1: Optimize After Combination (Recommended)
+
+```python
+from raptor import EnsembleAnalyzer
+from raptor.threshold_optimizer import optimize_thresholds
+
+# 1. Run ensemble with default thresholds
+analyzer = EnsembleAnalyzer()
+ensemble = analyzer.combine(pipeline_results, method='weighted_average')
+
+# 2. Apply ATO to combined results
+result = optimize_thresholds(
+    ensemble['combined_de'],
+    logfc_col='log2FC_consensus',
+    pvalue_col='FDR_consensus',
+    goal='balanced'
+)
+
+# 3. Use optimized thresholds
+significant = result.results_df[result.results_df['significant']]
+print(f"High-confidence genes: {len(significant)}")
+print(f"\nMethods:\n{result.methods_text}")
+```
+
+#### Option 2: Uniform Thresholds Across Pipelines
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+
+# First, determine optimal threshold from combined data
+combined_logfc = pd.concat([p1['logFC'], p3['logFC'], p4['logFC']])
+combined_pval = pd.concat([p1['pvalue'], p3['pvalue'], p4['pvalue']])
+combined = pd.DataFrame({'logFC': combined_logfc, 'pvalue': combined_pval})
+
+result = optimize_thresholds(combined, goal='balanced')
+threshold = result.logfc_threshold
+
+# Apply uniform threshold to all pipelines
+for pipeline_df in [p1, p3, p4]:
+    pipeline_df['significant'] = (
+        (abs(pipeline_df['logFC']) > threshold) & 
+        (pipeline_df['FDR'] < 0.05)
+    )
+```
+
+#### Option 3: Integrated Ensemble + ATO
+
 ```bash
-raptor ensemble --method meta_analysis
+# Single command with ATO
+raptor ensemble \
+  --data data/ \
+  --pipelines 1,3,4 \
+  --use-ato \
+  --ato-goal balanced \
+  --output results/
+```
+
+### ATO Methods Text for Ensemble
+
+```python
+result = optimize_thresholds(ensemble_combined, goal='balanced')
+print(result.methods_text)
+```
+
+**Example Output:**
+```
+"Ensemble differential expression analysis was performed using 
+three complementary pipelines (STAR-RSEM-DESeq2, Salmon-edgeR, 
+Kallisto-DESeq2) with results combined via weighted averaging. 
+Significance thresholds were determined using the Adaptive 
+Threshold Optimizer (ATO) with the 'balanced' analysis goal. 
+The proportion of true null hypotheses (π₀) was estimated at 
+0.83 using Storey's spline method. A uniform adjusted p-value 
+threshold of 0.05 (Benjamini-Hochberg FDR correction) and log₂ 
+fold change threshold of 0.71 were applied across all pipelines, 
+identifying 1,156 consensus differentially expressed genes 
+(agreement score ≥ 0.67)."
 ```
 
 ---
 
-##  Running Ensemble Analysis
+## 🔬 Running Ensemble Analysis
 
-### Configuration
-
-Create `ensemble_config.yaml`:
+### Configuration with ATO
 
 ```yaml
+# ensemble_config_v2.1.1.yaml
 ensemble:
-  # Pipeline selection
   pipelines:
-    - 1  # STAR-RSEM-DESeq2
-    - 3  # Salmon-edgeR
-    - 4  # Kallisto-Sleuth
+    - 1
+    - 3
+    - 4
   
-  # Ensemble method
   method: weighted_average
   
-  # Weights (auto-calculated if not specified)
   weights:
     pipeline_1: 0.40
     pipeline_3: 0.35
     pipeline_4: 0.25
   
-  # Filtering
-  min_pipelines: 2  # Gene must be found by ≥2 pipelines
-  fdr_threshold: 0.05
-  log2fc_threshold: 1.0
+  min_pipelines: 2
   
-  # Outlier detection
+  # NEW: Threshold Optimizer settings
+  threshold_optimizer:
+    enabled: true
+    goal: "balanced"
+    padj_method: "BH"
+    logfc_method: "auto"
+    uniform_thresholds: true
+  
   detect_outliers: true
-  outlier_threshold: 2.5  # z-score threshold
-  
-  # Output
-  include_individual_results: true
   generate_plots: true
   generate_report: true
 ```
@@ -254,291 +331,126 @@ ensemble:
 
 ```bash
 raptor ensemble \
-  --config ensemble_config.yaml \
+  --config ensemble_config_v2.1.1.yaml \
   --data data/fastq/ \
   --output ensemble_analysis/
 ```
 
-### Step-by-Step Execution
-
-```bash
-# 1. Run individual pipelines
-raptor run --pipeline 1 --data data/ --output p1/
-raptor run --pipeline 3 --data data/ --output p3/
-raptor run --pipeline 4 --data data/ --output p4/
-
-# 2. Combine results
-raptor ensemble combine \
-  --results p1/,p3/,p4/ \
-  --method weighted_average \
-  --output ensemble/
-
-# 3. Generate report
-raptor ensemble report \
-  --results ensemble/ \
-  --output ensemble_report.html
-```
-
 ---
 
-##  Interpreting Results
+## 📊 Interpreting Results
 
-### Ensemble Output Structure
+### Ensemble Output Structure (v2.1.1)
 
 ```
 ensemble_results/
 ├── consensus_genes.csv         # Final DE gene list
+├── optimized_consensus.csv     # ATO-optimized results (NEW!)
+├── threshold_report.txt        # ATO thresholds used (NEW!)
+├── methods_text.txt            # Publication methods (NEW!)
 ├── pipeline_agreement.csv      # Agreement metrics
 ├── individual_results/         # Each pipeline's output
-│   ├── pipeline_1/
-│   ├── pipeline_3/
-│   └── pipeline_4/
 ├── plots/
 │   ├── venn_diagram.png
-│   ├── concordance_heatmap.png
-│   ├── confidence_distribution.png
-│   └── upset_plot.png
-├── ensemble_report.html        # Interactive report
-└── ensemble_summary.txt        # Quick summary
+│   ├── volcano_optimized.png   # With ATO thresholds (NEW!)
+│   └── concordance_heatmap.png
+└── ensemble_report.html        # Interactive report
 ```
 
-### Understanding consensus_genes.csv
+### Understanding optimized_consensus.csv (NEW)
 
 ```csv
-gene_id,log2FC_consensus,FDR_consensus,n_pipelines,agreement_score,confidence
-ENSG00000111640,3.45,1.2e-08,3,1.00,high
-ENSG00000087086,3.21,2.3e-07,3,1.00,high
-ENSG00000148584,-3.12,1.5e-07,3,1.00,high
-ENSG00000183878,-2.98,3.2e-06,2,0.67,medium
-ENSG00000198804,2.45,5.1e-05,2,0.67,medium
+gene_id,log2FC_consensus,FDR_consensus,n_pipelines,agreement_score,significant,direction
+ENSG00000111640,3.45,1.2e-08,3,1.00,True,up
+ENSG00000087086,3.21,2.3e-07,3,1.00,True,up
+ENSG00000148584,-3.12,1.5e-07,3,1.00,True,down
+ENSG00000183878,-0.65,3.2e-06,2,0.67,False,down  # Below ATO threshold
 ```
 
-**Columns:**
-- `log2FC_consensus` - Weighted average fold change
-- `FDR_consensus` - Meta-analyzed FDR
-- `n_pipelines` - Number of pipelines finding gene
-- `agreement_score` - Proportion agreeing (0-1)
-- `confidence` - High/Medium/Low based on agreement
-
-### Confidence Categories
-
-```
-🟢 High Confidence (agreement ≥ 0.8)
-   Found by most/all pipelines
-   → Publication-ready
-   → High priority for validation
-
-🟡 Medium Confidence (agreement 0.5-0.8)
-   Found by multiple pipelines
-   → Consider for follow-up
-   → May need additional validation
-
-🔴 Low Confidence (agreement < 0.5)
-   Found by only one pipeline
-   → Treat with caution
-   → May be false positive
-   → Might be pipeline-specific artifact
-```
-
-### Venn Diagram Interpretation
-
-```
-      Pipeline 1
-      ┌─────────┐
-      │   234   │
-   ┌──┼─────┬───┼──┐
-   │  │ 523 │289│  │
-   │P3└─────┴───┘P4│
-   │   467    345  │
-   └───────────────┘
-
-Total Genes:
-• Pipeline 1 only: 234
-• Pipeline 3 only: 467
-• Pipeline 4 only: 345
-• P1 ∩ P3: 523 (High confidence! ✅)
-• P1 ∩ P4: 289
-• P3 ∩ P4: (not shown directly, calculate from data)
-• All three: 523 (Highest confidence! 🌟)
-
-Focus on the intersection genes!
-```
-
-### UpSet Plot (Better than Venn for >3 pipelines)
-
-```
-Intersection Size
-    ↑
-600 │         ●
-500 │         │
-400 │     ●   │
-300 │     │   │     ●
-200 │ ●   │   │     │     ●
-100 │ │   │   │     │     │     ●
-    └─┴───┴───┴─────┴─────┴─────┴─
-      P1  P1  P1    P1    P3    P4
-          P3  P3    P3    P4
-              P4    P4
-                    P2
-
-Largest intersection: P1∩P3∩P4 (523 genes)
-```
-
-### Concordance Heatmap
-
-```
-Pipeline Concordance (Jaccard Index)
-
-         P1    P3    P4    P5
-    P1 [1.00  0.78  0.72  0.68]
-    P3 [0.78  1.00  0.81  0.65]
-    P4 [0.72  0.81  1.00  0.62]
-    P5 [0.68  0.65  0.62  1.00]
-
-High concordance = Good! 
-Low concordance = Investigate 
-```
+The `significant` column uses ATO-optimized thresholds!
 
 ---
 
-##  Advanced Options
+## 🔧 Advanced Options
 
-### Custom Weighting Schemes
+### Custom Weights with ATO
 
 ```python
-from raptor.ensemble import EnsembleAnalyzer
+from raptor import EnsembleAnalyzer
+from raptor.threshold_optimizer import optimize_thresholds
 
-# Accuracy-based weights
-analyzer = EnsembleAnalyzer(method='weighted_average')
-analyzer.set_weights_by_accuracy({
-    1: 0.92,  # Pipeline 1 accuracy
-    3: 0.88,
-    4: 0.83
-})
+analyzer = EnsembleAnalyzer()
 
-# Speed-based weights (for quick analyses)
-analyzer.set_weights_by_speed({
-    1: 0.20,  # Slow
-    3: 0.40,  # Medium
-    4: 0.40   # Fast
-})
-
-# Custom weights
-analyzer.set_custom_weights({
+# Combine with custom weights
+ensemble = analyzer.combine(results, method='weighted_average', weights={
     1: 0.5,   # Trust STAR-RSEM most
     3: 0.3,
     4: 0.2
 })
+
+# Optimize thresholds
+result = optimize_thresholds(ensemble['combined'], goal='validation')  # Stringent
 ```
 
-### Outlier Detection
+### Sensitivity Analysis with ATO
 
 ```python
-# Detect pipeline-specific findings
-outliers = analyzer.detect_outliers(
-    threshold=2.5,  # z-score
-    method='iqr'    # or 'zscore', 'isolation_forest'
-)
-
-print(f"Found {len(outliers)} outlier genes")
-# These might be interesting or artifacts!
-```
-
-### Sensitivity Analysis
-
-```python
-# Test robustness to different parameters
 from raptor.ensemble import sensitivity_analysis
+from raptor.threshold_optimizer import optimize_thresholds
 
-results = sensitivity_analysis(
-    data=ensemble_data,
-    parameters={
-        'fdr_threshold': [0.01, 0.05, 0.10],
-        'log2fc_threshold': [0.5, 1.0, 1.5],
-        'min_pipelines': [2, 3]
+# Test different ATO goals
+results = {}
+for goal in ['discovery', 'balanced', 'validation']:
+    threshold_result = optimize_thresholds(ensemble_data, goal=goal)
+    results[goal] = {
+        'threshold': threshold_result.logfc_threshold,
+        'n_genes': threshold_result.n_significant
     }
-)
-
-# See which genes are consistently found
-robust_genes = results.get_robust_genes(min_fraction=0.8)
-```
-
-### Bootstrapping for Confidence Intervals
-
-```python
-# Bootstrap to estimate confidence
-from raptor.ensemble import bootstrap_ensemble
-
-boot_results = bootstrap_ensemble(
-    ensemble_data,
-    n_bootstrap=1000,
-    confidence_level=0.95
-)
-
-# Get genes with stable estimates
-stable_genes = boot_results.filter_by_stability(
-    ci_width_threshold=0.5  # Max CI width for log2FC
-)
+    
+print("Goal\t\tlogFC\tGenes")
+for goal, r in results.items():
+    print(f"{goal}\t{r['threshold']:.2f}\t{r['n_genes']}")
 ```
 
 ---
 
-##  Best Practices
+## ✅ Best Practices
 
 ### Pipeline Selection
 
 ✅ **Use 3-5 pipelines** - Good balance  
 ✅ **Include diverse methods** - Both alignment and pseudo-alignment  
 ✅ **Mix statistical approaches** - Different DE methods  
-❌ **Don't use all 8 blindly** - Diminishing returns  
-❌ **Avoid very similar pipelines** - STAR-HTSeq vs STAR-featureCounts  
+✅ **Apply ATO for uniform thresholds** (NEW in v2.1.1)
 
 **Recommended Combinations:**
 
-**Standard (3 pipelines):**
+**Standard (3 pipelines) with ATO:**
 - Pipeline 1 (STAR-RSEM-DESeq2) - Gold standard
 - Pipeline 3 (Salmon-edgeR) - Fast and accurate
-- Pipeline 4 (Kallisto-Sleuth) - Ultra-fast
+- Pipeline 4 (Kallisto-DESeq2) - Ultra-fast
+- **+ ATO goal='balanced'**
 
-**Comprehensive (5 pipelines):**
-- Add Pipeline 5 (STAR-HTSeq-limma) - Complex designs
-- Add Pipeline 2 (HISAT2-StringTie) - Isoforms
-
-### Interpretation Guidelines
-
-✅ **Focus on high-confidence genes** - Found by most pipelines  
-✅ **Check concordance** - High agreement = reliable  
-✅ **Investigate discordant genes** - Might be interesting!  
-✅ **Report agreement metrics** - Transparency  
-✅ **Validate key findings** - qPCR, Western blot  
-
-### Reporting in Publications
+### Reporting in Publications (Updated for v2.1.1)
 
 **Methods Section:**
 ```
 Differential expression analysis was performed using ensemble 
 analysis of three complementary pipelines: STAR-RSEM-DESeq2, 
-Salmon-edgeR, and Kallisto-Sleuth. Results were combined using 
-weighted averaging with weights proportional to each pipeline's 
-accuracy on benchmark datasets. Genes were considered 
-differentially expressed if they met FDR < 0.05 and |log2FC| > 1 
-in at least 2 of 3 pipelines (agreement score ≥ 0.67).
-```
-
-**Results Section:**
-```
-Ensemble analysis identified 1,247 high-confidence differentially 
-expressed genes (agreement score ≥ 0.8), with 523 genes detected 
-by all three pipelines. Pipeline concordance was high (Jaccard 
-index: 0.72-0.81), indicating robust findings. An additional 
-345 medium-confidence genes were detected by 2 of 3 pipelines.
+Salmon-edgeR, and Kallisto-DESeq2. Results were combined using 
+weighted averaging. Significance thresholds were determined using 
+the Adaptive Threshold Optimizer (ATO) with the 'balanced' goal, 
+yielding an optimized log₂ fold change threshold of 0.71 based on 
+MAD estimation from the combined data distribution. Genes were 
+considered differentially expressed if they met FDR < 0.05 and 
+|log₂FC| > 0.71 in at least 2 of 3 pipelines (agreement score ≥ 0.67).
 ```
 
 ---
 
-##  Case Studies
+## 📚 Case Studies
 
-### Case Study 1: Cancer vs Normal
+### Case Study 1: Cancer vs Normal with ATO
 
 **Setup:**
 - 24 samples (12 cancer, 12 normal)
@@ -549,227 +461,103 @@ index: 0.72-0.81), indicating robust findings. An additional
 ```bash
 raptor ensemble \
   --data cancer_study/ \
-  --pipelines 1,3,5 \  # Use robust methods
-  --method weighted_average \
-  --min-pipelines 3 \  # All must agree
+  --pipelines 1,3,5 \
+  --use-ato \
+  --ato-goal validation \  # Stringent for clinical
+  --min-pipelines 3 \
   --output cancer_ensemble/
 ```
 
 **Results:**
-- 1,847 high-confidence DE genes
-- 234 cancer-specific genes (all 3 pipelines)
-- 15 candidate therapeutic targets
-- Published in high-impact journal ✅
+- ATO threshold: |logFC| > 0.89 (data-driven, not arbitrary)
+- 1,523 high-confidence DE genes
+- Publication-ready methods text generated ✅
 
-### Case Study 2: Time Series
-
-**Setup:**
-- 5 time points, 4 replicates each
-- Complex experimental design
-- Need robust temporal patterns
-
-**Approach:**
-```bash
-raptor ensemble \
-  --data timeseries/ \
-  --pipelines 1,5 \  # Good for complex designs
-  --method meta_analysis \
-  --output timeseries_ensemble/
-```
-
-**Results:**
-- Identified 892 genes with temporal patterns
-- High concordance between pipelines (0.85)
-- Validated top 20 by qPCR (95% confirmed)
-
-### Case Study 3: Small Pilot
+### Case Study 2: Exploratory with Discovery Goal
 
 **Setup:**
-- Only 6 samples (3 vs 3)
-- Need preliminary gene list
-- Limited budget
+- Preliminary experiment
+- Want to capture more candidates
 
 **Approach:**
-```bash
-raptor ensemble \
-  --data pilot/ \
-  --pipelines 3,4 \  # Fast pipelines
-  --method vote_counting \
-  --min-pipelines 2 \  # Both must agree
-  --output pilot_ensemble/
+```python
+result = optimize_thresholds(ensemble_combined, goal='discovery')
+# More permissive threshold: |logFC| > 0.52
+# Captures more potential hits for validation
 ```
-
-**Results:**
-- 156 high-confidence genes
-- Used for power calculation
-- Full study funded based on results ✅
 
 ---
 
-##  Troubleshooting
+## 🔧 Troubleshooting
 
-### Issue: Low Concordance Between Pipelines
+### Issue: Different Pipelines Give Very Different Gene Counts
 
-**Symptoms:**
+**Old Problem:**
 ```
-Pipeline concordance: 0.35 (Low!)
-Warning: Pipelines disagree substantially
+Pipeline 1: 1,234 genes (|logFC| > 1)
+Pipeline 3: 1,876 genes (|logFC| > 0.58)
+Pipeline 4: 921 genes (|logFC| > 1, FDR < 0.01)
 ```
 
-**Possible Causes:**
-1. **Data quality issues** - Check QC
-2. **Different normalizations** - Use raw counts
-3. **Inappropriate pipelines** - Wrong for your data
-4. **Batch effects** - Not properly handled
+**v2.1.1 Solution - Use ATO:**
+```python
+from raptor.threshold_optimizer import optimize_thresholds
 
-**Solutions:**
-```bash
-# 1. Check data quality
-raptor qc --data data/ --detailed
+# Determine uniform threshold
+result = optimize_thresholds(combined_data, goal='balanced')
 
-# 2. Ensure using raw counts
-raptor validate --data data/ --check-normalization
-
-# 3. Try different pipeline combination
-raptor ensemble --pipelines 1,3,4  # Instead of 1,2,7
-
-# 4. Include batch correction
-raptor ensemble --adjust-batch
+# Apply to all pipelines
+uniform_threshold = result.logfc_threshold
+# Now: All pipelines use |logFC| > 0.73
 ```
 
 ### Issue: Too Few Consensus Genes
 
-**Symptoms:**
-```
-High confidence genes: 23
-Expected: 100-1000
-```
-
 **Solutions:**
 ```bash
-# 1. Lower agreement threshold
-raptor ensemble --min-pipelines 2  # Instead of 3
+# 1. Use ATO with discovery goal
+raptor ensemble --use-ato --ato-goal discovery
 
-# 2. Relax statistical thresholds
-raptor ensemble --fdr 0.10 --log2fc 0.5
+# 2. Lower agreement threshold
+raptor ensemble --min-pipelines 2
 
-# 3. Use less conservative method
-raptor ensemble --method weighted_average  # Instead of vote_counting
+# 3. Combine both approaches
 ```
 
 ### Issue: Ensemble Takes Too Long
 
 **Solutions:**
 ```bash
-# 1. Use fewer pipelines
-raptor ensemble --pipelines 3,4  # Fast ones only
+# 1. Use fast pipelines
+raptor ensemble --pipelines 3,4  # Pseudo-alignment only
 
-# 2. Parallel execution
-raptor ensemble --parallel --max-jobs 4
-
-# 3. Use precomputed results
-raptor ensemble combine --results p1/,p3/,p4/
+# 2. Run ATO separately (fast)
+# ATO takes <1 second regardless of ensemble size
 ```
 
 ---
 
-##  Advanced Ensemble Techniques
+## 📋 Summary
 
-### Hierarchical Ensemble
-
-```python
-# First level: Group similar pipelines
-from raptor.ensemble import HierarchicalEnsemble
-
-he = HierarchicalEnsemble()
-
-# Level 1: Within-method ensembles
-alignment_consensus = he.combine([1, 5, 6])  # All STAR-based
-pseudo_consensus = he.combine([3, 4])        # Pseudo-alignment
-
-# Level 2: Between-method ensemble
-final_consensus = he.combine([
-    alignment_consensus,
-    pseudo_consensus
-])
-```
-
-### Machine Learning Ensemble
-
-```python
-# Use ML to learn optimal combination
-from raptor.ensemble import MLEnsemble
-
-ml_ensemble = MLEnsemble()
-
-# Train on known DE genes
-ml_ensemble.train(
-    pipeline_results=all_results,
-    true_labels=validated_genes
-)
-
-# Apply to new data
-consensus = ml_ensemble.predict(new_results)
-```
-
-### Fuzzy Logic Ensemble
-
-```python
-# Use fuzzy logic for soft decisions
-from raptor.ensemble import FuzzyEnsemble
-
-fuzzy = FuzzyEnsemble()
-
-# Define membership functions
-fuzzy.add_rule("High FC and Low FDR", weight=1.0)
-fuzzy.add_rule("Medium FC and Medium FDR", weight=0.5)
-
-consensus = fuzzy.combine(pipeline_results)
-```
-
----
-
-##  Comparison with Single Pipelines
-
-### Accuracy Improvement
-
-```
-                Single Best   Ensemble    Improvement
-─────────────────────────────────────────────────────
-Sensitivity     0.85          0.91        +7%
-Specificity     0.88          0.94        +7%
-Precision       0.82          0.90        +10%
-F1-Score        0.83          0.91        +10%
-FDR Control     Good          Excellent   +++
-```
-
-### When Ensemble Helps Most
-
-1. **High Variation** - BCV > 0.6
-2. **Complex Designs** - Multiple factors
-3. **Novel Conditions** - Unusual experiments
-4. **Clinical Data** - Patient samples
-5. **Small Samples** - n < 6 per group
-
----
-
-##  Summary
-
-Ensemble analysis provides:
+Ensemble analysis in v2.1.1 provides:
 - ✅ **Robust Results** - Reduces false positives
 - ✅ **Higher Confidence** - Multiple methods agree
-- ✅ **Publication Quality** - Demonstrates rigor
-- ✅ **Outlier Detection** - Catches errors
-- ✅ **Comprehensive View** - See all evidence
+- ✅ **🎯 Optimized Thresholds** - Data-driven via ATO (NEW!)
+- ✅ **Publication Quality** - Auto-generated methods text
+- ✅ **Uniform Analysis** - Same thresholds across pipelines
 
-**Recommended for important projects where accuracy matters most!** 🚀
+**Recommended workflow:**
+1. Run ensemble with 3-5 pipelines
+2. Apply ATO to combined results
+3. Use optimized thresholds for final gene list
+4. Include ATO methods text in publication
 
 ---
 
 **Author:** Ayeh Bolouki  
-**Version:** 2.1.0  
+**Version:** 2.1.1  
 **License:** MIT
 
 ---
 
-*"Many pipelines, one truth - ensemble your way to robust results!"* 
+*"Many pipelines, optimized thresholds, one truth!"* 🎯🦖

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAPTOR v2.1.0 Example Script: Advanced Data Quality Assessment
+RAPTOR v2.1.1 Example Script: Advanced Data Quality Assessment
 
 Demonstrates comprehensive data quality assessment with:
 - Library quality scoring
@@ -43,7 +43,7 @@ def print_banner():
     """Print RAPTOR banner."""
     print("""
     ╔══════════════════════════════════════════════════════════════╗
-    ║       🦖 RAPTOR v2.1.0 - Data Quality Assessment            ║
+    ║       🦖 RAPTOR v2.1.1 - Data Quality Assessment            ║
     ║                                                              ║
     ║   Comprehensive Quality Scoring & Batch Effect Detection    ║
     ╚══════════════════════════════════════════════════════════════╝
@@ -324,7 +324,7 @@ def run_quality_assessment(counts_file, metadata_file=None, plot=False,
     # Prepare output
     output = {
         'timestamp': datetime.now().isoformat(),
-        'raptor_version': '2.1.0',
+        'raptor_version': '2.1.1',
         'data_info': {
             'n_genes': counts.shape[0] if not demo else 5000,
             'n_samples': counts.shape[1] if not demo else 12

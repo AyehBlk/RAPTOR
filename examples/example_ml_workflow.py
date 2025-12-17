@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-ML Recommender Complete Example - RAPTOR v2.1.0
+ML Recommender Complete Example - RAPTOR v2.1.1
 
 Demonstrates the full machine learning workflow:
 1. Generate synthetic training data
@@ -11,6 +11,7 @@ Demonstrates the full machine learning workflow:
 5. Compare different models
 
 Author: Ayeh Bolouki
+Affiliation: University of Namur & GIGA-Neurosciences, University of Liège, Belgium
 Email: ayehbolouki1988@gmail.com
 Version: 2.1.0
 """
@@ -476,7 +477,7 @@ def main():
     """Main workflow execution."""
     
     parser = argparse.ArgumentParser(
-        description='Complete ML Recommender Workflow Demo for RAPTOR v2.1.0',
+        description='Complete ML Recommender Workflow Demo for RAPTOR v2.1.1',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

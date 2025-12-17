@@ -18,23 +18,23 @@ dependencies:
   - matplotlib>=3.4.0
   - seaborn>=0.11.0
   - scikit-learn>=1.0.0
-  - joblib>=1.1.0              # NEW v2.1.0 - ML model serialization
+  - joblib>=1.1.0              # ML model serialization
   
   # ==========================================================================
-  # v2.1.0 NEW - Quality Assessment & Statistics
+  # v2.1.0+ - Quality Assessment & Statistics
   # ==========================================================================
-  - statsmodels>=0.13.0        # NEW v2.1.0 - Batch effect detection, ANOVA
+  - statsmodels>=0.13.0        # Batch effect detection, ANOVA, π₀ estimation
   
   # ==========================================================================
-  # v2.1.0 NEW - Resource Monitoring
+  # v2.1.0+ - Resource Monitoring
   # ==========================================================================
-  - psutil>=5.8.0              # NEW v2.1.0 - CPU/memory/disk monitoring
+  - psutil>=5.8.0              # CPU/memory/disk monitoring
   
   # ==========================================================================
-  # v2.1.0 NEW - Interactive Dashboard
+  # v2.1.0+ - Interactive Dashboard
   # ==========================================================================
-  - streamlit>=1.28.0          # NEW v2.1.0 - Web dashboard framework
-  - plotly>=5.14.0             # NEW v2.1.0 - Interactive visualizations
+  - streamlit>=1.28.0          # Web dashboard framework
+  - plotly>=5.14.0             # Interactive visualizations
   
   # ==========================================================================
   # Data handling
@@ -49,12 +49,12 @@ dependencies:
   - click>=8.0.0
   - tqdm>=4.62.0
   - colorama>=0.4.4
-  - colorlog>=6.6.0            # NEW v2.1.0 - Colored logging output
+  - colorlog>=6.6.0            # Colored logging output
   
   # ==========================================================================
-  # v2.1.0 NEW - Automated Reporting
+  # v2.1.0+ - Automated Reporting
   # ==========================================================================
-  - markdown>=3.3.0            # NEW v2.1.0 - Markdown to HTML conversion
+  - markdown>=3.3.0            # Markdown to HTML conversion
   
   # ==========================================================================
   # Testing and development
@@ -126,5 +126,5 @@ dependencies:
   # ==========================================================================
   - pip
   - pip:
-    - bayesian-optimization>=1.2.0   # NEW v2.1.0 - Parameter optimization
-    # - raptor-rnaseq>=2.1.0         # Uncomment when published to PyPI
+    - bayesian-optimization>=1.2.0   # Parameter optimization
+    # - raptor-rnaseq>=2.1.1         # Uncomment when published to PyPI

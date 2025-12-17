@@ -1,32 +1,71 @@
-# RAPTOR v2.1.0 Pipelines Reference
+# RAPTOR v2.1.1 Pipelines Reference
 
-Deep dive into all 8 RNA-seq analysis pipelines with ML-powered selection guidance.
+Deep dive into all 8 RNA-seq analysis pipelines with ML-powered selection guidance and **ATO compatibility**.
 
-## Pipeline Overview
+## 🆕 What's New in v2.1.1
 
-| ID | Name | Type | Speed | Accuracy | Memory | ML Rank* |
-|----|------|------|-------|----------|--------|----------|
-| 1 | STAR-RSEM-DESeq2 | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚫⚫ | High | #2 |
-| 2 | HISAT2-StringTie-Ballgown | Alignment | ⚫⚫⚫⚪⚪ | ⚫⚫⚫⚫⚪ | Medium | #5 |
-| 3 | Salmon-edgeR | Pseudo-align | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚫⚪ | Low | #1 ⭐ |
-| 4 | Kallisto-Sleuth | Pseudo-align | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚪⚪ | Low | #3 |
-| 5 | STAR-HTSeq-limma | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚫⚪ | High | #4 |
-| 6 | STAR-featureCounts-NOISeq | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚪⚪ | High | #6 |
-| 7 | Bowtie2-RSEM-EBSeq | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚪⚪ | Medium | #7 |
-| 8 | HISAT2-Cufflinks-Cuffdiff | Alignment | ⚫⚪⚪⚪⚪ | ⚫⚫⚪⚪⚪ | Medium | #8 |
-
-*ML Rank: Average ranking from ML model across typical datasets (v2.1.0)
+- **🎯 ATO Compatibility** - All pipelines work with Adaptive Threshold Optimizer
+- **Output Format Reference** - Column names for each pipeline's DE output
+- **Threshold Optimization** - Data-driven thresholds for all pipelines
 
 ---
 
-##  What's New in v2.1.0
+## Pipeline Overview
 
-Each pipeline now includes:
--  **ML Success Rate** - Historical success on similar data
--  **Quality Compatibility** - Which data qualities work best
--  **Resource Predictions** - Estimated CPU/memory/time
--  **Best Use Cases** - ML-learned optimal scenarios
--  **Ensemble Weight** - Recommended weight in ensemble analysis
+| ID | Name | Type | Speed | Accuracy | ATO Compatible |
+|----|------|------|-------|----------|----------------|
+| 1 | STAR-RSEM-DESeq2 | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚫⚫ | ✅ Yes |
+| 2 | HISAT2-StringTie-Ballgown | Alignment | ⚫⚫⚫⚪⚪ | ⚫⚫⚫⚫⚪ | ✅ Yes |
+| 3 | Salmon-edgeR | Pseudo-align | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚫⚪ | ✅ Yes ⭐ |
+| 4 | Kallisto-DESeq2 | Pseudo-align | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚪⚪ | ✅ Yes |
+| 5 | STAR-featureCounts-limma | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚫⚪ | ✅ Yes |
+| 6 | Salmon-NOISeq | Pseudo-align | ⚫⚫⚫⚫⚫ | ⚫⚫⚫⚪⚪ | ⚠️ Special* |
+| 7 | Bowtie2-RSEM-EBSeq | Alignment | ⚫⚫⚪⚪⚪ | ⚫⚫⚫⚪⚪ | ⚠️ Special* |
+| 8 | HISAT2-Cufflinks-Cuffdiff | Alignment | ⚫⚪⚪⚪⚪ | ⚫⚫⚪⚪⚪ | ✅ Yes |
+
+*Special handling required - see pipeline section
+
+---
+
+## 🎯 ATO Integration (NEW in v2.1.1)
+
+### All Pipelines Support ATO
+
+After running any pipeline, use ATO for data-driven thresholds:
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+# Load DE results from any pipeline
+df = pd.read_csv('pipeline_results.csv')
+
+# Optimize thresholds
+result = optimize_thresholds(
+    df,
+    logfc_col='log2FoldChange',  # Adjust per pipeline
+    pvalue_col='pvalue',
+    goal='balanced'
+)
+
+print(f"Optimal |logFC| > {result.logfc_threshold:.2f}")
+print(f"Significant genes: {result.n_significant}")
+```
+
+### Pipeline Output Formats for ATO
+
+| Pipeline | LogFC Column | P-value Column | Notes |
+|----------|-------------|----------------|-------|
+| 1 (DESeq2) | `log2FoldChange` | `pvalue` | Standard |
+| 2 (Ballgown) | `fc` | `pval` | Check column names |
+| 3 (edgeR) | `logFC` | `PValue` | Case-sensitive |
+| 4 (DESeq2) | `log2FoldChange` | `pvalue` | Standard |
+| 5 (limma) | `logFC` | `P.Value` | Note the dot |
+| 6 (NOISeq) | `M` | `prob` | Probability, not p-value* |
+| 7 (EBSeq) | `PostFC` | `PPDE` | Posterior probability* |
+| 8 (Cuffdiff) | `log2(fold_change)` | `p_value` | Check exact name |
+
+*NOISeq and EBSeq use different statistical frameworks - see pipeline sections
 
 ---
 
@@ -44,65 +83,43 @@ Each pipeline now includes:
 - Small sample sizes (n<6)
 - Complex experimental designs
 - When accuracy is paramount
-- **NEW**: High biological variation (BCV > 0.6)
 
-### Performance
-- Runtime: ~2-6 hours (typical dataset)
-- Memory: 32-48 GB
-- Accuracy: 95%
-- **NEW**: ML Success Rate: 92% (on similar data)
-- **NEW**: Resource Efficiency: 7/10
+### 🎯 ATO Integration (NEW)
 
-### ML Insights (NEW v2.1.0)
-```
-When ML Recommends Pipeline 1:
-✓ Small sample size (n < 10)
-✓ Need highest accuracy
-✓ Have sufficient resources (>32GB RAM)
-✓ Complex design or batch effects
-✓ High biological variation
+```python
+# DESeq2 output columns
+from raptor.threshold_optimizer import optimize_thresholds
 
-ML Success Rate by Data Type:
-├─ Small samples (n<6): 94% success
-├─ Medium BCV (0.3-0.6): 93% success
-├─ High BCV (>0.6): 89% success
-└─ Complex designs: 91% success
-
-Historical Performance:
-Based on 2,847 analyses in ML training data
+df = pd.read_csv('deseq2_results.csv')
+result = optimize_thresholds(
+    df,
+    logfc_col='log2FoldChange',
+    pvalue_col='pvalue',
+    goal='balanced'
+)
 ```
 
-### Running
+### Running with ATO
+
 ```bash
-# Basic
-raptor run --pipeline 1 \
-  --data fastq/ \
-  --reference /path/to/star_index \
-  --annotation genes.gtf \
-  --output pipeline1_results/
+# 1. Run pipeline
+raptor run --pipeline 1 --data fastq/ --output results/
 
-# With ML-optimized parameters (NEW)
-raptor run --pipeline 1 \
-  --data fastq/ \
-  --reference /path/to/star_index \
-  --use-ml-params \
-  --monitor-resources
+# 2. Optimize thresholds
+python -c "
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+df = pd.read_csv('results/deseq2_results.csv')
+result = optimize_thresholds(df, goal='balanced')
+print(f'Use |logFC| > {result.logfc_threshold:.2f}')
+result.results_df.to_csv('results/optimized_results.csv')
+"
 ```
 
-### Quality Recommendations (NEW)
-```
-Optimal Data Characteristics:
-├─ Sample size: 3-20 (works well with small n)
-├─ BCV: Any (handles high variation)
-├─ Depth: >10M reads/sample
-├─ Library CV: <0.4
-└─ Zero inflation: <70%
-
-Avoid if:
-✗ Very large datasets (>100 samples) - too slow
-✗ Very low resources (<32GB RAM)
-✗ Need quick turnaround (<2 hours)
-```
+### ML Insights
+- ML Success Rate: 92%
+- Recommended for: n < 10 samples, high BCV
+- ATO works excellently with DESeq2 output
 
 ---
 
@@ -119,31 +136,23 @@ Avoid if:
 - Novel transcript discovery
 - Isoform-level analysis
 - Non-model organisms
-- When reference incomplete
-- **NEW**: Exploring unannotated regions
 
-### Performance
-- Runtime: ~1-4 hours
-- Memory: 16-24 GB
-- Accuracy: 88%
-- **NEW**: ML Success Rate: 81% (context-dependent)
-- **NEW**: Best for transcript discovery, not DE
+### 🎯 ATO Integration (NEW)
 
-### ML Insights (NEW)
-```
-When ML Recommends Pipeline 2:
-✓ Non-model organism
-✓ Incomplete annotation
-✓ Novel transcript discovery primary goal
-✓ Isoform-level analysis needed
+```python
+# Ballgown output columns may vary
+df = pd.read_csv('ballgown_results.csv')
 
-ML Success Rate by Data Type:
-├─ Non-model organisms: 87% success
-├─ Novel transcript discovery: 91% success
-├─ Standard DE analysis: 75% success (not optimal)
-└─ Isoform switching: 85% success
+# Check column names first
+print(df.columns.tolist())
 
-Warning: ML rarely recommends for standard DE
+# Common Ballgown columns
+result = optimize_thresholds(
+    df,
+    logfc_col='fc',      # or 'log2fc'
+    pvalue_col='pval',   # or 'qval'
+    goal='discovery'
+)
 ```
 
 ---
@@ -160,217 +169,151 @@ Warning: ML rarely recommends for standard DE
 - Most RNA-seq experiments
 - Large datasets (>20 samples)
 - Quick turnaround needed
-- Good balance of all metrics
-- **NEW**: ML's most frequently recommended pipeline
+- **Best ATO compatibility** (well-calibrated p-values)
 
-### Performance
-- Runtime: ~0.5-2 hours
-- Memory: 8-16 GB
-- Accuracy: 90%
-- **NEW**: ML Success Rate: 89% (highest overall)
-- **NEW**: Resource Efficiency: 10/10 (best)
+### 🎯 ATO Integration (NEW) ⭐
 
-### ML Insights (NEW) 
-```
-Why ML Loves Pipeline 3:
-✓ Best speed/accuracy tradeoff
-✓ Lowest resource requirements
-✓ Handles most data types well
-✓ Robust to batch effects
-✓ Excellent for n=6-50 samples
+```python
+# edgeR output columns
+df = pd.read_csv('edger_results.csv')
+result = optimize_thresholds(
+    df,
+    logfc_col='logFC',      # Note: different from DESeq2
+    pvalue_col='PValue',    # Note: capital P
+    goal='balanced'
+)
 
-ML Success Rate by Data Type:
-├─ Standard experiments: 91% success
-├─ Large samples (n>20): 94% success
-├─ Medium BCV (0.2-0.6): 92% success
-├─ Balanced designs: 90% success
-└─ Overall: 89% success (BEST!)
-
-ML Recommendation Frequency:
-Recommended in 47% of all profiles
-(Most recommended pipeline)
-
-Historical Performance:
-Based on 5,234 analyses in ML training data
-(Largest dataset - most reliable predictions)
+# edgeR p-values work excellently with ATO
+print(f"π₀ estimate: {result.pi0:.3f}")
+print(f"Optimal |logFC|: {result.logfc_threshold:.3f}")
 ```
 
-### Running
+### Why ATO Works Best with edgeR
+
+- Well-calibrated p-values
+- Good π₀ estimation
+- Clean logFC distribution
+- Most tested combination
+
+### Running with ATO
+
 ```bash
-# Basic
-raptor run --pipeline 3 \
-  --data fastq/ \
-  --transcriptome /path/to/salmon_index \
-  --output pipeline3_results/
-
-# ML-optimized (NEW)
-raptor run --pipeline 3 \
-  --data fastq/ \
-  --transcriptome /path/to/salmon_index \
-  --use-ml-params \
-  --quality-check \
-  --monitor-resources
-```
-
-### Quality Recommendations (NEW)
-```
-Optimal Data Characteristics:
-├─ Sample size: 6-100 (sweet spot: 12-24)
-├─ BCV: 0.2-0.6 (medium variation)
-├─ Depth: >15M reads/sample
-├─ Library CV: <0.3
-└─ Zero inflation: 30-60%
-
-Works well even if:
-✓ Slight batch effects
-✓ Some outliers
-✓ Moderate library size variation
-
-Avoid if:
-✗ Very small samples (n<4) - use Pipeline 1
-✗ Need novel transcript discovery - use Pipeline 2
+raptor run --pipeline 3 --data fastq/ --use-ato --ato-goal balanced
 ```
 
 ---
 
-## Pipeline 4: Kallisto-Sleuth
+## Pipeline 4: Kallisto-DESeq2
 
 **Ultra-Fast - Large Studies**
 
 ### Components
 - **Quantification**: Kallisto
-- **Statistics**: Sleuth (bootstrap-based)
+- **Statistics**: DESeq2
 
 ### Best For
 - Very large datasets (>50 samples)
 - Exploratory analysis
 - Minimal resources
-- Speed is critical
-- **NEW**: Cloud deployment (cost-effective)
 
-### Performance
-- Runtime: ~0.3-1 hour
-- Memory: 4-8 GB
-- Accuracy: 88%
-- **NEW**: ML Success Rate: 84%
-- **NEW**: Cost Efficiency: 10/10 (best for cloud)
+### 🎯 ATO Integration (NEW)
 
-### ML Insights (NEW)
-```
-When ML Recommends Pipeline 4:
-✓ Very large datasets (>50 samples)
-✓ Limited resources (<16GB RAM)
-✓ Speed critical
-✓ Exploratory analysis
-✓ Cloud/spot instances
-
-ML Success Rate by Data Type:
-├─ Large samples (n>50): 88% success
-├─ Very large (n>100): 90% success
-├─ Low resources: 87% success
-└─ Standard (n=12): 82% success
-
-Best Use Case:
-Large-scale studies where speed > accuracy
-Historical: 1,923 analyses in ML training
+```python
+# Same as Pipeline 1 (DESeq2 output)
+df = pd.read_csv('kallisto_deseq2_results.csv')
+result = optimize_thresholds(
+    df,
+    logfc_col='log2FoldChange',
+    pvalue_col='pvalue',
+    goal='discovery'  # Good for exploratory
+)
 ```
 
 ---
 
-## Pipeline 5: STAR-HTSeq-limma-voom
+## Pipeline 5: STAR-featureCounts-limma
 
 **Flexible Modeling - Complex Designs**
 
 ### Components
 - **Alignment**: STAR
-- **Counting**: HTSeq
+- **Counting**: featureCounts
 - **Statistics**: limma-voom
 
 ### Best For
 - Complex experimental designs
 - Multi-factor analysis
 - Batch correction needed
-- Repeated measures
-- **NEW**: Time-series experiments
 
-### Performance
-- Runtime: ~2-7 hours
-- Memory: 32-40 GB
-- Accuracy: 92%
-- **NEW**: ML Success Rate: 88% (complex designs)
-- **NEW**: Flexibility: 10/10 (most flexible)
+### 🎯 ATO Integration (NEW)
 
-### ML Insights (NEW)
+```python
+# limma output columns
+df = pd.read_csv('limma_results.csv')
+result = optimize_thresholds(
+    df,
+    logfc_col='logFC',
+    pvalue_col='P.Value',  # Note the dot!
+    goal='balanced'
+)
 ```
-When ML Recommends Pipeline 5:
-✓ Complex experimental design
-✓ Multiple factors
-✓ Batch effects present
-✓ Paired/repeated samples
-✓ Need flexible modeling
 
-ML Success Rate by Data Type:
-├─ Complex designs: 91% success
-├─ Batch effects: 93% success
-├─ Multi-factor: 89% success
-├─ Paired samples: 90% success
-└─ Simple designs: 85% success
+### Note on limma P-values
 
-Historical: 1,456 analyses
-Note: Often 2nd choice after Pipeline 1
-```
+limma uses moderated t-statistics. ATO works well but:
+- P-values may be more conservative
+- Consider 'discovery' goal for more sensitivity
 
 ---
 
-## Pipeline 6: STAR-featureCounts-NOISeq
+## Pipeline 6: Salmon-NOISeq
 
 **Non-Parametric - Small Samples**
 
 ### Components
-- **Alignment**: STAR
-- **Counting**: featureCounts
+- **Quantification**: Salmon
 - **Statistics**: NOISeq
 
 ### Best For
 - Very small samples (n=2-3)
 - No replicates
-- Non-normal distributions
-- **NEW**: Highly variable data (BCV > 0.8)
 
-### Performance
-- Runtime: ~2-7 hours
-- Memory: 32-36 GB
-- Accuracy: 85%
-- **NEW**: ML Success Rate: 78% (small n only)
-- **NEW**: Small Sample Specialist
+### 🎯 ATO Integration (SPECIAL)
 
-### ML Insights (NEW)
+⚠️ **NOISeq uses probability, not p-values!**
+
+```python
+# NOISeq output is different
+df = pd.read_csv('noiseq_results.csv')
+
+# NOISeq uses probability (prob), not p-value
+# Higher prob = more likely DE (opposite of p-value!)
+
+# Convert probability to pseudo p-value
+df['pseudo_pvalue'] = 1 - df['prob']
+
+result = optimize_thresholds(
+    df,
+    logfc_col='M',              # NOISeq uses 'M' for log-ratio
+    pvalue_col='pseudo_pvalue',
+    goal='balanced'
+)
 ```
-When ML Recommends Pipeline 6:
-✓ Very small samples (n<4)
-✓ No or few replicates
-✓ Very high variation (BCV > 0.8)
-✓ Non-normal distributions
 
-ML Success Rate by Data Type:
-├─ n=2 samples: 81% success
-├─ n=3 samples: 84% success
-├─ n=4+ samples: 73% success (not optimal)
-└─ High BCV (>0.8): 79% success
+### Alternative: Use NOISeq's Native Threshold
 
-Warning from ML:
-Rarely optimal for n>3
-Consider Pipeline 1 instead for n≥4
+NOISeq recommends prob > 0.8 or prob > 0.9. You can also:
 
-Historical: 789 analyses
-(Smallest training set - less confident predictions)
+```python
+# Use NOISeq's native approach
+significant = df[df['prob'] > 0.9]
 ```
 
 ---
 
 ## Pipeline 7: Bowtie2-RSEM-EBSeq
 
-**Memory-Efficient Alternative**
+**Empirical Bayes - Isoform Analysis**
 
 ### Components
 - **Alignment**: Bowtie2
@@ -378,32 +321,35 @@ Historical: 789 analyses
 - **Statistics**: EBSeq
 
 ### Best For
-- Moderate resource environments
 - Isoform-level analysis
 - Two-condition comparisons
-- **NEW**: When STAR unavailable
 
-### Performance
-- Runtime: ~3-8 hours
-- Memory: 16-24 GB
-- Accuracy: 87%
-- **NEW**: ML Success Rate: 76%
-- **NEW**: Rarely ML's first choice
+### 🎯 ATO Integration (SPECIAL)
 
-### ML Insights (NEW)
+⚠️ **EBSeq uses posterior probability, not p-values!**
+
+```python
+# EBSeq output columns
+df = pd.read_csv('ebseq_results.csv')
+
+# EBSeq uses PPDE (Posterior Probability of being DE)
+# Convert to pseudo p-value
+df['pseudo_pvalue'] = 1 - df['PPDE']
+
+result = optimize_thresholds(
+    df,
+    logfc_col='PostFC',          # Posterior fold change
+    pvalue_col='pseudo_pvalue',
+    goal='balanced'
+)
 ```
-ML Recommendation Notes:
-⚠️  Rarely recommended by ML
-⚠️  Usually better alternatives exist
-⚠️  Consider Pipeline 1 or 3 instead
 
-Use Pipeline 7 when:
-- STAR not available
-- Moderate memory constraints
-- Isoform analysis needed
+### Alternative: Use EBSeq's Native Threshold
 
-ML typically ranks this #7
-Historical: 623 analyses
+EBSeq recommends PPDE > 0.95 (FDR = 0.05):
+
+```python
+significant = df[df['PPDE'] > 0.95]
 ```
 
 ---
@@ -419,83 +365,137 @@ Historical: 623 analyses
 
 ### Best For
 - Reproducing legacy analyses
-- When Cufflinks ecosystem required
-- **NEW**: Not recommended for new analyses
+- **Not recommended for new analyses**
 
-### Performance
-- Runtime: ~4-12 hours
-- Memory: 20-32 GB
-- Accuracy: 82%
-- **NEW**: ML Success Rate: 68% (lowest)
-- **NEW**: Legacy use only
+### 🎯 ATO Integration (NEW)
 
-### ML Insights (NEW)
+```python
+# Cuffdiff output columns
+df = pd.read_csv('cuffdiff_results.csv')
+result = optimize_thresholds(
+    df,
+    logfc_col='log2(fold_change)',  # Check exact name
+    pvalue_col='p_value',
+    goal='balanced'
+)
 ```
-ML Strongly Discourages Pipeline 8:
-❌ Lowest accuracy among all pipelines
-❌ Slowest runtime
-❌ Better alternatives always exist
-❌ Superseded by newer methods
 
-ML Success Rate:
-Only 68% success rate
-Recommended in <1% of profiles
+### Note
 
-Use ONLY if:
-- Reproducing old analyses
-- Required by journal/collaborators
+ML rarely recommends this pipeline. Consider Pipeline 2 for transcript discovery or Pipeline 3 for standard DE.
 
-ML Advice:
-Consider Pipeline 2 for transcript discovery
-Consider Pipeline 3 for standard DE
+---
 
-Historical: 412 analyses
-(Smallest and worst-performing in ML training)
+## 🎯 ATO Best Practices by Pipeline
+
+### Recommended Configurations
+
+| Pipeline | ATO Goal | Notes |
+|----------|----------|-------|
+| 1 (STAR-RSEM-DESeq2) | balanced | Best for publications |
+| 2 (HISAT2-StringTie) | discovery | More permissive for novel transcripts |
+| 3 (Salmon-edgeR) ⭐ | balanced | Best ATO compatibility |
+| 4 (Kallisto-DESeq2) | discovery | Good for large exploratory studies |
+| 5 (STAR-limma) | balanced | Works well with complex designs |
+| 6 (Salmon-NOISeq) | - | Use native prob threshold |
+| 7 (Bowtie2-EBSeq) | - | Use native PPDE threshold |
+| 8 (HISAT2-Cuffdiff) | balanced | Legacy support |
+
+### Quick Reference Code
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+# Pipeline 1 & 4 (DESeq2)
+result = optimize_thresholds(df, 'log2FoldChange', 'pvalue', goal='balanced')
+
+# Pipeline 3 (edgeR)
+result = optimize_thresholds(df, 'logFC', 'PValue', goal='balanced')
+
+# Pipeline 5 (limma)
+result = optimize_thresholds(df, 'logFC', 'P.Value', goal='balanced')
+
+# Pipeline 2 & 8 (Ballgown/Cuffdiff) - check columns first
+print(df.columns.tolist())
 ```
 
 ---
 
-##  ML-Powered Pipeline Selection (NEW)
+## ML-Powered Pipeline Selection with ATO
 
-### How ML Chooses Pipelines
+### Complete Workflow
 
 ```python
 from raptor import MLPipelineRecommender, RNAseqDataProfiler
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
 
-# Profile your data
+# 1. Profile data
 profiler = RNAseqDataProfiler(counts, metadata, use_ml=True)
 profile = profiler.profile()
 
-# Get ML recommendations
-ml_rec = MLPipelineRecommender()
-recommendations = ml_rec.recommend(profile, n=3, explain=True)
+# 2. Get ML recommendation
+recommender = MLPipelineRecommender()
+rec = recommender.recommend(profile)[0]
+print(f"Recommended: {rec['pipeline_name']} ({rec['confidence']})")
 
-# See why ML chose each pipeline
-for rec in recommendations:
-    print(f"\n{rec['pipeline_name']}")
-    print(f"ML Score: {rec['ml_score']:.3f}")
-    print(f"Success Rate: {rec['historical_success']:.1%}")
-    print(f"Based on {rec['similar_count']} similar projects")
-```
+# 3. Run recommended pipeline
+# raptor run --pipeline {rec['pipeline_id']} ...
 
-### ML Decision Factors
+# 4. Optimize thresholds with ATO
+de_results = pd.read_csv('de_results.csv')
 
-```
-ML considers (in order of importance):
-1. Biological Variation (BCV) - 35% weight
-2. Sample Size - 22% weight
-3. Sequencing Depth - 18% weight
-4. Library Size Variation - 12% weight
-5. Zero Inflation - 8% weight
-6. Organism - 5% weight
+# Get column names for this pipeline
+if rec['pipeline_id'] in [1, 4]:
+    logfc_col, pval_col = 'log2FoldChange', 'pvalue'
+elif rec['pipeline_id'] == 3:
+    logfc_col, pval_col = 'logFC', 'PValue'
+elif rec['pipeline_id'] == 5:
+    logfc_col, pval_col = 'logFC', 'P.Value'
 
-For YOUR data:
-raptor profile --counts data.csv --use-ml --explain
+result = optimize_thresholds(de_results, logfc_col, pval_col, goal='balanced')
+
+print(f"\n🎯 Data-Driven Thresholds:")
+print(f"   |logFC| > {result.logfc_threshold:.3f}")
+print(f"   Significant: {result.n_significant} genes")
+print(f"\nMethods text:\n{result.methods_text}")
 ```
 
 ---
 
-## Decision Guide
+## Ensemble Analysis with ATO
+
+For critical analyses, combine pipelines with uniform ATO thresholds:
+
+```yaml
+# config.yaml
+ensemble:
+  enabled: true
+  pipelines: [1, 3, 5]
+  
+threshold_optimizer:
+  enabled: true
+  goal: "balanced"
+  ensemble_mode:
+    uniform_thresholds: true  # Same thresholds for all pipelines
+```
+
+```python
+from raptor import EnsembleAnalyzer
+from raptor.threshold_optimizer import optimize_thresholds
+
+# Combine results
+analyzer = EnsembleAnalyzer()
+ensemble = analyzer.combine(pipeline_results, method='vote')
+
+# Apply uniform ATO thresholds
+result = optimize_thresholds(ensemble['combined'], goal='balanced')
+```
+
+---
+
+## Decision Guide with ATO
 
 ### Quick Decision Tree
 
@@ -503,103 +503,50 @@ raptor profile --counts data.csv --use-ml --explain
 Start Here
     ↓
 Need highest accuracy?
-├─ YES → Pipeline 1 (STAR-RSEM-DESeq2)
+├─ YES → Pipeline 1 (STAR-RSEM-DESeq2) + ATO goal='balanced'
 └─ NO → Continue
     ↓
 Have >50 samples?
-├─ YES → Pipeline 4 (Kallisto-Sleuth)
+├─ YES → Pipeline 4 (Kallisto-DESeq2) + ATO goal='discovery'
 └─ NO → Continue
     ↓
 Need novel transcripts?
-├─ YES → Pipeline 2 (HISAT2-StringTie)
+├─ YES → Pipeline 2 (HISAT2-StringTie) + ATO goal='discovery'
 └─ NO → Continue
     ↓
 Have <4 samples?
-├─ YES → Pipeline 6 (NOISeq)
-└─ NO → Continue
-    ↓
-Complex design/batch effects?
-├─ YES → Pipeline 5 (limma-voom)
-└─ NO → Pipeline 3 (Salmon-edgeR) ⭐
+├─ YES → Pipeline 6 (NOISeq) + Use native prob threshold
+└─ NO → Pipeline 3 (Salmon-edgeR) ⭐ + ATO goal='balanced'
 
-NOT SURE? → Use ML recommendation:
-raptor profile --counts data.csv --use-ml
-```
-
-### ML-Enhanced Decision (NEW)
-
-```bash
-# Let ML decide for you
-raptor profile --counts data.csv --use-ml
-
-# ML will consider:
-# - Your exact data characteristics
-# - 10,000+ past successful analyses
-# - Resource constraints
-# - Expected accuracy
-# - Historical success rate
-
-# Get top 3 with confidence scores
-# Choose based on ML confidence!
+ALL PIPELINES: Use ATO for data-driven thresholds!
 ```
 
 ---
 
-## Ensemble Recommendations (NEW)
+## Configuration Reference
 
-For critical analyses, combine multiple pipelines:
+```yaml
+# pipelines.yaml (v2.1.1)
 
-### ML-Suggested Ensembles
-
-**High Confidence Ensemble:**
-```
-Pipeline 1 + Pipeline 3 + Pipeline 5
-(Weight: 0.4, 0.4, 0.2)
-
-Why: Different methods, high accuracy
-ML Success: 94% on combined results
-```
-
-**Fast Ensemble:**
-```
-Pipeline 3 + Pipeline 4
-(Weight: 0.6, 0.4)
-
-Why: Both fast, complementary
-ML Success: 88%
-Runtime: <2 hours
-```
-
-**Maximum Robustness:**
-```
-Pipeline 1 + Pipeline 3 + Pipeline 4 + Pipeline 5
-(Weight: 0.3, 0.3, 0.2, 0.2)
-
-Why: Diverse methods
-ML Success: 96%
-Consensus genes highly reliable
+pipelines:
+  - id: 3
+    name: "Salmon-edgeR"
+    
+    # NEW: ATO configuration
+    threshold_optimizer_support:
+      output_format: "edger"
+      columns:
+        logfc: "logFC"
+        pvalue: "PValue"
+        fdr: "FDR"
+      ato_compatible: true
+      recommended_goal: "balanced"
 ```
 
 ---
 
-## See Configuration Details
-
-Pipeline parameters and settings:
-```bash
-# View pipeline configurations
-raptor show-pipeline-config --pipeline 3
-
-# Get ML-optimized parameters
-raptor get-ml-params --pipeline 3 --data-profile profile.json
-
-# Compare all pipeline configs
-raptor compare-configs --pipelines all
-```
-
----
-
-**RAPTOR v2.1.0 Pipelines**  
+**RAPTOR v2.1.1 Pipelines**  
 **Author**: Ayeh Bolouki  
 **License**: MIT
 
-*"Eight pipelines, one ML brain!"* 🤖🦖
+*"Eight pipelines, one ML brain, optimized thresholds!"* 🎯🦖

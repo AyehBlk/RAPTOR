@@ -5,7 +5,7 @@ RAPTOR Dashboard Launcher
 Quick launcher for the interactive web dashboard.
 
 Author: Ayeh Bolouki
-Version: 2.1.0
+Version: 2.1.1
 """
 
 import subprocess
@@ -38,20 +38,38 @@ def main():
         print("\nMake sure the dashboard folder exists with app.py or dashboard.py")
         sys.exit(1)
     
+    # Check for threshold optimizer
+    ato_status = "✅ Available"
+    try:
+        from raptor.threshold_optimizer import AdaptiveThresholdOptimizer
+    except ImportError:
+        try:
+            from threshold_optimizer import AdaptiveThresholdOptimizer
+        except ImportError:
+            ato_status = "⚠️ Not installed"
+    
     print(f"""
-    ╔══════════════════════════════════════════════════════════════╗
-    ║              🦖 Launching RAPTOR v2.1.0 Dashboard            ║
-    ╚══════════════════════════════════════════════════════════════╝
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║              🦖 Launching RAPTOR v2.1.1 Dashboard             ║
+    ╠═══════════════════════════════════════════════════════════════╣
+    ║                                                               ║
+    ║  🆕 NEW: Adaptive Threshold Optimizer (ATO)                   ║
+    ║     Data-driven threshold selection for DE analysis           ║
+    ║                                                               ║
+    ╚═══════════════════════════════════════════════════════════════╝
     
     Dashboard: {dashboard_path.name}
     Location:  {dashboard_path.parent}
+    
+    Threshold Optimizer: {ato_status}
     
     The dashboard will open in your default web browser.
     
     Features available:
     • 🤖 ML-based pipeline recommendations
+    • 🎯 Adaptive Threshold Optimizer (NEW!)
     • 📊 Real-time resource monitoring  
-    • 🎯 Ensemble analysis
+    • 🔬 Ensemble analysis
     • 📈 Benchmark comparisons
     • 📋 Quality assessment
     • 📄 Automated reporting
@@ -73,7 +91,7 @@ def main():
         print("\nInstall with:")
         print("  pip install streamlit plotly")
         print("\nOr install all RAPTOR dependencies:")
-        print("  pip install -r requirements.txt")
+        print("  pip install raptor-rnaseq[dashboard]")
         sys.exit(1)
 
 

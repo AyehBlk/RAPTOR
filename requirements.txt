@@ -1,4 +1,4 @@
-# RAPTOR v2.1.0 Requirements
+# RAPTOR v2.1.1 Requirements
 # RNA-seq Analysis Pipeline Testing and Optimization Resource
 # Python 3.8+
 # Updated: December 2025
@@ -25,7 +25,7 @@ pyyaml>=5.4.0
 
 
 # ============================================================================
-# v2.1.0 NEW FEATURES - REQUIRED DEPENDENCIES
+# v2.1.0+ FEATURES - REQUIRED DEPENDENCIES
 # ============================================================================
 
 # ---------- ML-Based Pipeline Recommendations ----------
@@ -35,6 +35,7 @@ pyyaml>=5.4.0
 # ---------- Advanced Data Quality Assessment ----------
 statsmodels>=0.13.0              # F-statistics for batch effect detection
                                  # ANOVA, statistical modeling
+                                 # π₀ estimation (Storey's method)
 
 
 # ---------- Real-Time Resource Monitoring ----------
@@ -65,6 +66,21 @@ markdown>=3.3.0                  # Markdown to HTML conversion
 # ---------- CLI and Utilities ----------
 click>=8.0.0                     # Command-line interface
 colorama>=0.4.4                  # Cross-platform colored output
+
+
+# ============================================================================
+# v2.1.1 FEATURES - NO NEW DEPENDENCIES REQUIRED
+# ============================================================================
+
+# ---------- Adaptive Threshold Optimizer (ATO) ----------
+# The ATO module uses existing dependencies:
+#   - scipy: Statistical distributions, optimization
+#   - numpy: Numerical operations
+#   - pandas: Data manipulation
+#   - matplotlib/seaborn: Visualization
+#   - statsmodels: π₀ estimation methods
+#
+# No additional packages required for ATO!
 
 
 # ============================================================================
@@ -128,7 +144,10 @@ colorama>=0.4.4                  # Cross-platform colored output
 #   pip install -r requirements.txt
 #   pip install streamlit plotly
 
-# Upgrade from v2.0.0:
+# From PyPI (recommended):
+#   pip install raptor-rnaseq[all]
+
+# Upgrade from v2.1.0:
 #   pip install -r requirements.txt --upgrade
 
 # Virtual environment (recommended):
@@ -136,3 +155,6 @@ colorama>=0.4.4                  # Cross-platform colored output
 #   source raptor_env/bin/activate  # Linux/Mac
 #   raptor_env\Scripts\activate     # Windows
 #   pip install -r requirements.txt
+
+# Verify ATO installation (v2.1.1):
+#   python -c "from raptor.threshold_optimizer import optimize_thresholds; print('✅ ATO Ready!')"

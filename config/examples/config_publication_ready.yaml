@@ -1,5 +1,5 @@
 # ============================================================================
-# RAPTOR v2.1.0 - PUBLICATION-READY CONFIGURATION
+# RAPTOR v2.1.1 - PUBLICATION-READY CONFIGURATION
 # ============================================================================
 # 
 # This configuration is designed for researchers preparing manuscripts
@@ -13,8 +13,12 @@
 # - Grant applications
 # - Conference presentations
 #
+# NEW in v2.1.1: Adaptive Threshold Optimizer for data-driven, defensible
+# threshold selection with publication-ready methods text generation.
+#
 # Features:
 # - Comprehensive quality control
+# - Data-driven threshold optimization (NEW!)
 # - Biological interpretation with multiple databases
 # - Publication-quality figures
 # - Detailed statistical reporting
@@ -28,7 +32,7 @@
 # GENERAL SETTINGS
 # ============================================================================
 general:
-  version: "2.1.0"
+  version: "2.1.1"
   verbose: true
   log_level: "INFO"
   output_dir: "./publication_analysis"
@@ -112,6 +116,83 @@ ml_recommendation:
     save_metrics: true
     metrics_file: "ml_performance.json"
     generate_performance_report: true
+
+# ============================================================================
+# ADAPTIVE THRESHOLD OPTIMIZER - PUBLICATION MODE (NEW in v2.1.1)
+# ============================================================================
+# Data-driven threshold optimization with full documentation for publication
+# Addresses reviewer concerns about "arbitrary" threshold selection
+# ============================================================================
+threshold_optimizer:
+  enabled: true
+  
+  # Balanced goal for publication (not too permissive, not too conservative)
+  goal: "balanced"
+  
+  # Enable all p-value adjustment methods for comparison
+  padj_methods:
+    benjamini_hochberg: true    # Standard FDR
+    benjamini_yekutieli: true   # Conservative FDR (any dependence)
+    storey_qvalue: true         # More powerful FDR with π₀
+    holm: true                  # FWER control
+    hochberg: true              # Less conservative FWER
+    bonferroni: true            # Most conservative
+  
+  # Enable all logFC methods for robustness
+  logfc_methods:
+    auto: true                  # Consensus (recommended)
+    mad: true                   # MAD-based
+    mixture: true               # Gaussian mixture
+    power: true                 # Power-based
+    percentile: true            # Percentile-based
+  
+  default_logfc_method: "auto"  # Use consensus for publication
+  
+  # π₀ estimation (important for methods section)
+  pi0_estimation:
+    enabled: true
+    methods:
+      - "storey"
+      - "pounds"
+      - "histogram"
+    default_method: "storey"
+    document_estimation: true   # Include in methods text
+  
+  # Comprehensive threshold comparison for supplementary
+  comparison:
+    enabled: true
+    logfc_values: [0.25, 0.5, 0.75, 1.0, 1.5, 2.0]
+    padj_values: [0.001, 0.01, 0.05, 0.1]
+    generate_heatmap: true
+    include_in_supplement: true
+  
+  # Publication-quality visualization
+  visualization:
+    volcano_plot: true
+    logfc_distribution: true
+    pvalue_distribution: true
+    threshold_heatmap: true
+    optimization_summary: true
+    adjustment_comparison: true
+    
+    # Publication settings
+    plot_format: "png"  # Also generates PDF/SVG
+    dpi: 300            # Publication quality
+    style: "publication"
+    color_palette: "colorblind_safe"
+    font_family: "Arial"
+  
+  # Output for publication
+  output:
+    save_optimized_results: true
+    save_significant_genes: true
+    generate_methods_text: true      # Auto-generates methods paragraph
+    export_formats: ["csv", "xlsx"]
+    
+    # Include in supplementary materials
+    include_threshold_rationale: true
+    include_pi0_estimation: true
+    include_method_comparison: true
 
 # ============================================================================
 # ADVANCED QUALITY ASSESSMENT - PUBLICATION STANDARDS
@@ -217,23 +298,24 @@ ensemble:
   generate_ensemble_report: true
   compare_methods: true
   plot_comparisons: true
-  
-  # Venn diagrams for overlaps
-  generate_venn_diagrams: true
 
 # ============================================================================
-# STATISTICAL ANALYSIS - PUBLICATION STANDARDS
+# STATISTICAL ANALYSIS - PUBLICATION STANDARDS (UPDATED v2.1.1)
 # ============================================================================
 statistics:
-  # Conservative thresholds (common in publications)
+  # Default thresholds (ATO will optimize these)
   fdr_threshold: 0.05
   log_fold_change_threshold: 1.0  # |log2FC| >= 1 (2-fold change)
   p_value_threshold: 0.05
   
+  # Use Adaptive Threshold Optimizer (recommended)
+  use_adaptive_thresholds: true
+  document_threshold_rationale: true  # Include ATO reasoning
+  
   # Stringent multiple testing correction
   adjustment_method: "BH"  # Benjamini-Hochberg
   
-  # Effect size reporting
+  # Effect size reporting (important for publication)
   min_base_mean: 10
   report_effect_sizes: true
   
@@ -249,7 +331,7 @@ statistics:
     document_correction: true
 
 # ============================================================================
-# AUTOMATED REPORTING - PUBLICATION QUALITY
+# AUTOMATED REPORTING - PUBLICATION QUALITY (UPDATED v2.1.1)
 # ============================================================================
 automated_reporting:
   enabled: true
@@ -259,13 +341,14 @@ automated_reporting:
     - "html"  # For supplementary materials
     - "pdf"   # For main manuscript
   
-  # Comprehensive sections
+  # Comprehensive sections (updated for v2.1.1)
   sections:
     - "executive_summary"
     - "study_overview"
     - "data_profiling"
     - "quality_assessment"
     - "pipeline_recommendation"
+    - "threshold_optimization"      # NEW in v2.1.1
     - "normalization_methods"
     - "differential_expression"
     - "biological_interpretation"
@@ -276,21 +359,16 @@ automated_reporting:
     - "conclusions"
     - "references"
   
-  # ========================================================================
-  # BIOLOGICAL INTERPRETATION - COMPREHENSIVE
-  # ========================================================================
+  # Biological interpretation - comprehensive
   interpretation:
     enabled: true
-    
-    # Multiple pathway databases for comprehensive coverage
     databases:
-      - "GO"              # Gene Ontology (BP, MF, CC)
-      - "KEGG"            # KEGG Pathways
-      - "Reactome"        # Reactome Pathways
-      - "WikiPathways"    # WikiPathways
-      - "MSigDB"          # Molecular Signatures Database
-      - "DisGeNET"        # Disease associations
-      - "DrugBank"        # Drug-gene interactions
+      - "GO"           # Gene Ontology
+      - "KEGG"         # KEGG Pathways
+      - "Reactome"     # Reactome Pathways
+      - "WikiPathways" # WikiPathways
+      - "DisGeNET"     # Disease associations
+      - "MSigDB"       # Molecular Signatures
     
     # Enrichment settings
     enrichment:
@@ -300,111 +378,44 @@ automated_reporting:
       min_genes: 5
       max_genes: 500
       
-      # Background gene set
-      use_custom_background: false
-      background_genes: null
+      # Multiple enrichment methods for robustness
+      compare_methods: true
+      methods: ["hypergeometric", "fisher", "gsea"]
     
-    # Gene Ontology - all aspects
-    go_analysis:
-      aspects: ["BP", "MF", "CC"]  # Biological Process, Molecular Function, Cellular Component
-      evidence_codes: "all"  # Use all evidence types
-      
     # Network analysis
     network:
       enabled: true
       method: "string"
       confidence_threshold: 0.7
-      max_interactions: 100
-      
-      # Hub gene identification
-      identify_hubs: true
-      hub_threshold: 10  # Minimum connections
-    
-    # Gene Set Enrichment Analysis (GSEA)
-    gsea:
-      enabled: true
-      permutations: 1000
-      ranking_metric: "signal_to_noise"
-      
-    # Upstream regulator analysis
-    upstream_regulators:
-      enabled: true
-      databases: ["TRRUST", "ChEA"]
+      generate_network_plots: true
   
-  # ========================================================================
-  # VISUALIZATIONS - PUBLICATION QUALITY
-  # ========================================================================
+  # Publication-quality visualizations
   plots:
-    # Standard plots
     volcano: true
     ma_plot: true
     heatmap: true
     pca: true
-    
-    # Enrichment visualizations
     enrichment_bar: true
     enrichment_dot: true
-    enrichment_network: true
-    
-    # Network plots
     network_graph: true
+    threshold_optimization: true   # NEW in v2.1.1
+    pi0_estimation: true           # NEW in v2.1.1
     
-    # Additional publication plots
-    correlation_heatmap: true
-    sample_distance_heatmap: true
-    dispersion_plot: true
-    count_distribution: true
-    
-    # Multi-panel figures
-    generate_composite_figures: true
-    
-    # Plot settings
-    dpi: 300  # High resolution
-    formats: ["png", "pdf", "svg"]  # Multiple formats
-    style: "publication"
-    font_size: 12
-    font_family: "Arial"
-    color_palette: "colorblind_safe"
-    
-    # Figure dimensions (inches) - standard for journals
-    figure_width: 7  # Single column width
-    figure_height: 5
-    
-    # Heatmap settings
-    heatmap:
-      clustering_method: "ward"
-      distance_metric: "euclidean"
-      color_scheme: "RdBu_r"
-      show_gene_names: true
-      max_genes: 50  # Top DE genes
+    # Plot quality settings
+    settings:
+      dpi: 300
+      format: ["png", "pdf", "svg"]
+      color_palette: "colorblind_safe"
+      font_family: "Arial"
+      font_size: 10
   
-  # ========================================================================
-  # REPORT CUSTOMIZATION
-  # ========================================================================
-  template: "publication"
-  
-  # Institution branding
-  logo: "./institution_logo.png"  # Path to your institution logo
-  
-  # Author information
+  # Report customization
+  template: "publication"  # publication-optimized template
+  logo: null  # Path to institution logo
   author_info: true
-  authors:
-    - name: "Your Name"
-      affiliation: "University of Namur"
-      email: "your.email@unamur.be"
-  
-  # Study information
-  study_info:
-    title: "Your Study Title"
-    description: "Brief study description"
-    date: "2025-11-19"
-  
-  # Timestamps and versioning
   timestamp: true
-  version_info: true
-  software_versions: true  # R, Python, package versions
   
-  # Citations and references
+  # Citation generation
   include_citations: true
   citation_style: "nature"  # nature, science, cell, plos
   
@@ -503,42 +514,45 @@ reproducibility:
   code_file: "analysis_code.R"  # or .py
 
 # ============================================================================
-# SUPPLEMENTARY MATERIALS GENERATION
+# SUPPLEMENTARY MATERIALS GENERATION (UPDATED v2.1.1)
 # ============================================================================
 supplementary:
   generate_supplements: true
   
   # Supplementary tables
   tables:
-    - "all_de_genes"           # All DE genes with statistics
-    - "top_de_genes"           # Top 100 DE genes
-    - "enrichment_results"     # All enrichment results
-    - "sample_metadata"        # Sample information
-    - "qc_metrics"             # Quality control metrics
-    - "pipeline_parameters"    # Analysis parameters
+    - "all_de_genes"             # All DE genes with statistics
+    - "top_de_genes"             # Top 100 DE genes
+    - "threshold_optimization"   # NEW: ATO results and rationale
+    - "enrichment_results"       # All enrichment results
+    - "sample_metadata"          # Sample information
+    - "qc_metrics"               # Quality control metrics
+    - "pipeline_parameters"      # Analysis parameters
   
   # Supplementary figures
   figures:
-    - "qc_plots"              # All QC plots
-    - "normalization_plots"   # Before/after normalization
-    - "exploratory_plots"     # PCA, clustering, etc.
-    - "de_plots"              # All DE visualizations
-    - "enrichment_plots"      # All enrichment plots
-    - "network_plots"         # Network visualizations
+    - "qc_plots"                 # All QC plots
+    - "normalization_plots"      # Before/after normalization
+    - "exploratory_plots"        # PCA, clustering, etc.
+    - "threshold_plots"          # NEW: ATO visualizations
+    - "de_plots"                 # All DE visualizations
+    - "enrichment_plots"         # All enrichment plots
+    - "network_plots"            # Network visualizations
   
   # Supplementary text
   text:
-    - "methods_detail"        # Detailed methods
-    - "pipeline_description"  # Pipeline documentation
-    - "statistical_tests"     # Statistical procedures
-    - "software_info"         # Software and versions
+    - "methods_detail"           # Detailed methods
+    - "threshold_rationale"      # NEW: Threshold selection rationale
+    - "pipeline_description"     # Pipeline documentation
+    - "statistical_tests"        # Statistical procedures
+    - "software_info"            # Software and versions
   
   # Package everything
   create_supplement_package: true
   package_format: "zip"
 
 # ============================================================================
-# METHODS SECTION GENERATION
+# METHODS SECTION GENERATION (UPDATED v2.1.1)
 # ============================================================================
 methods_generation:
   enabled: true
@@ -547,13 +561,14 @@ methods_generation:
   generate_methods_text: true
   methods_file: "methods_section.txt"
   
-  # Include these components
+  # Include these components (updated for v2.1.1)
   components:
     - "sample_description"
     - "sequencing_info"
     - "quality_control"
     - "normalization"
     - "pipeline_selection"
+    - "threshold_optimization"   # NEW: ATO methods text
     - "differential_expression"
     - "statistical_tests"
     - "enrichment_analysis"
@@ -566,18 +581,28 @@ methods_generation:
   # Citations
   include_citations: true
   citation_format: "numbered"  # numbered, author-year
+  
+  # Include ATO citation
+  cite_threshold_optimizer: true
 
 # ============================================================================
-# PEER REVIEW SUPPORT
+# PEER REVIEW SUPPORT (UPDATED v2.1.1)
 # ============================================================================
 peer_review_support:
   # Address common reviewer concerns
+  
+  # Threshold justification (NEW - addresses common reviewer concern)
+  threshold_justification:
+    enabled: true
+    document_ato_reasoning: true
+    compare_to_traditional: true  # Show difference vs |logFC|>1, padj<0.05
   
   # Robustness checks
   sensitivity_analysis:
     enabled: true
     vary_thresholds: true
     vary_normalization: true
+    include_ato_comparison: true  # NEW: Compare ATO vs traditional
   
   # Negative controls
   negative_controls:
@@ -660,13 +685,15 @@ journal_requirements:
     font_family: "Arial"
 
 # ============================================================================
-# PUBLICATION CHECKLIST
+# PUBLICATION CHECKLIST (UPDATED v2.1.1)
 # ============================================================================
 # 
 # Before submission, ensure:
 # ☐ Random seed set for reproducibility
 # ☐ All quality control metrics documented
 # ☐ Pipeline selection rationale clear
+# ☐ Threshold selection justified (use ATO methods text) ← NEW
+# ☐ π₀ estimation documented ← NEW
 # ☐ Statistical methods fully described
 # ☐ Multiple testing correction applied
 # ☐ Effect sizes reported
@@ -675,7 +702,7 @@ journal_requirements:
 # ☐ Software versions documented
 # ☐ Code available (GitHub, Zenodo)
 # ☐ Data archived (GEO, SRA)
-# ☐ Methods section written
+# ☐ Methods section written (including ATO paragraph) ← NEW
 # ☐ Biological interpretation included
 # ☐ Negative/positive controls documented
 # ☐ Reproducible with provided code/data

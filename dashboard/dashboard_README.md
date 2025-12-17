@@ -1,10 +1,25 @@
 # RAPTOR Interactive Dashboard 🦖
 
-Web-based interface for RAPTOR v2.1.0 ML features and analysis tools.
+Web-based interface for RAPTOR v2.1.1 ML features and analysis tools.
 
 ---
 
-##  Quick Start
+## 🆕 What's New in v2.1.1
+
+### Adaptive Threshold Optimizer (ATO)
+
+The new **Threshold Optimizer** page provides data-driven threshold selection for differential expression analysis:
+
+- **Data-driven logFC cutoffs** instead of arbitrary |logFC| > 1
+- **Multiple p-value adjustment methods**: BH, BY, Holm, Hochberg, Bonferroni, q-value
+- **π₀ estimation** for true null proportion
+- **Interactive visualizations**: Volcano plots, distributions, heatmaps
+- **Publication-ready methods text** generation
+- **Export optimized results** as CSV
+
+---
+
+## ⚡ Quick Start
 
 ### Installation
 
@@ -33,15 +48,15 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 
 ---
 
-##  Features
+## 📋 Features
 
-### 1.  Home
+### 1. 🏠 Home
 - Welcome page with quick start guide
-- System status overview
+- System status overview (including ATO availability)
 - Recent activity tracking
 - Quick links to main features
 
-### 2.  ML Recommender
+### 2. 🤖 ML Recommender
 **Get AI-powered pipeline recommendations**
 
 - **Upload Data**: CSV count matrix or generate sample data
@@ -49,15 +64,30 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 - **Recommend**: ML model suggests optimal pipeline
 - **Visualize**: Confidence scores, feature importance, alternatives
 
+### 3. 🎯 Threshold Optimizer *(NEW in v2.1.1)*
+**Data-driven threshold optimization for DE analysis**
+
+- **Upload DE Results**: CSV/TSV from DESeq2, edgeR, or limma
+- **Set Analysis Goal**: Discovery, Balanced, or Validation
+- **Optimize**: Get recommended logFC and padj thresholds
+- **Visualize**: Volcano plots, distributions, comparison heatmaps
+- **Export**: Significant genes, summary report, methods text
+
+**Supported input formats:**
+- DESeq2 output (log2FoldChange, pvalue, padj)
+- edgeR output (logFC, PValue, FDR)
+- limma-voom output (logFC, P.Value, adj.P.Val)
+
 **Example workflow:**
 ```
-1. Upload counts.csv (genes × samples)
-2. Click "Profile Data" 
-3. Click "Get ML Recommendation"
-4. View recommended pipeline with confidence score
+1. Upload your DESeq2 results (CSV)
+2. Select goal: "discovery" 
+3. Click "Optimize Thresholds"
+4. View recommended: |logFC| > 0.45, padj < 0.05
+5. Download significant genes and methods text
 ```
 
-### 3.  Resource Monitor
+### 4. 📊 Resource Monitor
 **Track system resources in real-time**
 
 - **CPU Usage**: Real-time CPU percentage
@@ -66,29 +96,15 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 - **Charts**: Interactive time-series plots
 - **Export**: Download monitoring data as CSV
 
-**Controls:**
-- ▶️ Start: Begin monitoring
-- ⏸️ Pause: Pause data collection
-- 🔄 Reset: Clear collected data
-- 💾 Export: Download CSV
-
-### 4.  Ensemble Analysis
+### 5. 🔬 Ensemble Analysis
 **Combine results from multiple pipelines**
 
 - **Select Pipelines**: Choose 3-6 pipelines to combine
-- **Ensemble Methods**:
-  - Vote counting (majority vote)
-  - Rank product (combine rankings)
-  - P-value combination (Fisher's method)
-  - Weighted average (by accuracy)
-  - Combined (all methods)
-- **Results**:
-  - Consensus score distribution
-  - Pipeline agreement heatmap
-  - Top consensus genes
-  - Export to CSV/TXT
+- **Ensemble Methods**: Vote, rank product, p-value combination, weighted
+- **Results**: Consensus scores, agreement heatmap, top genes
+- **Export**: CSV/TXT files
 
-### 5.  Benchmarks
+### 6. 📈 Benchmarks
 **Compare pipeline performance**
 
 - Performance metrics (accuracy, precision, recall, F1)
@@ -96,94 +112,122 @@ The dashboard will open automatically in your browser at `http://localhost:8501`
 - Trade-off analysis (accuracy vs speed)
 - Detailed comparison tables
 
-### 6.  Settings
+### 7. ⚙️ Settings
 **Configure dashboard preferences**
 
 - ML model selection and paths
 - Data and output directories
 - Performance settings (threads, memory)
+- **Threshold Optimizer defaults** *(NEW)*
 - Dashboard preferences (theme, auto-refresh)
-- Save/load settings
 
 ---
 
-##  File Structure
+## 📁 File Structure
 
 ```
-dashboard/
-├── dashboard.py           # Main dashboard application
-├── README.md             # This file
-└── config/
-    └── dashboard_settings.json  # Saved settings
+RAPTOR/
+├── launch_dashboard.py           # Dashboard launcher (root)
+├── dashboard/                    # Dashboard folder
+│   ├── dashboard.py              # Main dashboard application
+│   ├── dashboard_README.md       # This file
+│   └── docs/
+│       └── THRESHOLD_OPTIMIZER.md
+└── raptor/                       # Python package
+    ├── __init__.py
+    ├── ml_recommender.py
+    ├── threshold_optimizer/      # ATO module (v2.1.1)
+    │   ├── __init__.py
+    │   ├── ato.py                # Main optimizer class
+    │   └── visualization.py      # Plotting functions
+    └── ... other modules
+
 ```
 
 ---
 
-##  Prerequisites
+## 🎯 Threshold Optimizer Details
 
-### Required Files
+### Input Requirements
 
-Before using the dashboard, ensure you have:
+| Column | Aliases | Required |
+|--------|---------|----------|
+| log2FoldChange | logFC, log2FC, lfc | ✅ Yes |
+| pvalue | PValue, P.Value, pval | ✅ Yes |
+| padj | adj.P.Val, FDR, qvalue | Optional |
+| baseMean | AveExpr, logCPM | Optional |
+| lfcSE | SE | Optional |
 
-1. **ML Model** (for recommendations):
-   ```bash
-   # Train a model using example workflow
-   python example_ml_workflow.py --n-datasets 200
-   ```
-   This creates: `models/raptor_rf_model.pkl`
+### Analysis Goals
 
-2. **RAPTOR Modules** in Python path:
-   - `ml_recommender.py`
-   - `synthetic_benchmarks.py` (optional)
+| Goal | Error Control | Use Case |
+|------|--------------|----------|
+| **Discovery** | FDR | Exploratory analysis, maximize true positives |
+| **Balanced** | FDR | Publication, balance sensitivity/specificity |
+| **Validation** | FWER | Confirming targets, minimize false positives |
 
-### Python Packages
+### LogFC Methods
 
-All packages are installed automatically with:
-```bash
-pip install raptor-rnaseq[dashboard]
-```
+| Method | Description |
+|--------|-------------|
+| **auto** | Consensus of all methods (recommended) |
+| **mad** | MAD-based robust estimation |
+| **mixture** | Gaussian mixture model |
+| **power** | Power-based minimum effect |
+| **percentile** | 95th percentile of null |
 
-This includes: streamlit, pandas, numpy, plotly, psutil
+### P-value Adjustment Methods
+
+- **BH**: Benjamini-Hochberg (standard FDR)
+- **BY**: Benjamini-Yekutieli (any dependence)
+- **q-value**: Storey's q-value with π₀ estimation
+- **Holm**: Step-down FWER control
+- **Hochberg**: Step-up FWER control
+- **Bonferroni**: Most conservative
 
 ---
 
-##  Usage Examples
+## 💡 Usage Examples
 
-### Example 1: Get Pipeline Recommendation
+### Example 1: Optimize DE Thresholds
 
 ```bash
 1. Launch dashboard: streamlit run dashboard.py
-2. Go to "ML Recommender" page
-3. Click "Generate Sample Data" (or upload your CSV)
-4. Click "Profile Data"
-5. Click "Get ML Recommendation"
-6. View recommended pipeline and confidence score
+2. Go to "🎯 Threshold Optimizer" page
+3. Upload your DESeq2 results CSV
+4. Select goal: "discovery"
+5. Click "🚀 Optimize Thresholds"
+6. View results:
+   - Recommended |logFC| cutoff
+   - Recommended padj method and cutoff
+   - π₀ estimate
+   - Number of DE genes
+7. Download significant genes CSV
 ```
 
-### Example 2: Monitor Resource Usage
+### Example 2: Get Pipeline Recommendation
 
 ```bash
-1. Go to "Resource Monitor" page
+1. Go to "🤖 ML Recommender" page
+2. Click "Generate Sample Data" (or upload your CSV)
+3. Click "Profile Data" 
+4. Click "Get ML Recommendation"
+5. View recommended pipeline with confidence score
+```
+
+### Example 3: Monitor Resources
+
+```bash
+1. Go to "📊 Resource Monitor" page
 2. Click "▶️ Start Monitoring"
 3. Run your analysis in another terminal
 4. Watch real-time CPU/Memory usage
 5. Click "💾 Export Data" to save metrics
 ```
 
-### Example 3: Ensemble Analysis
-
-```bash
-1. Go to "Ensemble Analysis" page
-2. Select multiple pipelines (e.g., 1, 3, 5)
-3. Choose ensemble method (e.g., "p_value_combination")
-4. Click "Run Ensemble Analysis"
-5. View consensus genes and agreement heatmap
-6. Download high-confidence genes
-```
-
 ---
 
-##  Customization
+## 🔧 Customization
 
 ### Change Port
 
@@ -204,13 +248,19 @@ textColor = "#262730"
 font = "sans serif"
 ```
 
-### Model Path
-
-In Settings page, change "Model Directory" to your model location.
-
 ---
 
-##  Troubleshooting
+## 🐛 Troubleshooting
+
+### Problem: "Threshold Optimizer not available"
+
+**Solution:**
+```bash
+# Ensure RAPTOR v2.1.1+ is installed
+pip install raptor-rnaseq>=2.1.1
+
+# Or copy threshold_optimizer/ folder manually
+```
 
 ### Problem: "Model not found"
 
@@ -218,8 +268,6 @@ In Settings page, change "Model Directory" to your model location.
 ```bash
 # Train a model first
 python example_ml_workflow.py --n-datasets 200
-
-# Or specify correct model path in Settings
 ```
 
 ### Problem: "psutil not installed"
@@ -237,126 +285,21 @@ pip install raptor-rnaseq[dashboard]
 streamlit run dashboard.py --server.port 8502
 
 # Or kill existing process
-# On Linux/Mac:
 lsof -ti:8501 | xargs kill -9
-
-# On Windows:
-netstat -ano | findstr :8501
-taskkill /PID <PID> /F
-```
-
-### Problem: "Import error: ml_recommender"
-
-**Solution:**
-```bash
-# Ensure RAPTOR is installed
-pip install raptor-rnaseq[all]
-
-# Or run from RAPTOR root directory
-cd /path/to/RAPTOR
-streamlit run dashboard/dashboard.py
-```
-
-### Problem: Dashboard is slow
-
-**Solution:**
-- Reduce monitoring frequency in Resource Monitor
-- Clear browser cache
-- Use smaller datasets
-- Increase memory limit in Settings
-
----
-
-##  Security Notes
-
-### For Production Deployment
-
-1. **Change default settings** in dashboard_settings.json
-2. **Use authentication** if deploying publicly
-3. **Restrict access** to specific IPs
-4. **Enable HTTPS** for remote access
-5. **Set memory limits** to prevent resource exhaustion
-
-### Running on Server
-
-```bash
-# With authentication
-streamlit run dashboard.py --server.headless true
-
-# With password protection (requires config)
-# Edit ~/.streamlit/credentials.toml
 ```
 
 ---
 
-##  Documentation
+## 📚 Documentation
 
 - **RAPTOR Main Docs**: See `docs/` folder
+- **Threshold Optimizer**: `docs/THRESHOLD_OPTIMIZER.md`
 - **ML Guide**: `docs/ML_GUIDE.md`
 - **Ensemble Guide**: `docs/ENSEMBLE_GUIDE.md`
-- **Troubleshooting**: `docs/TROUBLESHOOTING.md`
 
 ---
 
-##  Contributing
-
-Found a bug or have a feature request?
-
-1. Check existing issues: https://github.com/AyehBlk/RAPTOR/issues
-2. Open a new issue with:
-   - Dashboard version
-   - Browser and OS
-   - Steps to reproduce
-   - Screenshots (if applicable)
-
----
-
-##  Performance Tips
-
-### For Large Datasets
-
-- Use data subsampling for profiling
-- Enable caching in Settings
-- Increase memory limit
-- Use batch processing mode (if available)
-
-### For Slow Connections
-
-- Reduce auto-refresh frequency
-- Disable real-time monitoring when not needed
-- Use CSV export instead of interactive plots
-
----
-
-##  Tutorial
-
-### First-Time Users
-
-**Step 1: Check System**
-- Go to Home page
-- Verify all status indicators are green ✅
-- If model not found, follow training instructions
-
-**Step 2: Try Sample Data**
-- Go to ML Recommender
-- Click "Use sample data"
-- Click "Generate Sample Data"
-- This creates 1000 genes × 6 samples
-
-**Step 3: Get Recommendation**
-- Click "Profile Data"
-- Wait for profiling (5-10 seconds)
-- Click "Get ML Recommendation"
-- View confidence score and reasons
-
-**Step 4: Explore Features**
-- Try Resource Monitor (watch live metrics)
-- Try Ensemble Analysis (combine pipelines)
-- Check Benchmarks (compare pipelines)
-
----
-
-##  Citation
+## 📖 Citation
 
 If you use RAPTOR Dashboard in your research:
 
@@ -365,7 +308,7 @@ If you use RAPTOR Dashboard in your research:
   author = {Bolouki, Ayeh},
   title = {RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource},
   year = {2025},
-  version = {2.1.0},
+  version = {2.1.1},
   doi = {10.5281/zenodo.17607161},
   url = {https://github.com/AyehBlk/RAPTOR}
 }
@@ -373,27 +316,27 @@ If you use RAPTOR Dashboard in your research:
 
 ---
 
-##  Support
+## 🆘 Support
 
 - **PyPI**: https://pypi.org/project/raptor-rnaseq/
 - **Email**: ayehbolouki1988@gmail.com
 - **GitHub Issues**: https://github.com/AyehBlk/RAPTOR/issues
-- **Documentation**: See `docs/` folder
 
 ---
 
-##  License
+## 📜 License
 
 MIT License - see LICENSE file
 
 ---
 
-##  Acknowledgments
+## 🙏 Acknowledgments
 
 Built with:
 - [Streamlit](https://streamlit.io/) - Web framework
 - [Plotly](https://plotly.com/) - Interactive visualizations
 - [Pandas](https://pandas.pydata.org/) - Data manipulation
+- [SciPy](https://scipy.org/) - Statistical functions
 
 ---
 
@@ -401,6 +344,6 @@ Built with:
 
 ---
 
-**Author**: Ayeh Bolouki
-**Version**: 2.1.0  
+**Author**: Ayeh Bolouki  
+**Version**: 2.1.1  
 **PyPI**: https://pypi.org/project/raptor-rnaseq/

@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 
 """
-RAPTOR v2.1.0 - Master Installation & Verification Script
+RAPTOR v2.1.1 - Master Installation & Verification Script
 
 This script will:
 1. Check Python version
 2. Install all dependencies
 3. Run comprehensive tests
-4. Optionally generate training data
-5. Launch the dashboard
+4. Verify Threshold Optimizer (NEW in v2.1.1)
+5. Optionally generate training data
+6. Launch the dashboard
 
 Author: Ayeh Bolouki
-Version: 2.1.0
+Version: 2.1.1
 
 Note: For simple installation, you can also use:
     pip install raptor-rnaseq
@@ -152,6 +153,39 @@ def verify_installation():
     
     return all_ok
 
+def verify_threshold_optimizer():
+    """Verify the Threshold Optimizer module (NEW in v2.1.1)."""
+    print_header("Verifying Threshold Optimizer (v2.1.1)")
+    
+    try:
+        from raptor.threshold_optimizer import (
+            AdaptiveThresholdOptimizer,
+            optimize_thresholds,
+            ThresholdResult
+        )
+        print_success("AdaptiveThresholdOptimizer imported")
+        print_success("optimize_thresholds function available")
+        print_success("ThresholdResult class available")
+        
+        # Try importing visualization functions
+        try:
+            from raptor.threshold_optimizer.visualization import (
+                plot_volcano,
+                plot_pvalue_distribution,
+                plot_logfc_distribution
+            )
+            print_success("Visualization functions available")
+        except ImportError:
+            print_info("Visualization functions not available (optional)")
+        
+        print_success("🎯 Threshold Optimizer ready!")
+        return True
+        
+    except ImportError as e:
+        print_error(f"Threshold Optimizer not available: {e}")
+        print_info("This feature requires RAPTOR v2.1.1 or higher")
+        return False
+
 def run_tests():
     """Run the test suite."""
     print_header("Running Test Suite")
@@ -234,7 +268,7 @@ def launch_dashboard():
     
     if choice in ['', 'y', 'yes']:
         launcher_files = ["launch_dashboard.py", "raptor/launch_dashboard.py"]
-        dashboard_files = ["dashboard.py", "raptor/dashboard.py"]
+        dashboard_files = ["dashboard.py", "raptor/dashboard.py", "dashboard/dashboard.py"]
         
         launcher_file = None
         for lf in launcher_files:
@@ -280,7 +314,7 @@ def print_summary():
     
     print("""
 ╔══════════════════════════════════════════════════════════════════════╗
-║         RAPTOR v2.1.0 - Ready to Use! 🦖                             ║
+║         RAPTOR v2.1.1 - Ready to Use! 🦖                             ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
 Quick Install (if you haven't already):
@@ -291,9 +325,15 @@ What's available:
 🎨 Interactive Dashboard:
    python launch_dashboard.py
    → Web-based interface at http://localhost:8501
+   → NEW: 🎯 Threshold Optimizer page!
 
 🤖 ML Recommendations:
    raptor profile --counts data.csv --use-ml
+
+🎯 Threshold Optimizer (NEW in v2.1.1):
+   from raptor.threshold_optimizer import optimize_thresholds
+   result = optimize_thresholds(de_results, goal='balanced')
+   print(result.methods_text)  # Copy to paper!
 
 📊 Quality Assessment:
    from raptor.data_quality_assessment import DataQualityAssessor
@@ -308,6 +348,7 @@ What's available:
    - README.md              - Quick start guide
    - COMPLETE_README.md     - Master guide
    - QUICK_START.md         - Get running in 5 minutes
+   - THRESHOLD_OPTIMIZER.md - 🎯 NEW! Data-driven thresholds
    - DASHBOARD_GUIDE.md     - Web interface guide
 
 🧪 Test System:
@@ -322,23 +363,28 @@ What's available:
    1. Launch dashboard: python launch_dashboard.py
    2. Upload data or use sample
    3. Get AI-powered recommendation
-   4. Enjoy! 🎉
+   4. Use 🎯 Threshold Optimizer for DE results (NEW!)
+   5. Enjoy! 🎉
 
 """)
 
 def main():
     """Main installation workflow."""
     print("""
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║              🦖 RAPTOR v2.1.0 Installer                          ║
-    ║                                                                  ║
-    ║     Machine Learning-Powered RNA-seq Analysis System             ║
-    ║              with Interactive Dashboard                          ║
-    ║                                                                  ║
-    ║                   Version 2.1.0                                  ║
-    ║                                                                  ║
-    ║   Quick install: pip install raptor-rnaseq                       ║
-    ╚══════════════════════════════════════════════════════════════════╝
+    ╔══════════════════════════════════════════════════════════════════════╗
+    ║              🦖 RAPTOR v2.1.1 Installer                              ║
+    ║                                                                      ║
+    ║     Machine Learning-Powered RNA-seq Analysis System                 ║
+    ║     with Interactive Dashboard & Threshold Optimizer                 ║
+    ║                                                                      ║
+    ║                   Version 2.1.1                                      ║
+    ║                                                                      ║
+    ║   🆕 NEW: Adaptive Threshold Optimizer (ATO)                         ║
+    ║   🆕 Data-driven significance thresholds                             ║
+    ║   🆕 Publication-ready methods text                                  ║
+    ║                                                                      ║
+    ║   Quick install: pip install raptor-rnaseq                           ║
+    ╚══════════════════════════════════════════════════════════════════════╝
     """)
     
     # Step 1: Check Python
@@ -356,7 +402,10 @@ def main():
         print_info("Try: pip install raptor-rnaseq[all]")
         sys.exit(1)
     
-    # Step 4: Run tests
+    # Step 4: Verify Threshold Optimizer (NEW in v2.1.1)
+    verify_threshold_optimizer()
+    
+    # Step 5: Run tests
     if not run_tests():
         print_error("Tests failed")
         print_info("You can continue, but some features may not work properly")
@@ -364,13 +413,13 @@ def main():
         if choice not in ['y', 'yes']:
             sys.exit(1)
     
-    # Step 5: Generate training data (optional)
+    # Step 6: Generate training data (optional)
     generate_training_data()
     
-    # Step 6: Print summary
+    # Step 7: Print summary
     print_summary()
     
-    # Step 7: Launch dashboard (optional)
+    # Step 8: Launch dashboard (optional)
     launch_dashboard()
 
 if __name__ == "__main__":

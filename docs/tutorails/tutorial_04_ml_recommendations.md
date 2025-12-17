@@ -13,13 +13,29 @@
 - When to trust ML vs rule-based recommendations
 - How to customize ML recommendations
 - Training custom models on your data
+- **NEW in v2.1.1**: Combining ML recommendations with threshold optimization
 
 ---
 
-## Prerequisites
+## 🆕 What's New in v2.1.1
+
+**ML + ATO Integration**: After getting ML pipeline recommendations, optimize your thresholds:
+
+```bash
+# 1. Get ML recommendation
+raptor profile --counts data.csv --recommend
+
+# 2. Run recommended pipeline
+raptor run --pipeline RECOMMENDED --counts data.csv --output results/
+
+# 3. Optimize thresholds with ATO
+raptor optimize-thresholds --results results/degs.csv --goal balanced
+```
+
+This combines the best of both systems: ML picks the optimal pipeline, ATO determines the optimal thresholds.
 
 - Completed [Tutorial 1: Getting Started](tutorial_01_getting_started.md)
-- RAPTOR v2.1.0+ installed
+- RAPTOR v2.1.1+ installed
 - Python programming basics
 - Understanding of RNA-seq analysis
 
@@ -42,7 +58,7 @@ Your Data Characteristics
 - Doesn't learn from past successes
 - Can't adapt to new scenarios
 
-### ML Approach (v2.1.0)
+### ML Approach (v2.1.1)
 ```
 Your Data Characteristics
          ↓
@@ -629,12 +645,14 @@ You've learned to:
 
 1. **Try Tutorial 5**: [Interactive Dashboard](tutorial_05_dashboard.md)
 2. **Try Tutorial 6**: [Ensemble Analysis](tutorial_06_ensemble.md)
-3. **Read**: [ML_TRAINING.md](../ML_TRAINING.md) - Deep dive into ML
-4. **Read**: [UNDERSTANDING_ML.md](../UNDERSTANDING_ML.md) - ML concepts
+3. **Try Tutorial 7**: [Threshold Optimization](tutorial_07_threshold_optimizer.md) 🎯 (NEW!)
+4. **Read**: [ML_TRAINING.md](../ML_TRAINING.md) - Deep dive into ML
+5. **Read**: [UNDERSTANDING_ML.md](../UNDERSTANDING_ML.md) - ML concepts
+6. **Read**: [THRESHOLD_OPTIMIZER.md](../THRESHOLD_OPTIMIZER.md) - ATO guide
 
 ---
 
 **Tutorial by Ayeh Bolouki**  
-For RAPTOR v2.1.0
+For RAPTOR v2.1.1
 
 *"Let machines learn, so you can focus on biology!"* 🤖🦖

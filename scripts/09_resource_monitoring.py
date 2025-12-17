@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAPTOR v2.1.0 Example Script: Resource Monitoring
+RAPTOR v2.1.1 Example Script: Resource Monitoring
 
 Demonstrates real-time resource tracking during pipeline execution:
 - CPU usage monitoring (overall and per-core)
@@ -50,7 +50,7 @@ def print_banner():
     """Print RAPTOR banner."""
     print("""
     ╔══════════════════════════════════════════════════════════════╗
-    ║       🦖 RAPTOR v2.1.0 - Resource Monitoring                ║
+    ║       🦖 RAPTOR v2.1.1 - Resource Monitoring                ║
     ║                                                              ║
     ║   Real-Time CPU/Memory/Disk Tracking During Analysis        ║
     ╚══════════════════════════════════════════════════════════════╝
@@ -385,7 +385,7 @@ def run_resource_monitoring(command=None, analyze_file=None, interval=1.0,
     # Prepare output
     output = {
         'timestamp': datetime.now().isoformat(),
-        'raptor_version': '2.1.0',
+        'raptor_version': '2.1.1',
         'monitoring_config': {
             'interval': interval,
             'duration': duration if not command else stats.get('runtime', 0)

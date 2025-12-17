@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAPTOR v2.1.0 Example Script: Parameter Optimization
+RAPTOR v2.1.1 Example Script: Parameter Optimization
 
 Demonstrates automated parameter tuning with:
 - Adaptive optimization based on data characteristics
@@ -43,7 +43,7 @@ def print_banner():
     """Print RAPTOR banner."""
     print("""
     ╔══════════════════════════════════════════════════════════════╗
-    ║       🦖 RAPTOR v2.1.0 - Parameter Optimization             ║
+    ║       🦖 RAPTOR v2.1.1 - Parameter Optimization             ║
     ║                                                              ║
     ║   Automated Parameter Tuning for RNA-seq Analysis           ║
     ╚══════════════════════════════════════════════════════════════╝
@@ -320,7 +320,7 @@ def run_parameter_optimization(counts_file=None, metadata_file=None, strategy='a
     # Prepare output
     output = {
         'timestamp': datetime.now().isoformat(),
-        'raptor_version': '2.1.0',
+        'raptor_version': '2.1.1',
         'strategy': strategy,
         'n_trials': n_trials,
         'cv_folds': cv_folds,

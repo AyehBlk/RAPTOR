@@ -1,5 +1,5 @@
 # =============================================================================
-# RAPTOR Pipeline Configurations
+# RAPTOR v2.1.1 Pipeline Configurations
 # =============================================================================
 # Detailed configurations for all 8 RNA-seq analysis pipelines
 #
@@ -9,6 +9,10 @@
 #   - Recommended use cases
 #   - Resource requirements
 #   - Decision criteria
+#
+# NEW in v2.1.1: Pipelines now integrate with Adaptive Threshold Optimizer
+# for data-driven significance threshold selection. Use threshold_optimizer
+# settings in your config to optimize thresholds based on your data.
 #
 # Author: Ayeh Bolouki
 # Affiliation: University of Namur, Belgium
@@ -37,6 +41,16 @@ pipeline_1:
     specificity: 0.96     # Very high specificity
     transcript_level: true
     gene_level: true
+  
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "deseq2"  # Column names: log2FoldChange, pvalue, padj
+    default_columns:
+      logfc: "log2FoldChange"
+      pvalue: "pvalue"
+      padj: "padj"
+      basemean: "baseMean"
   
   parameters:
     star:
@@ -69,8 +83,8 @@ pipeline_1:
     
     deseq2:
       design_formula: "~ condition"
-      fdr_threshold: 0.05
-      lfc_threshold: 0
+      fdr_threshold: 0.05  # Can be optimized by ATO
+      lfc_threshold: 0     # Can be optimized by ATO
       cook_cutoff: true
       independent_filtering: true
       alpha: 0.05
@@ -144,6 +158,15 @@ pipeline_2:
     gene_level: true
     novel_transcript_detection: true
   
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "ballgown"
+    default_columns:
+      logfc: "fc"  # Fold change needs log2 transformation
+      pvalue: "pval"
+      padj: "qval"
+  
   parameters:
     hisat2:
       index: null  # Must be provided
@@ -172,8 +195,8 @@ pipeline_2:
     ballgown:
       design: "~ condition"
       covariate_adjust: []
-      fdr_threshold: 0.05
-      fc_threshold: 1.0
+      fdr_threshold: 0.05  # Can be optimized by ATO
+      fc_threshold: 1.0    # Can be optimized by ATO
       feature_type: "transcript"  # transcript or gene
       time_series: false
   
@@ -236,6 +259,16 @@ pipeline_3:
     transcript_level: true
     gene_level: true
   
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "edger"
+    default_columns:
+      logfc: "logFC"
+      pvalue: "PValue"
+      padj: "FDR"
+      logcpm: "logCPM"
+  
   parameters:
     salmon:
       index: null  # Must be provided
@@ -255,8 +288,8 @@ pipeline_3:
     edger:
       design_formula: "~ condition"
       normalization_method: "TMM"  # TMM, RLE, upperquartile, none
-      fdr_threshold: 0.05
-      lfc_threshold: 0
+      fdr_threshold: 0.05  # Can be optimized by ATO
+      lfc_threshold: 0     # Can be optimized by ATO
       prior_count: 2
       robust: false
       trend_method: "locfit"  # locfit, loess, none
@@ -289,128 +322,145 @@ pipeline_3:
     - "Large-scale studies (>20 samples)"
     - "Exploratory analysis"
     - "Limited computational resources"
-    - "Quick turnaround needed"
-    - "Transcript-level analysis"
-    - "Good reference transcriptome available"
+    - "Quick turnaround time needed"
+    - "Batch processing multiple datasets"
   
   not_recommended_for:
-    - "Novel transcript discovery needed"
-    - "Poor quality reference transcriptome"
-    - "When genome alignment is required"
+    - "When alignment BAM files needed"
+    - "Novel transcript discovery"
+    - "Very short reads (<50bp)"
   
   output_files:
     - "gene_counts.csv"
     - "transcript_counts.csv"
     - "edger_results.csv"
     - "normalized_counts.csv"
-    - "salmon_quant.sf"
 
 # -----------------------------------------------------------------------------
-# Pipeline 4: Kallisto-Sleuth
+# Pipeline 4: Kallisto-DESeq2
 # -----------------------------------------------------------------------------
 pipeline_4:
-  name: "Kallisto-Sleuth"
+  name: "Kallisto-DESeq2"
   type: "alignment-free"
-  description: "Lightweight pseudo-alignment with bootstrap-based uncertainty quantification"
+  description: "Fast k-mer based quantification with robust statistical testing"
   
   components:
     quantification: "Kallisto"
-    statistics: "Sleuth"
+    statistics: "DESeq2"
   
   characteristics:
-    accuracy: 0.88
-    speed: 0.98
-    memory: 0.95
-    sensitivity: 0.86
+    accuracy: 0.89
+    speed: 0.92
+    memory: 0.88
+    sensitivity: 0.88
     specificity: 0.90
     transcript_level: true
     gene_level: true
-    bootstrap_uncertainty: true
+    bootstrap_support: true
+  
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "deseq2"
+    default_columns:
+      logfc: "log2FoldChange"
+      pvalue: "pvalue"
+      padj: "padj"
+      basemean: "baseMean"
   
   parameters:
     kallisto:
       index: null  # Must be provided
       threads: 8
       bootstrap_samples: 100
-      fragment_length: 200  # For single-end reads
-      sd: 80  # Standard deviation for single-end
-      single_end: false
-      bias: false
-      pseudobam: false
-      genomebam: false
-      gtf: null
       seed: 42
+      single: false  # True for single-end reads
+      fragment_length: null  # Required for single-end
+      sd: null  # Required for single-end
+      bias: false
+      fusion: false
+      pseudobam: false
     
-    sleuth:
+    deseq2:
       design_formula: "~ condition"
-      fdr_threshold: 0.05
-      lfc_threshold: 0
-      test_type: "wald"  # wald or lrt
-      aggregation_column: "ens_gene"  # For gene-level
-      normalize: true
-      transform: "natural_log"  # natural_log or none
-      num_cores: 1
-      gene_mode: true
-    
+      fdr_threshold: 0.05  # Can be optimized by ATO
+      lfc_threshold: 0     # Can be optimized by ATO
+      cook_cutoff: true
+      independent_filtering: true
+      alpha: 0.05
+      test: "Wald"
+      fit_type: "parametric"
+      sf_type: "ratio"
+      beta_prior: false
+  
   resource_requirements:
     min_threads: 2
-    recommended_threads: 4
-    max_threads: 8
-    min_memory_gb: 4
-    recommended_memory_gb: 8
-    disk_space_gb: 20
+    recommended_threads: 8
+    max_threads: 16
+    min_memory_gb: 8
+    recommended_memory_gb: 16
+    disk_space_gb: 30
   
   performance_benchmarks:
     small_dataset:
       runtime_hours: 0.3
-      peak_memory_gb: 6
+      peak_memory_gb: 8
     medium_dataset:
       runtime_hours: 1.0
-      peak_memory_gb: 8
+      peak_memory_gb: 12
     large_dataset:
       runtime_hours: 2.5
-      peak_memory_gb: 12
+      peak_memory_gb: 16
   
   recommended_for:
-    - "Very large studies (>50 samples)"
-    - "Minimal computational resources"
-    - "Rapid preliminary analysis"
-    - "Transcript-level uncertainty important"
-    - "Good reference transcriptome"
+    - "Fastest analysis needed"
+    - "Limited resources"
+    - "Uncertainty quantification (bootstraps)"
+    - "Large sample numbers"
+    - "Repeated analyses"
   
   not_recommended_for:
-    - "When highest accuracy required"
     - "Novel transcript discovery"
-    - "Complex experimental designs"
+    - "When alignment needed"
+    - "Reads with many sequencing errors"
   
   output_files:
-    - "gene_results.csv"
-    - "transcript_results.csv"
-    - "sleuth_results.csv"
-    - "kallisto_abundance.tsv"
-    - "bootstrap_summary.txt"
+    - "gene_counts.csv"
+    - "transcript_counts.csv"
+    - "deseq2_results.csv"
+    - "bootstrap_abundances.h5"
 
 # -----------------------------------------------------------------------------
-# Pipeline 5: STAR-HTSeq-limma-voom
+# Pipeline 5: STAR-featureCounts-limma-voom
 # -----------------------------------------------------------------------------
 pipeline_5:
-  name: "STAR-HTSeq-limma-voom"
+  name: "STAR-featureCounts-limma-voom"
   type: "alignment-based"
-  description: "Precise alignment with gene-level counting and flexible linear modeling"
+  description: "High-accuracy alignment with gene-level counting and linear modeling"
   
   components:
     alignment: "STAR"
-    counting: "HTSeq"
+    quantification: "featureCounts"
     statistics: "limma-voom"
   
   characteristics:
-    accuracy: 0.92
+    accuracy: 0.93
     speed: 0.65
-    memory: 0.60
-    sensitivity: 0.91
-    specificity: 0.93
+    memory: 0.55
+    sensitivity: 0.92
+    specificity: 0.94
     transcript_level: false
     gene_level: true
+  
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "limma"
+    default_columns:
+      logfc: "logFC"
+      pvalue: "P.Value"
+      padj: "adj.P.Val"
+      aveexpr: "AveExpr"
   
   parameters:
     star:
@@ -419,35 +469,41 @@ pipeline_5:
       readFilesCommand: "zcat"
       outFilterType: "BySJout"
       outFilterMultimapNmax: 20
+      alignSJoverhangMin: 8
+      alignSJDBoverhangMin: 1
+      outFilterMismatchNmax: 999
+      outFilterMismatchNoverReadLmax: 0.04
+      alignIntronMin: 20
+      alignIntronMax: 1000000
+      alignMatesGapMax: 1000000
       outSAMtype: "BAM SortedByCoordinate"
       outSAMunmapped: "Within"
       outSAMattributes: "NH HI AS NM MD"
-      quantMode: "GeneCounts"
     
-    htseq:
-      format: "bam"
-      order: "pos"
-      stranded: "no"  # no, yes, reverse
-      min_quality: 10
-      type: "exon"
-      id_attribute: "gene_id"
-      mode: "union"  # union, intersection-strict, intersection-nonempty
-      nonunique: "none"  # none, all, fraction, random
-      secondary_alignments: "ignore"
-      supplementary_alignments: "ignore"
+    featurecounts:
+      gtf: null  # Must be provided
+      threads: 8
+      feature_type: "exon"
+      attribute_type: "gene_id"
+      min_overlap: 1
+      min_mapping_quality: 10
+      count_multi_mapping: false
+      count_multi_overlap: false
+      fraction: false
+      primary_only: false
+      ignore_dup: false
+      strandedness: 0  # 0=unstranded, 1=stranded, 2=reversely stranded
     
     limma_voom:
       design_formula: "~ condition"
       normalization_method: "TMM"
-      fdr_threshold: 0.05
-      lfc_threshold: 0
+      fdr_threshold: 0.05  # Can be optimized by ATO
+      lfc_threshold: 0     # Can be optimized by ATO
       robust: true
-      trend: true
-      block: null  # For repeated measures
-      correlation: null
-      weights: true
-      plot: true
-      contrasts: null
+      treat: false  # Use treat() for hypothesis testing with fold change
+      adjust_method: "BH"
+      duplicate_correlation: null
+      block: null
   
   resource_requirements:
     min_threads: 4
@@ -455,139 +511,127 @@ pipeline_5:
     max_threads: 16
     min_memory_gb: 32
     recommended_memory_gb: 40
-    disk_space_gb: 90
+    disk_space_gb: 80
   
   performance_benchmarks:
     small_dataset:
       runtime_hours: 2.5
       peak_memory_gb: 36
     medium_dataset:
-      runtime_hours: 7.0
+      runtime_hours: 6.5
       peak_memory_gb: 42
     large_dataset:
-      runtime_hours: 14.0
+      runtime_hours: 13.0
       peak_memory_gb: 50
   
   recommended_for:
     - "Complex experimental designs"
-    - "Multi-factor experiments"
-    - "Repeated measures designs"
-    - "When linear modeling flexibility needed"
     - "Gene-level analysis sufficient"
+    - "Batch effect correction needed"
+    - "Duplicate sample handling"
+    - "Flexible linear modeling"
   
   not_recommended_for:
-    - "Transcript-level analysis needed"
-    - "Very limited resources"
-    - "Simple two-group comparisons"
+    - "Transcript-level analysis"
+    - "Limited computational resources"
+    - "Novel transcript discovery"
   
   output_files:
     - "gene_counts.csv"
     - "limma_results.csv"
     - "normalized_counts.csv"
-    - "voom_plot.png"
-    - "mean_variance_trend.png"
+    - "voom_weights.csv"
 
 # -----------------------------------------------------------------------------
-# Pipeline 6: STAR-featureCounts-NOISeq
+# Pipeline 6: Salmon-NOISeq
 # -----------------------------------------------------------------------------
 pipeline_6:
-  name: "STAR-featureCounts-NOISeq"
-  type: "alignment-based"
-  description: "Robust alignment with efficient counting and non-parametric statistics for small sample sizes"
+  name: "Salmon-NOISeq"
+  type: "alignment-free"
+  description: "Non-parametric method for small sample sizes without replicates"
   
   components:
-    alignment: "STAR"
-    counting: "featureCounts"
+    quantification: "Salmon"
     statistics: "NOISeq"
   
   characteristics:
-    accuracy: 0.85
-    speed: 0.70
-    memory: 0.65
-    sensitivity: 0.83
-    specificity: 0.87
-    transcript_level: false
+    accuracy: 0.80
+    speed: 0.90
+    memory: 0.85
+    sensitivity: 0.78
+    specificity: 0.82
+    transcript_level: true
     gene_level: true
-    small_sample_friendly: true
+    no_replicates: true
+  
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "noiseq"
+    notes: "NOISeq uses probability instead of p-value"
+    default_columns:
+      logfc: "M"  # log2 ratio
+      prob: "prob"  # Probability (not p-value)
   
   parameters:
-    star:
-      genomeDir: null
-      runThreadN: 8
-      readFilesCommand: "zcat"
-      outFilterType: "BySJout"
-      outSAMtype: "BAM SortedByCoordinate"
-      outSAMunmapped: "Within"
-    
-    featurecounts:
-      annotation: null  # GTF/GFF file
-      format: "GTF"
-      feature_type: "exon"
-      attribute_type: "gene_id"
-      threads: 8
-      strand_specific: 0  # 0=unstranded, 1=stranded, 2=reversely stranded
-      multi_mapping: false
-      min_mapping_quality: 0
-      count_multi_mapping: false
-      fraction: false
-      min_overlap: 1
-      largest_overlap: false
-      read_extension_5: 0
-      read_extension_3: 0
-      chimeric: false
-      both_ends: false
-      primary: false
+    salmon:
+      index: null
+      lib_type: "A"
+      num_threads: 8
+      num_bootstraps: 30
+      validate_mappings: true
+      gc_bias: false
     
     noiseq:
-      normalization: "tmm"  # tmm, rpkm, uqua, n
+      conditions: null  # Must be provided
       factor: "condition"
-      replicates: "biological"  # biological, technical, no
-      fdr_threshold: 0.05
-      lfc_threshold: 0
-      prob_threshold: 0.8  # NOISeq probability threshold
-      nss: 5  # Number of samples for simulation
-      v: 0.02  # Variability in size factor
+      k: 0.5
+      norm: "tmm"  # tmm, rpkm, uqua, n
+      filter: 1  # CPM filter
+      cv_cutoff: 100
+      cpm: 1
+      pnr: 0.2
+      nss: 5
+      v: 0.02
       lc: 0  # Length correction
-      k: null  # Counts per million cutoff
-      filter: 1  # CPM filtering
+      replicates: "technical"  # technical, biological, no
+      q_threshold: 0.8  # Probability threshold
   
   resource_requirements:
-    min_threads: 4
-    recommended_threads: 8
-    max_threads: 16
-    min_memory_gb: 32
-    recommended_memory_gb: 36
-    disk_space_gb: 85
+    min_threads: 2
+    recommended_threads: 4
+    max_threads: 8
+    min_memory_gb: 8
+    recommended_memory_gb: 12
+    disk_space_gb: 20
   
   performance_benchmarks:
     small_dataset:
-      runtime_hours: 2.5
-      peak_memory_gb: 34
+      runtime_hours: 0.5
+      peak_memory_gb: 8
     medium_dataset:
-      runtime_hours: 7.0
-      peak_memory_gb: 38
+      runtime_hours: 1.0
+      peak_memory_gb: 10
     large_dataset:
-      runtime_hours: 15.0
-      peak_memory_gb: 45
+      runtime_hours: 2.0
+      peak_memory_gb: 14
   
   recommended_for:
-    - "Small sample sizes (n=2-3 per group)"
     - "No biological replicates"
-    - "Non-normal distributions"
-    - "When parametric assumptions questionable"
-    - "Gene-level analysis"
+    - "Very small sample sizes"
+    - "Technical replicates only"
+    - "Exploratory/pilot studies"
+    - "Non-parametric approach preferred"
   
   not_recommended_for:
-    - "Large, well-powered studies"
-    - "Complex designs"
-    - "Transcript-level analysis"
-    - "When parametric methods appropriate"
+    - "Publication-quality analysis"
+    - "Well-powered studies"
+    - "When p-values required"
   
   output_files:
     - "gene_counts.csv"
     - "noiseq_results.csv"
-    - "normalized_counts.csv"
-    - "count_summary.txt"
+    - "expression_plots.pdf"
 
 # -----------------------------------------------------------------------------
 # Pipeline 7: Bowtie2-RSEM-EBSeq
@@ -610,6 +654,15 @@ pipeline_7:
     specificity: 0.88
     transcript_level: true
     gene_level: true
+  
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "ebseq"
+    notes: "EBSeq uses PPDE (posterior probability of DE)"
+    default_columns:
+      logfc: "PostFC"  # Posterior fold change
+      ppde: "PPDE"     # Posterior probability of DE
   
   parameters:
     bowtie2:
@@ -638,8 +691,8 @@ pipeline_7:
     
     ebseq:
       design_type: "TwoConditions"  # TwoConditions, MultiConditions
-      fdr_threshold: 0.05
-      fc_threshold: 1.0
+      fdr_threshold: 0.05  # Can be optimized by ATO
+      fc_threshold: 1.0    # Can be optimized by ATO
       num_iterations: 5
       num_bins: 20
       max_rounds: 20
@@ -706,6 +759,15 @@ pipeline_8:
     gene_level: true
     novel_transcript_detection: true
   
+  # Threshold Optimizer compatibility (v2.1.1)
+  threshold_optimizer_support:
+    compatible: true
+    output_format: "cuffdiff"
+    default_columns:
+      logfc: "log2(fold_change)"
+      pvalue: "p_value"
+      padj: "q_value"
+  
   parameters:
     hisat2:
       index: null
@@ -733,7 +795,7 @@ pipeline_8:
     
     cuffdiff:
       threads: 8
-      fdr_threshold: 0.05
+      fdr_threshold: 0.05  # Can be optimized by ATO
       library_type: "fr-unstranded"
       library_norm_method: "geometric"  # classic-fpkm, geometric, quartile
       dispersion_method: "pooled"  # pooled, per-condition, blind
@@ -877,6 +939,41 @@ comparison_matrix:
     large_samples: [3, 4, 1]
     complex_designs: [1, 5, 2]
     bootstrap_uncertainty: [4, 3]
+    ato_compatible: [1, 2, 3, 4, 5, 6, 7, 8]  # NEW: All pipelines support ATO
+
+# -----------------------------------------------------------------------------
+# Threshold Optimizer Integration (NEW in v2.1.1)
+# -----------------------------------------------------------------------------
+threshold_optimizer_integration:
+  description: |
+    All pipelines now integrate with the Adaptive Threshold Optimizer (ATO).
+    Instead of using fixed thresholds (|logFC| > 1, padj < 0.05), ATO
+    determines data-driven thresholds based on your specific dataset.
+  
+  supported_output_formats:
+    - deseq2:    # Pipelines 1, 4
+        columns: ["log2FoldChange", "pvalue", "padj", "baseMean"]
+    - edger:     # Pipeline 3
+        columns: ["logFC", "PValue", "FDR", "logCPM"]
+    - limma:     # Pipeline 5
+        columns: ["logFC", "P.Value", "adj.P.Val", "AveExpr"]
+    - ballgown:  # Pipeline 2
+        columns: ["fc", "pval", "qval"]
+    - noiseq:    # Pipeline 6
+        columns: ["M", "prob"]
+    - ebseq:     # Pipeline 7
+        columns: ["PostFC", "PPDE"]
+    - cuffdiff:  # Pipeline 8
+        columns: ["log2(fold_change)", "p_value", "q_value"]
+  
+  usage_note: |
+    To use ATO with any pipeline, add this to your config:
+    
+    threshold_optimizer:
+      enabled: true
+      goal: "discovery"  # or "balanced" or "validation"
+    
+    ATO will automatically detect column names and optimize thresholds.
 
 # =============================================================================
 # End of Pipeline Configurations

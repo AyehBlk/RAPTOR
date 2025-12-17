@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raptor-rnaseq"
-version = "2.1.0"
-description = "RNA-seq Analysis Pipeline Testing and Optimization Resource with ML-powered recommendations"
+version = "2.1.1"
+description = "RNA-seq Analysis Pipeline Testing and Optimization Resource with ML-powered recommendations and adaptive threshold optimization"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
@@ -30,6 +30,8 @@ keywords = [
     "data-quality",
     "dashboard",
     "interactive",
+    "threshold-optimization",
+    "adaptive-threshold",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",

@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.1.0-brightgreen?style=for-the-badge" alt="RAPTOR v2.1.0"/>
+  <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.1.1-brightgreen?style=for-the-badge" alt="RAPTOR v2.1.1"/>
 </p>
 
 <h1 align="center">RAPTOR</h1>
@@ -14,7 +14,7 @@
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python 3.8+"/></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"/></a>
   <a href="https://doi.org/10.5281/zenodo.17607161"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17607161.svg" alt="DOI"/></a>
-  <a href="https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.0"><img src="https://img.shields.io/badge/Release-v2.1.0-orange.svg" alt="Release v2.1.0"/></a>
+  <a href="https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.1"><img src="https://img.shields.io/badge/Release-v2.1.1-orange.svg" alt="Release v2.1.1"/></a>
 </p>
 
 <p align="center">
@@ -28,6 +28,34 @@
 
 ---
 
+## 🆕 What's New in v2.1.1
+
+###  Adaptive Threshold Optimizer (ATO)
+
+**Stop using arbitrary thresholds!** The new Adaptive Threshold Optimizer determines data-driven significance cutoffs for differential expression analysis.
+
+```python
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+df = pd.read_csv('deseq2_results.csv')
+result = optimize_thresholds(df, goal='discovery')
+
+print(f"Optimal logFC: {result.logfc_threshold:.2f}")
+print(f"Significant genes: {result.n_significant}")
+print(f"\n{result.methods_text}")  # Publication-ready!
+```
+
+**Key Features:**
+- Multiple p-value adjustment methods (BH, BY, Storey q-value, Holm, Bonferroni)
+- Five logFC optimization methods (MAD, mixture model, power-based, percentile, consensus)
+- π₀ estimation for true null proportion
+- Three analysis goals: discovery, balanced, validation
+- Auto-generated publication methods text
+- Interactive dashboard integration
+
+---
+
 ##  What is RAPTOR?
 
 **RAPTOR** is a comprehensive framework for benchmarking and optimizing RNA-seq differential expression analysis pipelines. Instead of guessing which pipeline works best for your data, RAPTOR provides **evidence-based, ML-powered recommendations** through systematic comparison of 8 popular pipelines.
@@ -36,19 +64,26 @@
 
 | Challenge | RAPTOR Solution |
 |-----------|-----------------|
-| Which pipeline should I use? |  **ML recommendations** with 87% accuracy |
-| Is my data quality good enough? |  **Quality assessment** with batch effect detection |
-| How do I know results are reliable? |  **Ensemble analysis** combining multiple pipelines |
-| What resources do I need? |  **Resource monitoring** with predictions |
-| How do I present results? |  **Automated reports** publication-ready |
+| Which pipeline should I use? | ✅ **ML recommendations** with 87% accuracy |
+| What thresholds should I use? | ✅ **Adaptive Threshold Optimizer** (NEW!) |
+| Is my data quality good enough? | ✅ **Quality assessment** with batch effect detection |
+| How do I know results are reliable? | ✅ **Ensemble analysis** combining multiple pipelines |
+| What resources do I need? | ✅ **Resource monitoring** with predictions |
+| How do I present results? | ✅ **Automated reports** publication-ready |
 
 ---
 
-##  What's New in v2.1.0
+##  Features
 
 <table>
 <tr>
 <td width="50%">
+
+###  Adaptive Threshold Optimizer (NEW!)
+- Data-driven logFC and p-value thresholds
+- Multiple statistical methods
+- Publication-ready methods text
+- Interactive dashboard page
 
 ###  ML-Based Recommendations
 - 87% prediction accuracy
@@ -62,14 +97,14 @@
 - Outlier identification
 - Actionable recommendations
 
+</td>
+<td width="50%">
+
 ###  Ensemble Analysis
 - 5 combination methods
 - 33% fewer false positives
 - High-confidence gene lists
 - Consensus validation
-
-</td>
-<td width="50%">
 
 ###  Interactive Dashboard
 - Web-based interface (no coding!)
@@ -82,12 +117,6 @@
 - <1% performance overhead
 - Resource predictions
 - Cost estimation for cloud
-
-###  Parameter Optimization
-- Bayesian optimization
-- Grid search
-- Adaptive tuning
-- Best parameter selection
 
 </td>
 </tr>
@@ -104,10 +133,10 @@
 pip install raptor-rnaseq
 
 # Launch dashboard
-python launch_dashboard.py
+raptor dashboard
 
 # Opens at http://localhost:8501
-# Upload data → Get ML recommendation → Done!
+# Upload data → Get ML recommendation → Use 🎯 Threshold Optimizer → Done!
 ```
 
 ### Option 2: Command Line
@@ -119,6 +148,9 @@ raptor profile --counts counts.csv --metadata metadata.csv --use-ml
 # Run recommended pipeline
 raptor run --pipeline 3 --data fastq/ --output results/
 
+# Optimize thresholds (NEW!)
+raptor optimize-thresholds --input results.csv --goal balanced
+
 # Generate report
 raptor report --results results/ --output report.html
 ```
@@ -127,6 +159,7 @@ raptor report --results results/ --output report.html
 
 ```python
 from raptor import RNAseqDataProfiler, MLPipelineRecommender
+from raptor.threshold_optimizer import optimize_thresholds
 
 # Profile your data
 profiler = RNAseqDataProfiler(counts, metadata)
@@ -138,6 +171,12 @@ recommendation = recommender.recommend(profile)
 
 print(f"Recommended: Pipeline {recommendation['pipeline_id']}")
 print(f"Confidence: {recommendation['confidence']:.1%}")
+
+# After running pipeline, optimize thresholds (NEW!)
+de_results = pd.read_csv('de_results.csv')
+result = optimize_thresholds(de_results, goal='balanced')
+print(f"Optimal |logFC|: {result.logfc_threshold:.2f}")
+print(result.methods_text)
 ```
 
 ---
@@ -176,9 +215,6 @@ cd RAPTOR
 
 # Install Python dependencies
 pip install -r requirements.txt
-
-# Install R dependencies (optional, for running pipelines)
-Rscript scripts/install_r_packages.R
 
 # Verify installation
 python install.py
@@ -219,12 +255,16 @@ RAPTOR/
 ├── raptor/                 # Core Python package
 │   ├── profiler.py         # Data profiling
 │   ├── recommender.py      # Rule-based recommendations
-│   ├── ml_recommender.py   # ML recommendations (NEW)
-│   ├── data_quality_assessment.py  # Quality scoring (NEW)
-│   ├── ensemble_analysis.py        # Ensemble methods (NEW)
-│   ├── resource_monitoring.py      # Resource tracking (NEW)
+│   ├── ml_recommender.py   # ML recommendations
+│   ├── threshold_optimizer/ # 🆕 Adaptive Threshold Optimizer (v2.1.1)
+│   │   ├── __init__.py
+│   │   ├── ato.py          # Core ATO class
+│   │   └── visualization.py # ATO visualizations
+│   ├── data_quality_assessment.py
+│   ├── ensemble_analysis.py
+│   ├── resource_monitoring.py
 │   └── ...
-├── dashboard/              # Interactive web dashboard (NEW)
+├── dashboard/              # Interactive web dashboard
 ├── pipelines/              # Pipeline configurations (8 pipelines)
 ├── scripts/                # Workflow scripts (00-10)
 ├── examples/               # Example scripts & demos
@@ -251,8 +291,8 @@ RAPTOR/
 ### Core Features
 | Document | Description |
 |----------|-------------|
+| [THRESHOLD_OPTIMIZER.md](docs/THRESHOLD_OPTIMIZER.md) | 🆕 Adaptive threshold optimization |
 | [PROFILE_RECOMMEND.md](docs/PROFILE_RECOMMEND.md) | Data profiling & recommendations |
-| [ML_GUIDE.md](docs/ML_GUIDE.md) | ML recommendation system |
 | [QUALITY_ASSESSMENT.md](docs/QUALITY_ASSESSMENT.md) | Quality scoring & batch effects |
 | [BENCHMARKING.md](docs/BENCHMARKING.md) | Pipeline benchmarking |
 
@@ -261,7 +301,6 @@ RAPTOR/
 |----------|-------------|
 | [ENSEMBLE.md](docs/ENSEMBLE.md) | Multi-pipeline ensemble analysis |
 | [RESOURCE_MONITORING.md](docs/RESOURCE_MONITORING.md) | Resource tracking |
-| [PARAMETER_OPTIMIZATION.md](docs/PARAMETER_OPTIMIZATION.md) | Parameter tuning |
 | [CLOUD_DEPLOYMENT.md](docs/CLOUD_DEPLOYMENT.md) | AWS/GCP/Azure deployment |
 
 ### Reference
@@ -270,41 +309,82 @@ RAPTOR/
 | [PIPELINES.md](docs/PIPELINES.md) | Pipeline details & selection guide |
 | [API.md](docs/API.md) | Python API reference |
 | [FAQ.md](docs/FAQ.md) | Frequently asked questions |
-| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues & solutions |
 | [CHANGELOG.md](docs/CHANGELOG.md) | Version history |
 
 ---
 
 ##  Usage Examples
 
-### Example 1: Quick ML Recommendation
-
-```bash
-# Get instant recommendation for your data
-raptor profile --counts counts.csv --use-ml
-
-# Output:
-# 🦖 RECOMMENDED: Pipeline 3 (Salmon-edgeR)
-# Confidence: 89%
-# Reason: Optimal for your sample size (n=12) and moderate BCV (0.35)
-```
-
-### Example 2: Quality Assessment
+### Example 1: Quick Threshold Optimization (NEW!)
 
 ```python
-from raptor.data_quality_assessment import DataQualityAssessor
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
 
-assessor = DataQualityAssessor(counts, metadata)
-report = assessor.assess_quality()
+# Load DE results
+df = pd.read_csv('deseq2_results.csv')
 
-print(f"Quality Score: {report['overall_score']}/100")
-print(f"Batch Effects: {'Detected' if report['batch_effects']['detected'] else 'None'}")
+# Optimize thresholds
+result = optimize_thresholds(df, goal='balanced')
+
+print(f"Optimal |logFC|: {result.logfc_threshold:.3f}")
+print(f"Significant genes: {result.n_significant}")
+print(f"π₀ estimate: {result.pi0:.3f}")
+
+# Get publication methods text
+print(result.methods_text)
+
+# Save results
+result.results_df.to_csv('optimized_results.csv')
 ```
 
-### Example 3: Ensemble Analysis
+### Example 2: Full Workflow
+
+```python
+from raptor import RNAseqDataProfiler, MLPipelineRecommender
+from raptor.threshold_optimizer import optimize_thresholds
+import pandas as pd
+
+# 1. Profile data
+counts = pd.read_csv('counts.csv', index_col=0)
+metadata = pd.read_csv('metadata.csv')
+
+profiler = RNAseqDataProfiler(counts, metadata, use_ml=True)
+profile = profiler.profile(quality_check=True)
+print(f"Quality Score: {profile['quality_score']}/100")
+
+# 2. Get ML recommendation
+recommender = MLPipelineRecommender()
+recommendations = recommender.recommend(profile, n=3)
+print(f"Recommended: {recommendations[0]['pipeline_name']}")
+
+# 3. [Run recommended pipeline - produces DE results]
+# raptor run --pipeline 3 ...
+
+# 4. Optimize thresholds (NEW in v2.1.1)
+de_results = pd.read_csv('deseq2_results.csv')
+result = optimize_thresholds(
+    de_results,
+    logfc_col='log2FoldChange',
+    pvalue_col='pvalue',
+    goal='balanced'
+)
+
+print(f"\n🎯 Optimized Thresholds:")
+print(f"   LogFC: |{result.logfc_threshold:.3f}|")
+print(f"   Significant: {result.n_significant} genes")
+
+# 5. Save results with methods text
+result.results_df.to_csv('final_results.csv')
+with open('methods.txt', 'w') as f:
+    f.write(result.methods_text)
+```
+
+### Example 3: Ensemble Analysis with ATO
 
 ```python
 from raptor.ensemble_analysis import EnsembleAnalyzer
+from raptor.threshold_optimizer import optimize_thresholds
 
 # Combine results from multiple pipelines
 analyzer = EnsembleAnalyzer()
@@ -314,29 +394,9 @@ consensus = analyzer.combine_results(
     min_agreement=2
 )
 
-print(f"Consensus DE genes: {len(consensus['de_genes'])}")
-```
-
-### Example 4: Full Workflow
-
-```bash
-# 1. Simulate test data
-Rscript scripts/00_simulate_data.R -o sim_data/ -n 6
-
-# 2. Profile and get recommendation
-python scripts/02_profile_data.py sim_data/counts.csv
-
-# 3. Run benchmark
-bash scripts/01_run_all_pipelines.sh sim_data/ results/ refs/
-
-# 4. Compare results
-Rscript scripts/03_compare_results.R results/ --truth sim_data/truth_set.csv
-
-# 5. Visualize
-Rscript scripts/04_visualize_comparison.R results/
-
-# 6. Generate report
-python scripts/08_automated_report.py --results results/
+# Use ATO for uniform thresholds across ensemble
+result = optimize_thresholds(consensus['combined'], goal='balanced')
+print(f"Consensus DE genes: {result.n_significant}")
 ```
 
 ---
@@ -352,17 +412,18 @@ python scripts/08_automated_report.py --results results/
 | Prediction Time | <0.1s |
 | Training Data | 10,000+ analyses |
 
-### Ensemble Analysis Impact
+### Threshold Optimizer Benefits
 
-| Metric | Single Pipeline | Ensemble |
-|--------|-----------------|----------|
-| False Positives | 30% | 20% |
-| Validation Success | 60% | 80% |
-| Reproducibility | 75% | 92% |
+| Metric | Traditional | With ATO |
+|--------|-------------|----------|
+| Threshold justification | Arbitrary | Data-driven |
+| Methods text | Manual | Auto-generated |
+| False positives | Higher | Optimized |
+| Reproducibility | Variable | Standardized |
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 We welcome contributions! RAPTOR is open-source and aims to make free science accessible to everyone.
 
@@ -392,7 +453,7 @@ If you use RAPTOR in your research, please cite:
   author       = {Bolouki, Ayeh},
   title        = {RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource},
   year         = {2025},
-  version      = {2.1.0},
+  version      = {2.1.1},
   publisher    = {Zenodo},
   doi          = {10.5281/zenodo.17607161},
   url          = {https://github.com/AyehBlk/RAPTOR}
@@ -441,5 +502,5 @@ Copyright (c) 2025 Ayeh Bolouki
 </p>
 
 <p align="center">
-  <em>RAPTOR v2.1.0 - Making pipeline selection evidence-based, not guesswork 🦖</em>
+  <em>RAPTOR v2.1.1 - Making pipeline selection evidence-based, not guesswork 🦖</em>
 </p>

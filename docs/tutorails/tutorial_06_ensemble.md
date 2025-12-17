@@ -13,14 +13,27 @@
 - How to identify high-confidence genes
 - How to handle discordant results
 - Best practices for robust analysis
+- **NEW in v2.1.1**: Using ATO for uniform thresholds across pipelines
 
 ---
 
-## Prerequisites
+## 🆕 What's New in v2.1.1
+
+**ATO + Ensemble Integration**: Apply the same data-driven threshold across all pipelines for fair comparison:
+
+```bash
+raptor ensemble --counts data.csv --metadata meta.txt \
+                --pipelines STAR-DESeq2,Salmon-DESeq2,Kallisto-DESeq2 \
+                --use-ato \
+                --ato-goal balanced \
+                --output ensemble_ato/
+```
+
+This ensures all pipelines use the **same statistically-justified threshold** rather than arbitrary |logFC| > 1. Results include auto-generated methods text for publications.
 
 - Completed Tutorial 1 and Tutorial 2
 - Understanding of differential expression analysis
-- RAPTOR v2.1.0+ installed
+- RAPTOR v2.1.1+ installed
 - Sufficient computational resources to run multiple pipelines
 
 ---
@@ -177,9 +190,53 @@ analyzer = EnsembleAnalyzer()
 ensemble = analyzer.load_and_combine(results)
 ```
 
----
+### Ensemble with ATO (NEW in v2.1.1)
 
-## Step 3: Combine Results
+Apply uniform data-driven thresholds for fair comparison:
+
+```bash
+# Command line - ensemble with ATO
+raptor ensemble \
+  --counts data.csv \
+  --metadata meta.txt \
+  --pipelines STAR-DESeq2,Salmon-DESeq2,Kallisto-DESeq2 \
+  --use-ato \
+  --ato-goal balanced \
+  --output ensemble_ato/
+```
+
+```python
+# Python API - ensemble with ATO
+from raptor import EnsembleAnalyzer
+from raptor.threshold_optimizer import optimize_thresholds
+
+# First, combine all pipeline results
+combined = pd.concat([
+    pd.read_csv('results/star_deseq2.csv'),
+    pd.read_csv('results/salmon_deseq2.csv'),
+    pd.read_csv('results/kallisto_deseq2.csv')
+])
+
+# Get uniform threshold from ATO
+ato_result = optimize_thresholds(combined, goal='balanced')
+uniform_threshold = ato_result.logfc_threshold
+
+print(f"Uniform threshold: {uniform_threshold:.3f}")
+print(f"Methods text: {ato_result.methods_text}")
+
+# Apply to ensemble analysis
+analyzer = EnsembleAnalyzer()
+ensemble = analyzer.combine(
+    results_dir='results/',
+    logfc_threshold=uniform_threshold,  # Use ATO threshold
+    fdr_threshold=0.05
+)
+```
+
+**Why ATO + Ensemble?**
+- **Fair comparison**: All pipelines use the same statistically-justified threshold
+- **No arbitrary cutoffs**: Data determines the optimal |logFC|
+- **Publication-ready**: Auto-generated methods text explains your approach
 
 ### Basic Combination (Voting)
 
@@ -701,7 +758,7 @@ If you use ensemble analysis in your research:
 ```
 We employed an ensemble approach combining results from [3] 
 RNA-seq analysis pipelines (Salmon-edgeR, STAR-RSEM-DESeq2, 
-and Kallisto-Sleuth) using RAPTOR v2.1.0 (Bolouki, 2025). 
+and Kallisto-Sleuth) using RAPTOR v2.1.1 (Bolouki, 2025). 
 Genes identified as differentially expressed by at least 2 
 out of 3 pipelines (consensus threshold) were considered 
 high-confidence candidates. This ensemble approach yielded 
@@ -712,6 +769,6 @@ providing robust results independent of methodological choice.
 ---
 
 **Tutorial by Ayeh Bolouki**  
-For RAPTOR v2.1.0
+For RAPTOR v2.1.1
 
 *"In statistical consensus, there is confidence!"* 

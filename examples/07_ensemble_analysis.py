@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-RAPTOR v2.1.0 Example Script: Ensemble Analysis
+RAPTOR v2.1.1 Example Script: Ensemble Analysis
 
 Demonstrates multi-pipeline consensus differential expression analysis:
 - Weighted voting across pipelines
@@ -41,7 +41,7 @@ def print_banner():
     """Print RAPTOR banner."""
     print("""
     ╔══════════════════════════════════════════════════════════════╗
-    ║       🦖 RAPTOR v2.1.0 - Ensemble Analysis                  ║
+    ║       🦖 RAPTOR v2.1.1 - Ensemble Analysis                  ║
     ║                                                              ║
     ║   Multi-Pipeline Consensus Differential Expression          ║
     ╚══════════════════════════════════════════════════════════════╝
@@ -292,7 +292,7 @@ def run_ensemble_analysis(results_dir=None, pipeline_files=None, method='weighte
     # Prepare output
     output = {
         'timestamp': datetime.now().isoformat(),
-        'raptor_version': '2.1.0',
+        'raptor_version': '2.1.1',
         'method': method,
         'parameters': {
             'min_pipelines': min_pipelines,

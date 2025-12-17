@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Advanced Data Quality Assessment Examples - RAPTOR v2.1.0
+Advanced Data Quality Assessment Examples - RAPTOR v2.1.1
 
 Demonstrates comprehensive quality assessment including:
 - Basic quality scoring
