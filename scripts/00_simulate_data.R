@@ -14,7 +14,6 @@
 suppressPackageStartupMessages({
   library(polyester)
   library(Biostrings)
-  library(rtracklayer)
   library(optparse)
 })
 
@@ -26,8 +25,8 @@ option_list <- list(
               help="Number of samples (must be even) [default: %default]"),
   make_option(c("-g", "--ngenes"), type="integer", default=10000,
               help="Number of genes to simulate [default: %default]"),
-  make_option(c("-r", "--reads"), type="integer", default=1000000,
-              help="Number of reads per sample [default: %default]"),
+  make_option(c("-r", "--reads"), type="integer", default=300,
+              help="Mean reads per transcript [default: %default]"),
   make_option(c("-d", "--ndiff"), type="integer", default=1000,
               help="Number of differentially expressed genes [default: %default]"),
   make_option(c("-f", "--foldchange"), type="numeric", default=3,
@@ -45,6 +44,10 @@ if (opt$nsamples %% 2 != 0) {
   stop("Number of samples must be even (equal groups for case/control)")
 }
 
+if (opt$ndiff > opt$ngenes) {
+  stop("Number of DE genes cannot exceed total number of genes")
+}
+
 # Set seed for reproducibility
 set.seed(opt$seed)
 
@@ -52,7 +55,7 @@ cat("=== RAPTOR RNA-seq Data Simulation ===\n")
 cat(sprintf("Output directory: %s\n", opt$output))
 cat(sprintf("Number of samples: %d\n", opt$nsamples))
 cat(sprintf("Number of genes: %d\n", opt$ngenes))
-cat(sprintf("Reads per sample: %d\n", opt$reads))
+cat(sprintf("Mean reads per transcript: %d\n", opt$reads))
 cat(sprintf("DE genes: %d\n", opt$ndiff))
 cat(sprintf("Fold change: %.1f\n", opt$foldchange))
 cat(sprintf("Random seed: %d\n\n", opt$seed))
@@ -60,8 +63,11 @@ cat(sprintf("Random seed: %d\n\n", opt$seed))
 # Create output directory
 dir.create(opt$output, showWarnings = FALSE, recursive = TRUE)
 
-# Generate transcriptome
+# =============================================================================
+# Step 1: Generate transcriptome
+# =============================================================================
 cat("Step 1: Generating synthetic transcriptome...\n")
+
 transcript_length <- 1000
 transcripts <- DNAStringSet(replicate(opt$ngenes, {
   paste(sample(c("A", "C", "G", "T"), transcript_length, replace = TRUE), 
@@ -72,10 +78,13 @@ names(transcripts) <- paste0("GENE", sprintf("%05d", 1:opt$ngenes))
 # Save transcriptome
 fasta_file <- file.path(opt$output, "transcriptome.fa")
 writeXStringSet(transcripts, fasta_file)
-cat(sprintf("  Saved transcriptome: %s\n", fasta_file))
+cat(sprintf("  ✓ Saved transcriptome: %s (%d transcripts)\n", fasta_file, opt$ngenes))
 
-# Create GTF annotation
+# =============================================================================
+# Step 2: Create GTF annotation
+# =============================================================================
 cat("Step 2: Creating annotation file...\n")
+
 gtf_data <- data.frame(
   seqname = names(transcripts),
   source = "simulation",
@@ -92,75 +101,110 @@ gtf_data <- data.frame(
 gtf_file <- file.path(opt$output, "annotation.gtf")
 write.table(gtf_data, gtf_file, quote = FALSE, sep = "\t", 
             row.names = FALSE, col.names = FALSE)
-cat(sprintf("  Saved annotation: %s\n", gtf_file))
+cat(sprintf("  ✓ Saved annotation: %s\n", gtf_file))
 
-# Setup simulation parameters
+# =============================================================================
+# Step 3: Setup simulation parameters
+# =============================================================================
 cat("Step 3: Setting up expression parameters...\n")
+
 n_per_group <- opt$nsamples / 2
+n_groups <- 2  # Control and Treatment
 
-# Baseline expression levels (negative binomial parameters)
-baseline_mean <- rnorm(opt$ngenes, mean = 100, sd = 50)
-baseline_mean[baseline_mean < 10] <- 10  # Minimum expression
+# Baseline expression levels (reads per transcript)
+# Using negative binomial to ensure positive values
+baseline_mean <- pmax(rnbinom(opt$ngenes, mu = opt$reads, size = 10), 10)
 
-# Identify DE genes
+cat(sprintf("  Baseline expression: mean=%.1f, range=[%d, %d]\n", 
+            mean(baseline_mean), min(baseline_mean), max(baseline_mean)))
+
+# =============================================================================
+# Step 4: Define DE genes and fold changes
+# =============================================================================
+cat("Step 4: Defining differentially expressed genes...\n")
+
+# Randomly select DE genes
 de_genes <- sample(1:opt$ngenes, opt$ndiff)
 n_up <- floor(opt$ndiff / 2)
 n_down <- opt$ndiff - n_up
 up_genes <- de_genes[1:n_up]
 down_genes <- de_genes[(n_up + 1):opt$ndiff]
 
-# Create fold change matrix
-fold_changes <- matrix(1, nrow = opt$ngenes, ncol = opt$nsamples)
-# Upregulated in treatment group
-fold_changes[up_genes, (n_per_group + 1):opt$nsamples] <- opt$foldchange
-# Downregulated in treatment group  
-fold_changes[down_genes, (n_per_group + 1):opt$nsamples] <- 1/opt$foldchange
+# Create fold change matrix: ngenes rows × 2 columns (groups, NOT samples!)
+# Column 1 = Control group (all 1s)
+# Column 2 = Treatment group (1s for non-DE, fold_change for DE)
+fold_changes <- matrix(1, nrow = opt$ngenes, ncol = n_groups)
 
-cat(sprintf("  DE genes: %d upregulated, %d downregulated\n", n_up, n_down))
+# Upregulated in treatment (group 2)
+fold_changes[up_genes, 2] <- opt$foldchange
 
-# Simulate reads
-cat("Step 4: Simulating RNA-seq reads...\n")
-cat("  This may take a few minutes...\n")
+# Downregulated in treatment (group 2)
+fold_changes[down_genes, 2] <- 1 / opt$foldchange
 
-simulate_experiment_countmat(
+cat(sprintf("  ✓ DE genes: %d upregulated (FC=%.1f), %d downregulated (FC=%.2f)\n", 
+            n_up, opt$foldchange, n_down, 1/opt$foldchange))
+
+# =============================================================================
+# Step 5: Simulate RNA-seq reads
+# =============================================================================
+cat("Step 5: Simulating RNA-seq reads...\n")
+cat("  This may take a few minutes depending on the number of genes...\n")
+
+reads_dir <- file.path(opt$output, "reads")
+dir.create(reads_dir, showWarnings = FALSE, recursive = TRUE)
+
+# Use simulate_experiment
+# - fasta: path to transcriptome FASTA
+# - reads_per_transcript: vector of length ngenes
+# - fold_changes: matrix of ngenes × n_groups
+# - num_reps: vector specifying replicates per group
+
+simulate_experiment(
   fasta = fasta_file,
-  gtf = gtf_file,
-  seqpath = opt$output,
-  outdir = file.path(opt$output, "reads"),
-  num_reps = c(n_per_group, n_per_group),
-  reads_per_transcript = baseline_mean,
-  fold_changes = fold_changes,
+  outdir = reads_dir,
+  num_reps = c(n_per_group, n_per_group),  # e.g., c(3, 3) for 6 samples
+  reads_per_transcript = baseline_mean,     # Vector of length ngenes
+  fold_changes = fold_changes,              # Matrix: ngenes × 2
   readlen = 100,
   paired = TRUE,
-  seed = opt$seed
+  seed = opt$seed,
+  gzip = FALSE  # We'll compress later with better naming
 )
 
-# Rename files to meaningful names
-cat("Step 5: Organizing output files...\n")
-reads_dir <- file.path(opt$output, "reads")
+cat("  ✓ Reads generated successfully\n")
+
+# =============================================================================
+# Step 6: Rename and organize output files
+# =============================================================================
+cat("Step 6: Organizing output files...\n")
+
+# Polyester outputs: sample_01_1.fasta, sample_01_2.fasta, etc.
+# We rename to: control_1_R1.fastq, control_1_R2.fastq, etc.
 
 for (i in 1:n_per_group) {
-  file.rename(
-    file.path(reads_dir, paste0("sample_", sprintf("%02d", i), "_1.fasta")),
-    file.path(reads_dir, paste0("control_", i, "_R1.fastq"))
-  )
-  file.rename(
-    file.path(reads_dir, paste0("sample_", sprintf("%02d", i), "_2.fasta")),
-    file.path(reads_dir, paste0("control_", i, "_R2.fastq"))
-  )
+  # Control samples (first group)
+  old_r1 <- file.path(reads_dir, paste0("sample_", sprintf("%02d", i), "_1.fasta"))
+  old_r2 <- file.path(reads_dir, paste0("sample_", sprintf("%02d", i), "_2.fasta"))
+  new_r1 <- file.path(reads_dir, paste0("control_", i, "_R1.fastq"))
+  new_r2 <- file.path(reads_dir, paste0("control_", i, "_R2.fastq"))
+  
+  if (file.exists(old_r1)) file.rename(old_r1, new_r1)
+  if (file.exists(old_r2)) file.rename(old_r2, new_r2)
 }
 
 for (i in 1:n_per_group) {
+  # Treatment samples (second group)
   j <- i + n_per_group
-  file.rename(
-    file.path(reads_dir, paste0("sample_", sprintf("%02d", j), "_1.fasta")),
-    file.path(reads_dir, paste0("treatment_", i, "_R1.fastq"))
-  )
-  file.rename(
-    file.path(reads_dir, paste0("sample_", sprintf("%02d", j), "_2.fasta")),
-    file.path(reads_dir, paste0("treatment_", i, "_R2.fastq"))
-  )
+  old_r1 <- file.path(reads_dir, paste0("sample_", sprintf("%02d", j), "_1.fasta"))
+  old_r2 <- file.path(reads_dir, paste0("sample_", sprintf("%02d", j), "_2.fasta"))
+  new_r1 <- file.path(reads_dir, paste0("treatment_", i, "_R1.fastq"))
+  new_r2 <- file.path(reads_dir, paste0("treatment_", i, "_R2.fastq"))
+  
+  if (file.exists(old_r1)) file.rename(old_r1, new_r1)
+  if (file.exists(old_r2)) file.rename(old_r2, new_r2)
 }
+
+cat("  ✓ Files renamed\n")
 
 # Compress FASTQ files
 cat("Step 6: Compressing FASTQ files...\n")
