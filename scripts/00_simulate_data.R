@@ -206,19 +206,28 @@ for (i in 1:n_per_group) {
 
 cat("  ✓ Files renamed\n")
 
-# Compress FASTQ files
-cat("Step 6: Compressing FASTQ files...\n")
+# =============================================================================
+# Step 7: Compress FASTQ files
+# =============================================================================
+cat("Step 7: Compressing FASTQ files...\n")
+
 fastq_files <- list.files(reads_dir, pattern = "\\.fastq$", full.names = TRUE)
 for (f in fastq_files) {
-  system(paste("gzip", f))
+  system(paste("gzip -f", shQuote(f)), ignore.stdout = TRUE, ignore.stderr = TRUE)
 }
 
-# Create sample metadata
-cat("Step 7: Creating sample metadata...\n")
+cat(sprintf("  ✓ Compressed %d files\n", length(fastq_files)))
+
+# =============================================================================
+# Step 8: Create sample metadata
+# =============================================================================
+cat("Step 8: Creating sample metadata...\n")
+
 metadata <- data.frame(
   sample_id = c(paste0("control_", 1:n_per_group), 
                 paste0("treatment_", 1:n_per_group)),
   condition = rep(c("control", "treatment"), each = n_per_group),
+  group = rep(c(1, 2), each = n_per_group),
   batch = rep("batch1", opt$nsamples),
   replicate = rep(1:n_per_group, 2),
   fastq_1 = c(paste0("control_", 1:n_per_group, "_R1.fastq.gz"),
@@ -229,57 +238,96 @@ metadata <- data.frame(
 
 metadata_file <- file.path(opt$output, "sample_metadata.csv")
 write.csv(metadata, metadata_file, row.names = FALSE, quote = FALSE)
-cat(sprintf("  Saved metadata: %s\n", metadata_file))
+cat(sprintf("  ✓ Saved metadata: %s\n", metadata_file))
 
-# Save truth set (DE genes)
-cat("Step 8: Saving ground truth information...\n")
+# =============================================================================
+# Step 9: Save ground truth (DE genes)
+# =============================================================================
+cat("Step 9: Saving ground truth information...\n")
+
 truth_data <- data.frame(
   gene_id = names(transcripts),
   is_de = FALSE,
   direction = "none",
-  true_fc = 1
+  true_fc = 1.0,
+  true_log2fc = 0.0
 )
 
 truth_data$is_de[up_genes] <- TRUE
 truth_data$direction[up_genes] <- "up"
 truth_data$true_fc[up_genes] <- opt$foldchange
+truth_data$true_log2fc[up_genes] <- log2(opt$foldchange)
 
 truth_data$is_de[down_genes] <- TRUE
 truth_data$direction[down_genes] <- "down"
 truth_data$true_fc[down_genes] <- 1/opt$foldchange
+truth_data$true_log2fc[down_genes] <- log2(1/opt$foldchange)
 
 truth_file <- file.path(opt$output, "truth_set.csv")
 write.csv(truth_data, truth_file, row.names = FALSE, quote = FALSE)
-cat(sprintf("  Saved ground truth: %s\n", truth_file))
+cat(sprintf("  ✓ Saved ground truth: %s\n", truth_file))
 
-# Create summary report
-cat("Step 9: Creating summary report...\n")
+# =============================================================================
+# Step 10: Create summary report
+# =============================================================================
+cat("Step 10: Creating summary report...\n")
+
 summary_file <- file.path(opt$output, "simulation_summary.txt")
 sink(summary_file)
 cat("=== RAPTOR RNA-seq Simulation Summary ===\n\n")
 cat(sprintf("Date: %s\n", Sys.time()))
+cat(sprintf("RAPTOR Version: 2.1.1\n"))
 cat(sprintf("Random seed: %d\n\n", opt$seed))
 cat("Parameters:\n")
 cat(sprintf("  Samples: %d (%d control, %d treatment)\n", 
             opt$nsamples, n_per_group, n_per_group))
 cat(sprintf("  Genes: %d\n", opt$ngenes))
 cat(sprintf("  DE genes: %d (%d up, %d down)\n", opt$ndiff, n_up, n_down))
-cat(sprintf("  Fold change: %.1f\n", opt$foldchange))
-cat(sprintf("  Reads per sample: %d\n", opt$reads))
+cat(sprintf("  Fold change: %.1f (log2FC = %.2f)\n", opt$foldchange, log2(opt$foldchange)))
+cat(sprintf("  Mean reads per transcript: %d\n", opt$reads))
 cat(sprintf("  Read length: 100 bp paired-end\n\n"))
 cat("Output files:\n")
-cat(sprintf("  Transcriptome: %s\n", fasta_file))
-cat(sprintf("  Annotation: %s\n", gtf_file))
-cat(sprintf("  Reads: %s/*.fastq.gz\n", reads_dir))
-cat(sprintf("  Metadata: %s\n", metadata_file))
-cat(sprintf("  Ground truth: %s\n", truth_file))
+cat(sprintf("  Transcriptome: %s\n", basename(fasta_file)))
+cat(sprintf("  Annotation: %s\n", basename(gtf_file)))
+cat(sprintf("  Reads: reads/*.fastq.gz\n"))
+cat(sprintf("  Metadata: %s\n", basename(metadata_file)))
+cat(sprintf("  Ground truth: %s\n", basename(truth_file)))
+cat("\nExpression statistics:\n")
+cat(sprintf("  Mean baseline expression: %.1f reads/transcript\n", mean(baseline_mean)))
+cat(sprintf("  Expression range: [%d, %d]\n", min(baseline_mean), max(baseline_mean)))
 sink()
 
-cat(sprintf("\n=== Simulation Complete! ===\n"))
+# =============================================================================
+# Done!
+# =============================================================================
+cat(sprintf("\n" ))
+cat("╔════════════════════════════════════════════════════════════╗\n")
+cat("║           ✓ Simulation Complete!                          ║\n")
+cat("╚════════════════════════════════════════════════════════════╝\n\n")
+
 cat(sprintf("Output directory: %s\n", opt$output))
 cat(sprintf("Summary report: %s\n\n", summary_file))
 
-cat("Next steps:\n")
-cat("  1. Use simulated FASTQ files to test pipelines\n")
-cat("  2. Compare results to ground truth (truth_set.csv)\n")
-cat("  3. Evaluate pipeline performance\n\n")
+# List generated files
+cat("Generated files:\n")
+cat(sprintf("  📁 %s/\n", opt$output))
+cat(sprintf("     ├── transcriptome.fa      (reference transcriptome)\n"))
+cat(sprintf("     ├── annotation.gtf        (gene annotations)\n"))
+cat(sprintf("     ├── sample_metadata.csv   (sample information)\n"))
+cat(sprintf("     ├── truth_set.csv         (ground truth DE genes)\n"))
+cat(sprintf("     ├── simulation_summary.txt\n"))
+cat(sprintf("     └── reads/\n"))
+for (i in 1:n_per_group) {
+  cat(sprintf("         ├── control_%d_R1.fastq.gz\n", i))
+  cat(sprintf("         ├── control_%d_R2.fastq.gz\n", i))
+}
+for (i in 1:n_per_group) {
+  cat(sprintf("         ├── treatment_%d_R1.fastq.gz\n", i))
+  cat(sprintf("         ├── treatment_%d_R2.fastq.gz\n", i))
+}
+
+cat("\nNext steps:\n")
+cat("  1. Use simulated FASTQ files to test RNA-seq pipelines\n")
+cat("  2. Run differential expression analysis\n")
+cat("  3. Compare results to ground truth (truth_set.csv)\n")
+cat("  4. Evaluate pipeline performance with RAPTOR\n\n")
