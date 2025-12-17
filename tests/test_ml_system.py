@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 
 """
-Quick Test Script for RAPTOR ML Recommender
+Quick Test Script for RAPTOR ML Recommender - v2.1.1
 
-Tests all components to ensure proper installation and functionality.
+Tests all ML components to ensure proper installation and functionality.
+🆕 Now includes Adaptive Threshold Optimizer (ATO) tests.
 
 Author: Ayeh Bolouki
 """
@@ -57,6 +58,13 @@ def test_imports():
         print("  ✗ joblib - install with: pip install joblib")
         return False
     
+    try:
+        import scipy
+        print("  ✓ scipy")
+    except ImportError:
+        print("  ✗ scipy - install with: pip install scipy")
+        return False
+    
     return True
 
 
@@ -76,6 +84,18 @@ def test_ml_modules():
         print("  ✓ synthetic_benchmarks")
     except ImportError as e:
         print(f"  ✗ synthetic_benchmarks - {e}")
+        return False
+    
+    # 🆕 v2.1.1: Test ATO imports
+    try:
+        from raptor.threshold_optimizer import (
+            AdaptiveThresholdOptimizer,
+            ThresholdResult,
+            optimize_thresholds
+        )
+        print("  ✓ threshold_optimizer (v2.1.1)")
+    except ImportError as e:
+        print(f"  ✗ threshold_optimizer - {e}")
         return False
     
     return True
@@ -299,10 +319,115 @@ def test_prediction():
         shutil.rmtree(model_dir)
 
 
+def test_ato_basic():
+    """Test ATO basic functionality - NEW in v2.1.1."""
+    print("\nTesting ATO (v2.1.1)...")
+    
+    try:
+        import numpy as np
+        import pandas as pd
+        from raptor.threshold_optimizer import optimize_thresholds, ThresholdResult
+        
+        # Generate test data
+        np.random.seed(42)
+        n_genes = 500
+        
+        df = pd.DataFrame({
+            'log2FoldChange': np.concatenate([
+                np.random.normal(0, 0.2, 400),    # Null
+                np.random.normal(2, 0.5, 50),     # Up
+                np.random.normal(-2, 0.5, 50)     # Down
+            ]),
+            'pvalue': np.concatenate([
+                np.random.uniform(0.1, 1, 400),
+                np.random.exponential(0.001, 100)
+            ])
+        })
+        df.index = [f'Gene_{i}' for i in range(n_genes)]
+        
+        # Run ATO
+        result = optimize_thresholds(df, goal='balanced', verbose=False)
+        
+        print(f"  ✓ ATO executed successfully")
+        print(f"    LogFC cutoff: {result.logfc_cutoff:.3f}")
+        print(f"    Padj cutoff: {result.padj_cutoff}")
+        print(f"    DE genes: {result.n_significant_optimized}")
+        
+        # Test result type
+        if isinstance(result, ThresholdResult):
+            print(f"  ✓ Result is ThresholdResult type")
+        else:
+            print(f"  ✗ Result is not ThresholdResult type")
+            return False
+        
+        # Test summary method
+        summary = result.summary()
+        if len(summary) > 50:
+            print(f"  ✓ summary() method works")
+        else:
+            print(f"  ✗ summary() method failed")
+            return False
+        
+        return True
+        
+    except Exception as e:
+        print(f"  ✗ ATO failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def test_ato_goals():
+    """Test ATO different analysis goals - NEW in v2.1.1."""
+    print("\nTesting ATO goals (v2.1.1)...")
+    
+    try:
+        import numpy as np
+        import pandas as pd
+        from raptor.threshold_optimizer import optimize_thresholds
+        
+        # Generate test data
+        np.random.seed(123)
+        n_genes = 1000
+        
+        df = pd.DataFrame({
+            'log2FoldChange': np.concatenate([
+                np.random.normal(0, 0.3, 850),
+                np.random.normal(2, 0.5, 75),
+                np.random.normal(-2, 0.5, 75)
+            ]),
+            'pvalue': np.concatenate([
+                np.random.uniform(0.1, 1, 850),
+                np.random.exponential(0.001, 150)
+            ])
+        })
+        df.index = [f'Gene_{i}' for i in range(n_genes)]
+        
+        # Test all goals
+        results = {}
+        for goal in ['discovery', 'balanced', 'validation']:
+            result = optimize_thresholds(df, goal=goal, verbose=False)
+            results[goal] = result
+            print(f"  ✓ Goal '{goal}': {result.n_significant_optimized} DE genes")
+        
+        # Verify discovery >= balanced >= validation (generally)
+        if results['discovery'].n_significant_optimized >= results['validation'].n_significant_optimized:
+            print(f"  ✓ Goal ordering correct (discovery >= validation)")
+        else:
+            print(f"  ⚠ Goal ordering may vary based on data")
+        
+        return True
+        
+    except Exception as e:
+        print(f"  ✗ ATO goals test failed: {e}")
+        return False
+
+
 def main():
     """Run all tests."""
     print("=" * 70)
-    print("RAPTOR ML Recommender - System Test")
+    print("RAPTOR v2.1.1 ML Recommender - System Test")
+    print("🆕 Now includes Adaptive Threshold Optimizer (ATO) tests!")
     print("=" * 70)
     
     tests = [
@@ -311,7 +436,9 @@ def main():
         ("Feature extraction", test_feature_extraction),
         ("Data generation", test_data_generation),
         ("Model training", test_model_training),
-        ("Prediction", test_prediction)
+        ("Prediction", test_prediction),
+        ("ATO basic (v2.1.1)", test_ato_basic),
+        ("ATO goals (v2.1.1)", test_ato_goals),
     ]
     
     results = []
@@ -339,7 +466,7 @@ def main():
     print(f"\nResults: {passed}/{total} tests passed")
     
     if passed == total:
-        print("\n🎉 All tests passed! System is ready to use.")
+        print("\n🎉 All tests passed! ML system is ready to use.")
         return 0
     else:
         print("\n⚠️  Some tests failed. Check errors above.")

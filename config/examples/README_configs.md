@@ -608,7 +608,6 @@ A: Use the auto-generated methods text from `config_publication_ready.yaml`.
 
 ##  Additional Resources
 
-- **PyPI**: https://pypi.org/project/raptor-rnaseq/
 - **RAPTOR Documentation**: See `docs/` folder
 - **Threshold Optimizer Docs**: `docs/THRESHOLD_OPTIMIZER.md`
 - **Tutorials**: `docs/tutorials/`
@@ -627,6 +626,5 @@ A: Use the auto-generated methods text from `config_publication_ready.yaml`.
 
 **Author**: Ayeh Bolouki  
 **License**: MIT  
-**PyPI**: https://pypi.org/project/raptor-rnaseq/
 
 *Making free science for everybody around the world* 🌍
