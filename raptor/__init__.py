@@ -4,18 +4,17 @@ RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
 A comprehensive benchmarking framework for RNA-seq differential expression analysis
 pipelines with intelligent, data-driven pipeline recommendations powered by machine learning.
 
-Version 2.1.1 introduces the Adaptive Threshold Optimizer (ATO) for data-driven
-significance threshold selection in differential expression analysis.
+Version 2.1.2 is a hotfix release that fixes Python 3.8-3.11 compatibility
+for the Adaptive Threshold Optimizer (ATO) feature introduced in v2.1.1.
 
 Install from PyPI: pip install raptor-rnaseq
 
 Author: Ayeh Bolouki
-Email: ayeh.bolouki@unamur.be
 License: MIT
 """
 
 # Version information
-__version__ = '2.1.1'
+__version__ = '2.1.2'
 __author__ = 'Ayeh Bolouki'
 __email__ = 'ayeh.bolouki@unamur.be'
 __license__ = 'MIT'
@@ -129,7 +128,7 @@ def _show_welcome():
     """Display welcome message on first import."""
     print("""
     ╔══════════════════════════════════════════════════════════════════╗
-    ║                     🦖 RAPTOR v2.1.1                             ║
+    ║                     🦖 RAPTOR v2.1.2                             ║
     ║   RNA-seq Analysis Pipeline Testing & Optimization Resource      ║
     ║                                                                  ║
     ║          🤖 ML-POWERED RECOMMENDATIONS                           ║
@@ -142,7 +141,7 @@ def _show_welcome():
     ║                                                                  ║
     ╚══════════════════════════════════════════════════════════════════╝
     
-    What's New in v2.1.1:
+    What's New in v2.1.2:
     • 🎯 Adaptive Threshold Optimizer (ATO) for DE analysis
       - Data-driven logFC and padj threshold selection
       - Multiple p-value adjustment methods (BH, BY, q-value, Holm...)
