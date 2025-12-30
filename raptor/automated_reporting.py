@@ -802,6 +802,9 @@ automated visualization modules.
         """Generate Markdown report."""
         logger.info("Generating Markdown report...")
         
+        # Build key findings list (Python 3.8+ compatible - no backslash in f-string)
+        key_findings_md = "\n".join([f"- {finding}" for finding in self.report_sections['executive_summary']['key_findings']])
+        
         md_content = f"""# {self.report_sections['executive_summary']['title']}
 
 **Generated:** {self.report_sections['executive_summary']['date']}
@@ -812,7 +815,7 @@ automated visualization modules.
 
 ### Key Findings
 
-{"".join([f"- {finding}\n" for finding in self.report_sections['executive_summary']['key_findings']])}
+{key_findings_md}
 
 ## Statistical Results
 
