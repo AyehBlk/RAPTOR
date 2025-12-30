@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "raptor-rnaseq"
-version = "2.1.1"
+version = "2.1.2"
 description = "RNA-seq Analysis Pipeline Testing and Optimization Resource with ML-powered recommendations and adaptive threshold optimization"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Ayeh Bolouki", email = "ayeh.bolouki@unamur.be"}
+    {name = "Ayeh Bolouki", email = "ayehbolouki1988@gmail.com"}
 ]
 maintainers = [
-    {name = "Ayeh Bolouki", email = "ayeh.bolouki@unamur.be"}
+    {name = "Ayeh Bolouki", email = "ayehbolouki1988@gmail.com"}
 ]
 requires-python = ">=3.8"
 keywords = [
