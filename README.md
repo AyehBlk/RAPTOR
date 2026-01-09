@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.1.1-brightgreen?style=for-the-badge" alt="RAPTOR v2.1.1"/>
+  <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.1.2-brightgreen?style=for-the-badge" alt="RAPTOR v2.1.2"/>
 </p>
 
 <h1 align="center">RAPTOR</h1>
@@ -14,7 +14,7 @@
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8+-blue.svg" alt="Python 3.8+"/></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"/></a>
   <a href="https://doi.org/10.5281/zenodo.17607161"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17607161.svg" alt="DOI"/></a>
-  <a href="https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.1"><img src="https://img.shields.io/badge/Release-v2.1.1-orange.svg" alt="Release v2.1.1"/></a>
+  <a href="https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.2"><img src="https://img.shields.io/badge/Release-v2.1.2-orange.svg" alt="Release v2.1.2"/></a>
 </p>
 
 <p align="center">
@@ -28,7 +28,7 @@
 
 ---
 
-## 🆕 What's New in v2.1.1
+## 🆕 What's New in v2.1.2
 
 ###  Adaptive Threshold Optimizer (ATO)
 
@@ -256,7 +256,7 @@ RAPTOR/
 │   ├── profiler.py         # Data profiling
 │   ├── recommender.py      # Rule-based recommendations
 │   ├── ml_recommender.py   # ML recommendations
-│   ├── threshold_optimizer/ # 🆕 Adaptive Threshold Optimizer (v2.1.1)
+│   ├── threshold_optimizer/ # 🆕 Adaptive Threshold Optimizer (v2.1.2)
 │   │   ├── __init__.py
 │   │   ├── ato.py          # Core ATO class
 │   │   └── visualization.py # ATO visualizations
@@ -361,7 +361,7 @@ print(f"Recommended: {recommendations[0]['pipeline_name']}")
 # 3. [Run recommended pipeline - produces DE results]
 # raptor run --pipeline 3 ...
 
-# 4. Optimize thresholds (NEW in v2.1.1)
+# 4. Optimize thresholds (NEW in v2.1.2)
 de_results = pd.read_csv('deseq2_results.csv')
 result = optimize_thresholds(
     de_results,
@@ -502,5 +502,5 @@ Copyright (c) 2025 Ayeh Bolouki
 </p>
 
 <p align="center">
-  <em>RAPTOR v2.1.1 - Making pipeline selection evidence-based, not guesswork 🦖</em>
+  <em>RAPTOR v2.1.2 - Making pipeline selection evidence-based, not guesswork 🦖</em>
 </p>
