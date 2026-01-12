@@ -1,0 +1,82 @@
+# Quick Kallisto Pipeline Configuration
+# RAPTOR v2.2.0
+# For fast count matrix generation (QC purposes)
+
+pipeline:
+  id: "quick_kallisto"
+  name: "Quick Kallisto Quantification"
+  version: "2.2.0"
+  description: "Ultra-fast pseudo-alignment with Kallisto for QC and profiling"
+  
+  purpose: "Generate count matrix quickly for quality assessment"
+  
+  output:
+    - "Gene-level count matrix (counts.csv)"
+    - "TPM matrix (tpm.csv)"
+    - "Sample information (sample_info.csv)"
+
+# Input Configuration
+input:
+  # Sample sheet file (required)
+  sample_sheet: null  # Path to sample_sheet.csv
+  
+  # Kallisto index (required)
+  index: null  # Path to Kallisto index file (.idx)
+  
+  # Optional: Gene-to-transcript mapping for gene-level counts
+  # If not provided, will output transcript-level counts
+  gene_map: null  # Path to tx2gene.csv (transcript_id,gene_id)
+
+# Output Configuration
+output:
+  # Output directory
+  dir: "quick_counts"
+  
+  # Output files
+  counts_file: "counts.csv"        # Raw counts matrix
+  tpm_file: "tpm.csv"              # TPM normalized matrix
+  sample_info: "sample_info.csv"   # Sample metadata
+  
+  # Keep individual sample quantification files
+  keep_quant_files: false
+
+# Kallisto Parameters
+kallisto:
+  # Number of bootstrap samples (0 = disable for speed)
+  num_bootstraps: 0
+  
+  # Seed for bootstrap sampling
+  seed: 42
+  
+  # Use pseudobam output (increases runtime, usually not needed for QC)
+  pseudobam: false
+  
+  # Strand-specific options
+  # null = unstranded (default)
+  # "rf-stranded" = reverse-forward stranded (e.g., TruSeq)
+  # "fr-stranded" = forward-reverse stranded
+  strand: null
+  
+  # Additional Kallisto options (advanced)
+  extra_options: ""
+
+# Single-end specific options (REQUIRED for single-end data!)
+single_end:
+  # Fragment length mean (REQUIRED for single-end)
+  # Estimate from Bioanalyzer/TapeStation or use ~200 for standard libraries
+  fragment_length: 200
+  
+  # Fragment length standard deviation (REQUIRED for single-end)
+  # Typically 20-80 depending on library prep
+  fragment_sd: 20
+
+# Computational Resources
+resources:
+  threads: 8
+  memory_gb: 16
+
+# Logging
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  save_logs: true
+  log_file: "quick_kallisto.log"
