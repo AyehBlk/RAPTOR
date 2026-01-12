@@ -8,6 +8,12 @@ Automatically assess the quality of your RNA-seq data to ensure reliable results
 
 ## 🆕 What's New in v2.2.0
 
+### Normalization Options
+- **4 normalization methods** available: log2, CPM, quantile, none
+- Flexible handling of raw counts or pre-normalized data
+- CPM for varying library sizes
+- Quantile for aggressive normalization
+
 ### Advanced Outlier Detection
 - **6 detection methods** with consensus voting
 - PCA + Mahalanobis, Isolation Forest, LOF, Elliptic Envelope, Correlation-based, Library Size
@@ -32,16 +38,17 @@ Automatically assess the quality of your RNA-seq data to ensure reliable results
 
 1. [Overview](#overview)
 2. [Quick Start](#quick-start)
-3. [Quality Metrics](#quality-metrics)
-4. [Quality Scoring](#quality-scoring)
-5. [Advanced Outlier Detection](#advanced-outlier-detection) ← **NEW**
-6. [PLS-DA Analysis](#pls-da-analysis) ← **NEW**
-7. [VIP Scores](#vip-scores) ← **NEW**
-8. [Batch Effect Analysis](#batch-effect-analysis)
-9. [Sample Quality](#sample-quality)
-10. [Interpretation Guide](#interpretation-guide)
-11. [Troubleshooting](#troubleshooting)
-12. [Best Practices](#best-practices)
+3. [Normalization Options](#normalization-options) ← **NEW**
+4. [Quality Metrics](#quality-metrics)
+5. [Quality Scoring](#quality-scoring)
+6. [Advanced Outlier Detection](#advanced-outlier-detection) ← **NEW**
+7. [PLS-DA Analysis](#pls-da-analysis) ← **NEW**
+8. [VIP Scores](#vip-scores) ← **NEW**
+9. [Batch Effect Analysis](#batch-effect-analysis)
+10. [Sample Quality](#sample-quality)
+11. [Interpretation Guide](#interpretation-guide)
+12. [Troubleshooting](#troubleshooting)
+13. [Best Practices](#best-practices)
 
 ---
 
@@ -78,6 +85,9 @@ from raptor.data_quality_assessment import quick_quality_check
 # Quick check with visualization
 report = quick_quality_check(counts, metadata, output_file='quality.png')
 print(f"Quality Score: {report['overall']['score']:.1f}/100")
+
+# With CPM normalization (for varying library sizes)
+report = quick_quality_check(counts, metadata, normalization='cpm')
 ```
 
 ### Advanced Outlier Detection (NEW)
@@ -88,6 +98,9 @@ from raptor.data_quality_assessment import detect_outliers_quick
 # Detect outliers using 6 methods
 result = detect_outliers_quick(counts, consensus_threshold=3)
 print(f"Outliers: {result.outlier_samples}")
+
+# With CPM normalization
+result = detect_outliers_quick(counts, consensus_threshold=3, normalization='cpm')
 ```
 
 ### PLS-DA with VIP (NEW)
@@ -106,11 +119,188 @@ biomarkers = result.get_significant_features(vip_threshold=1.5)
 # Basic quality check
 raptor qc --counts data/counts.csv --output qc_report/
 
+# With CPM normalization
+raptor qc --counts data/counts.csv --normalization cpm --output qc_report/
+
 # With outlier detection
 raptor qc --counts data/counts.csv --outliers --threshold 3
 
 # With PLS-DA
 raptor plsda --counts data/counts.csv --metadata meta.csv --group condition
+
+# PLS-DA with CPM normalization
+raptor plsda --counts data/counts.csv --metadata meta.csv --normalization cpm
+```
+
+---
+
+## 🔧 Normalization Options
+
+RAPTOR supports multiple normalization methods for quality assessment. Choose the appropriate method based on your data characteristics.
+
+### Available Methods
+
+| Method | Command | Description |
+|--------|---------|-------------|
+| **log2** | `--normalization log2` | `log2(counts + 1)` - Default, good for most RNA-seq |
+| **CPM** | `--normalization cpm` | Counts Per Million + log2 - Accounts for library size |
+| **Quantile** | `--normalization quantile` | Forces same distribution across samples |
+| **None** | `--normalization none` | No transformation - Use for pre-normalized data |
+
+### When to Use Each Method
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  NORMALIZATION DECISION TREE                                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Is your data already normalized (TPM, FPKM, VST, rlog)?        │
+│  ├── YES → Use 'none'                                           │
+│  └── NO ↓                                                       │
+│                                                                 │
+│  Do library sizes vary significantly (>5x)?                     │
+│  ├── YES → Use 'cpm'                                            │
+│  └── NO ↓                                                       │
+│                                                                 │
+│  Do you need aggressive normalization (same distributions)?     │
+│  ├── YES → Use 'quantile'                                       │
+│  └── NO → Use 'log2' (default)                                  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Detailed Method Descriptions
+
+#### 1. log2 (Default)
+
+```python
+normalized = log2(counts + 1)
+```
+
+**Best for:**
+- Standard RNA-seq count data
+- Library sizes relatively similar (<5x variation)
+- Most common use case
+
+**Example:**
+```python
+assessor = DataQualityAssessor(counts, normalization='log2')
+```
+
+#### 2. CPM (Counts Per Million)
+
+```python
+cpm = (counts / library_size) * 1,000,000
+normalized = log2(cpm + 1)
+```
+
+**Best for:**
+- Library sizes vary significantly (>5x)
+- Comparing samples with different sequencing depths
+- When library size correction is important
+
+**Example:**
+```python
+# Python
+assessor = DataQualityAssessor(counts, normalization='cpm')
+
+# CLI
+raptor qc --counts counts.csv --normalization cpm
+```
+
+#### 3. Quantile Normalization
+
+Forces all samples to have the same distribution by:
+1. Ranking values within each sample
+2. Replacing with mean value at each rank across samples
+
+**Best for:**
+- Removing technical variation between samples
+- When you want aggressive normalization
+- Microarray-style normalization
+
+**Example:**
+```python
+# Python
+assessor = DataQualityAssessor(counts, normalization='quantile')
+
+# CLI
+raptor qc --counts counts.csv --normalization quantile
+```
+
+#### 4. None (Pre-normalized Data)
+
+Use when your data is already normalized:
+- TPM (Transcripts Per Million)
+- FPKM (Fragments Per Kilobase Million)
+- VST (Variance Stabilizing Transformation)
+- rlog (Regularized log transformation)
+
+**Example:**
+```python
+# Python - with TPM data
+assessor = DataQualityAssessor(tpm_data, normalization='none')
+
+# CLI
+raptor qc --counts tpm_data.csv --normalization none
+```
+
+### Impact on Quality Assessment
+
+| Metric | log2 | CPM | Quantile | None |
+|--------|------|-----|----------|------|
+| Library Size Assessment | Uses raw | Uses raw | Uses raw | Uses raw |
+| PCA/Variance | Transformed | Transformed | Transformed | As provided |
+| Outlier Detection | Transformed | Transformed | Transformed | As provided |
+| PLS-DA | Transformed | Transformed | Transformed | As provided |
+
+> **Note:** Library size metrics always use raw counts regardless of normalization choice.
+
+### CLI Examples
+
+```bash
+# Default log2 transformation
+raptor qc --counts counts.csv --output qc_report/
+
+# CPM for varying library sizes
+raptor qc --counts counts.csv --normalization cpm --output qc_report/
+
+# Quantile normalization
+raptor qc --counts counts.csv --normalization quantile --output qc_report/
+
+# Pre-normalized TPM data
+raptor qc --counts tpm_data.csv --normalization none --output qc_report/
+
+# Outlier detection with CPM
+raptor outliers --counts counts.csv --normalization cpm
+
+# PLS-DA with CPM
+raptor plsda --counts counts.csv --metadata meta.csv --normalization cpm
+```
+
+### Python API Examples
+
+```python
+from raptor import DataQualityAssessor, quick_quality_check
+
+# Method 1: Using DataQualityAssessor directly
+assessor = DataQualityAssessor(counts, metadata, normalization='cpm')
+report = assessor.assess_quality()
+outliers = assessor.detect_outliers_advanced()
+
+# Method 2: Using convenience functions
+report = quick_quality_check(counts, metadata, normalization='cpm')
+
+# Method 3: Different normalization for different analyses
+assessor_log2 = DataQualityAssessor(counts, normalization='log2')
+assessor_cpm = DataQualityAssessor(counts, normalization='cpm')
+
+# Compare results
+report_log2 = assessor_log2.assess_quality()
+report_cpm = assessor_cpm.assess_quality()
+
+print(f"log2 score: {report_log2['overall']['score']:.1f}")
+print(f"CPM score:  {report_cpm['overall']['score']:.1f}")
 ```
 
 ---
