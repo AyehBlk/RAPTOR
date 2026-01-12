@@ -494,12 +494,13 @@ def auto_detect_samples(input_dir: str,
     
     fastq_files = sorted([str(f) for f in fastq_files])
     
-    # Common R1/R2 patterns
-    r1_patterns = [
-        (r'(.+)_R1[_.]', r'\1_R2'),       # sample_R1.fq -> sample_R2.fq
-        (r'(.+)_1\.', r'\1_2.'),           # sample_1.fq -> sample_2.fq
-        (r'(.+)\.R1\.', r'\1.R2.'),        # sample.R1.fq -> sample.R2.fq
-        (r'(.+)_R1_001\.', r'\1_R2_001.'), # Illumina style
+    # R1 indicators and their R2 replacements
+    r1_to_r2 = [
+        ('_R1_001', '_R2_001'),  # Illumina: sample_R1_001.fastq.gz
+        ('_R1.', '_R2.'),        # Standard: sample_R1.fastq.gz
+        ('_R1_', '_R2_'),        # With suffix: sample_R1_trimmed.fastq.gz
+        ('.R1.', '.R2.'),        # Dot notation: sample.R1.fastq.gz
+        ('_1.', '_2.'),          # Simple: sample_1.fastq.gz
     ]
     
     samples = []
@@ -513,22 +514,16 @@ def auto_detect_samples(input_dir: str,
         filename = os.path.basename(fq)
         found_pair = False
         
-        for r1_pat, r2_replace in r1_patterns:
-            match = re.match(r1_pat, filename)
-            if match:
+        for r1_marker, r2_marker in r1_to_r2:
+            if r1_marker in filename:
                 # This looks like R1, find R2
-                r2_pattern = re.sub(r1_pat, r2_replace, filename)
-                r2_path = os.path.join(os.path.dirname(fq), r2_pattern)
+                r2_filename = filename.replace(r1_marker, r2_marker)
+                r2_path = os.path.join(os.path.dirname(fq), r2_filename)
                 
-                # Handle .gz extension
-                if not os.path.exists(r2_path) and not r2_path.endswith('.gz'):
-                    r2_path += '.gz'
-                if not os.path.exists(r2_path) and r2_path.endswith('.gz'):
-                    r2_path = r2_path[:-3]
-                
-                if os.path.exists(r2_path) and r2_path in fastq_files:
+                if r2_path in fastq_files:
                     # Found pair!
-                    sample_name = match.group(1)
+                    # Extract sample name (remove R1 marker and extension)
+                    sample_name = filename.split(r1_marker)[0]
                     # Clean up sample name
                     sample_name = re.sub(r'[_\-\.]$', '', sample_name)
                     
