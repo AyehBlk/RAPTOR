@@ -1,7 +1,0 @@
-sample_id,condition,batch,fastq_r1,fastq_r2
-Sample1,Control,Batch1,/path/to/data/Sample1_R1.fastq.gz,/path/to/data/Sample1_R2.fastq.gz
-Sample2,Control,Batch1,/path/to/data/Sample2_R1.fastq.gz,/path/to/data/Sample2_R2.fastq.gz
-Sample3,Control,Batch2,/path/to/data/Sample3_R1.fastq.gz,/path/to/data/Sample3_R2.fastq.gz
-Sample4,Treatment,Batch1,/path/to/data/Sample4_R1.fastq.gz,/path/to/data/Sample4_R2.fastq.gz
-Sample5,Treatment,Batch1,/path/to/data/Sample5_R1.fastq.gz,/path/to/data/Sample5_R2.fastq.gz
-Sample6,Treatment,Batch2,/path/to/data/Sample6_R1.fastq.gz,/path/to/data/Sample6_R2.fastq.gz
