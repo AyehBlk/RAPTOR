@@ -27,6 +27,20 @@
 </p>
 
 ---
+## ⚠️ Important Notice - Repository Under Active Development
+
+**🚧 This repository is currently undergoing major refactoring and debugging. Please do not clone or use in production at this time.**
+
+We are implementing a new, cleaner architecture that will be:
+- ✅ More maintainable and easier to understand
+- ✅ Better organized with clear module structure
+- ✅ Fully tested and production-ready
+
+**Expected completion:** End of next week
+
+We appreciate your patience as we work to deliver a high-quality, stable release. Please check back soon!
+
+---
 
 ## 🆕 What's New in v2.1.2
 
