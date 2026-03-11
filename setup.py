@@ -218,7 +218,7 @@ setup(
     # -------------------------------------------------------------------------
     # Basic Information
     # -------------------------------------------------------------------------
-    name="raptor",
+    name="raptor-rnaseq",
     version=VERSION,
     description="RNA-seq Analysis Pipeline Testing and Optimization Resource",
     long_description=long_description,
