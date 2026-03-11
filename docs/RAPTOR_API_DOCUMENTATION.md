@@ -847,7 +847,7 @@ ensemble_result.to_csv('consensus_genes.csv')
 ## API Reference Summary
 
 **Full API documentation for each module available in:**
-- [Module 2 API](docs/MODULE_2_Quality_Assessment.md#api-reference)
+- [Module 2 API](docs/MODULE_2_Quality Assessment & Outlier Detection.md#api-reference)
 - [Module 3 API](docs/MODULE_3_Data_Profiling.md#api-reference)
 - [Module 4 API](docs/MODULE_4_Pipeline_Recommender.md#api-reference)
 - [Module 7 API](docs/MODULE_7_DE_Import.md#api-reference)
