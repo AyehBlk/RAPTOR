@@ -1,5 +1,4 @@
-Optional (Enhancement)
-
+future plan:#
 Add raptor de-analysis command to main CLI
 Add progress bars to Python wrapper
 Add caching for R package checks
