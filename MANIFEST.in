@@ -1,0 +1,154 @@
+# MANIFEST.in for RAPTOR v2.2.0
+# =============================================================================
+# This file tells setuptools which non-Python files to include when building
+# the distribution packages (sdist, wheel).
+# =============================================================================
+
+# =============================================================================
+# Documentation Files (Root Level)
+# =============================================================================
+
+include README.md
+include LICENSE
+include RAPTOR_STRUCTURE.md
+
+# Streamlit configuration
+include .streamlit/config.toml
+
+# =============================================================================
+# Documentation Directory
+# =============================================================================
+
+recursive-include docs *.md
+
+# =============================================================================
+# Example Scripts
+# =============================================================================
+
+recursive-include examples *.py
+recursive-include examples *.md
+
+# =============================================================================
+# Templates
+# =============================================================================
+
+recursive-include templates *.csv
+
+# =============================================================================
+# RAPTOR Package - R Scripts (Module 6)
+# =============================================================================
+
+# R scripts for differential expression
+recursive-include raptor/external_modules/module6_de_analysis/r_scripts *.R
+
+# Module 6 documentation
+recursive-include raptor/external_modules/module6_de_analysis/documentation *.md
+include raptor/external_modules/module6_de_analysis/README.md
+include raptor/external_modules/module6_de_analysis/WORKFLOW_OVERVIEW.md
+include raptor/external_modules/module6_de_analysis/recomendation.txt
+
+# =============================================================================
+# RAPTOR Package - Pipeline Configuration Files (Module 5)
+# =============================================================================
+
+# YAML configuration files for all pipelines
+recursive-include raptor/pipelines *.yaml
+
+# Shell scripts for pipelines
+recursive-include raptor/pipelines *.sh
+
+# Pipeline documentation
+include raptor/pipelines/star_salmon/STAR_SALMON_COMPLETE_SUMMARY.md
+recursive-include raptor/pipelines/quick_kallisto *.md
+recursive-include raptor/pipelines *.md
+
+# =============================================================================
+# RAPTOR Package - Dashboard Assets
+# =============================================================================
+
+# Dashboard HTML and assets
+recursive-include raptor/dashboard/assets *.html
+recursive-include raptor/dashboard/assets *.css
+recursive-include raptor/dashboard/assets *.png
+recursive-include raptor/dashboard/assets *.PNG
+recursive-include raptor/dashboard/assets *.jpg
+recursive-include raptor/dashboard/assets *.jpeg
+
+# =============================================================================
+# Tests (Include for Development Installations)
+# =============================================================================
+
+recursive-include tests *.py
+
+# =============================================================================
+# Exclude Unwanted Files
+# =============================================================================
+
+# Python cache and compiled files
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *$py.class
+
+# Distribution / packaging
+global-exclude .Python
+global-exclude build/
+global-exclude develop-eggs/
+global-exclude dist/
+global-exclude downloads/
+global-exclude eggs/
+global-exclude .eggs/
+global-exclude lib/
+global-exclude lib64/
+global-exclude parts/
+global-exclude sdist/
+global-exclude var/
+global-exclude wheels/
+global-exclude *.egg-info/
+global-exclude *.egg
+
+# IDE and editor files
+global-exclude .idea/
+global-exclude .vscode/
+global-exclude *.swp
+global-exclude *.swo
+global-exclude *~
+global-exclude .DS_Store
+
+# Version control
+global-exclude .git
+global-exclude .gitignore
+global-exclude .gitattributes
+
+# Testing and CI
+global-exclude .pytest_cache/
+global-exclude .coverage
+global-exclude htmlcov/
+global-exclude .tox/
+global-exclude .nox/
+
+# Virtual environments
+global-exclude venv/
+global-exclude env/
+global-exclude ENV/
+global-exclude .venv/
+
+# Other
+global-exclude *.log
+global-exclude .mypy_cache/
+global-exclude .dmypy.json
+global-exclude dmypy.json
+
+# =============================================================================
+# Notes
+# =============================================================================
+
+# This MANIFEST.in ensures that:
+# 1. All R scripts from Module 6 are included
+# 2. All YAML configs and shell scripts from Module 5 pipelines are included
+# 3. Dashboard assets (CSS, images, HTML) are included
+# 4. Documentation and examples are included
+# 5. Templates are included
+# 6. Unwanted cache and temp files are excluded
+#
+# Test with: python setup.py sdist
+# Check contents with: tar -tzf dist/raptor-2.2.0.tar.gz

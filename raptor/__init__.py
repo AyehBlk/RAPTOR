@@ -1,219 +1,617 @@
 """
-RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource
+RAPTOR v2.2.0 - RNA-seq Analysis Pipeline Testing and Optimization Resource
 
-A comprehensive benchmarking framework for RNA-seq differential expression analysis
-pipelines with intelligent, data-driven pipeline recommendations powered by machine learning.
-
-Version 2.1.2 is a hotfix release that fixes Python 3.8-3.11 compatibility
-for the Adaptive Threshold Optimizer (ATO) feature introduced in v2.1.1.
-
-Install from PyPI: pip install raptor-rnaseq
+A comprehensive framework for RNA-seq quality control, analysis,
+and pipeline optimization with ML-based recommendations.
 
 Author: Ayeh Bolouki
-License: MIT
+Email: ayehbolouki1988@gmail.com
+Version: 2.2.0
 """
 
-# Version information
-__version__ = '2.1.2'
-__author__ = 'Ayeh Bolouki'
-__email__ = 'ayeh.bolouki@unamur.be'
-__license__ = 'MIT'
-__url__ = 'https://github.com/AyehBlk/RAPTOR'
+__version__ = "2.2.0"
+__author__ = "Ayeh Bolouki"
+__email__ = "ayehbolouki1988@gmail.com"
 
-# Package metadata
-__all__ = [
-    # Core classes (v2.0.0)
-    'RNAseqDataProfiler',
-    'PipelineRecommender',
-    'PipelineBenchmark',
-    'DataSimulator',
-    'ReportGenerator',
-    # ML classes (v2.1.0)
-    'MLPipelineRecommender',
-    'DataQualityAssessor',
-    'ParameterOptimizer',
-    'AutomatedReportGenerator',
-    # Threshold Optimizer (v2.1.1) - NEW
-    'AdaptiveThresholdOptimizer',
-    'ThresholdResult',
-    'optimize_thresholds',
-    'THRESHOLD_OPTIMIZER_AVAILABLE',
-    # Version info
-    '__version__',
-]
-
-# Import main classes for easy access
-try:
-    # Core v2.0.0 classes
-    from raptor.profiler import RNAseqDataProfiler
-    from raptor.recommender import PipelineRecommender
-    from raptor.benchmark import PipelineBenchmark
-    from raptor.simulate import DataSimulator
-    from raptor.report import ReportGenerator
-    
-    # New v2.1.0 classes
-    from raptor.ml_recommender import MLPipelineRecommender
-    from raptor.data_quality_assessment import DataQualityAssessor
-    from raptor.parameter_optimization import ParameterOptimizer
-    from raptor.automated_reporting import AutomatedReportGenerator
-    
-except ImportError as e:
-    # Handle missing dependencies gracefully during installation
-    import warnings
-    warnings.warn(
-        f"Some RAPTOR components could not be imported: {e}. "
-        "This is normal during installation. If you see this after "
-        "installation, please ensure all dependencies are installed with: "
-        "pip install raptor-rnaseq[all]",
-        ImportWarning
-    )
-
-# ==============================================================================
-# Threshold Optimizer Module (v2.1.1) - NEW
-# ==============================================================================
+# =============================================================================
+# UTILS IMPORTS (Foundation - Always Load First)
+# =============================================================================
 
 try:
-    from raptor.threshold_optimizer import (
-        # Main class
-        AdaptiveThresholdOptimizer,
+    # Validation functions
+    from .utils.validation import (
+        # Basic validation
+        validate_count_matrix,
+        validate_metadata,
+        validate_group_column,
+        validate_file_path,
+        validate_directory_path,
+        validate_numeric_range,
+        validate_positive_integer,
+        validate_probability,
         
-        # Result container
-        ThresholdResult,
+        # Module 8: Parameter optimization validation
+        validate_de_result,
+        validate_ground_truth,
+        validate_fdr_target,
+        validate_bootstrap_iterations,
+        MIN_VALIDATED_GENES_ABSOLUTE,
+        MIN_VALIDATED_GENES_RECOMMENDED,
+        IDEAL_VALIDATED_GENES,
         
-        # Convenience function
-        optimize_thresholds,
-        
-        # Visualization functions
-        plot_optimization_summary,
-        plot_volcano,
-        plot_logfc_distribution,
-        plot_pvalue_distribution,
-        plot_threshold_comparison,
-        plot_adjustment_comparison
+        # Module 9: Ensemble analysis validation
+        validate_de_results_dict,
+        validate_ensemble_method,
+        validate_significance_threshold,
+        validate_direction_threshold,
+        validate_weights_dict,
+        validate_min_methods,
+        validate_filters_dict,
+        MIN_METHODS_ENSEMBLE,
+        RECOMMENDED_METHODS_ENSEMBLE,
+        IDEAL_METHODS_ENSEMBLE,
     )
-    THRESHOLD_OPTIMIZER_AVAILABLE = True
+
+    # Error classes and handlers
+    from .utils.errors import (
+        RAPTORError,
+        ValidationError,
+        DependencyError,
+        PipelineError,
+        
+        # Module 8 errors
+        OptimizationError,
+        GroundTruthError,
+        InsufficientDataError,
+        
+        # Module 9 errors
+        EnsembleError,
+        MethodMismatchError,
+        DirectionInconsistencyError,
+        CombinationFailedError,
+        
+        # Error handlers
+        handle_errors,
+        check_file_exists,
+        validate_output_writable,
+    )
+    
+    _UTILS_AVAILABLE = True
+
 except ImportError as e:
     import warnings
-    warnings.warn(
-        f"Threshold Optimizer module not available: {e}. "
-        "Some features may be limited.",
-        ImportWarning
-    )
-    THRESHOLD_OPTIMIZER_AVAILABLE = False
+    warnings.warn(f"Failed to import utils: {e}. Core functionality may be impaired.")
+    _UTILS_AVAILABLE = False
     
-    # Create placeholder classes for graceful degradation
-    AdaptiveThresholdOptimizer = None
-    ThresholdResult = None
-    optimize_thresholds = None
+    # Create dummy placeholders
+    class ValidationError(Exception):
+        pass
+    class RAPTORError(Exception):
+        pass
 
-# ==============================================================================
-# Package-level configuration
-# ==============================================================================
+# =============================================================================
+# CORE MODULE IMPORTS (Always Available)
+# =============================================================================
 
-import logging
-
-# Set up logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+# Simulation Module
+from .simulation import (
+    SimulationConfig,
+    SimulationResult,
+    RNAseqSimulator,
+    simulate_rnaseq,
+    simulate_diverse_datasets,
+    simulate_small_sample_high_dispersion,
+    simulate_large_sample_low_dispersion,
+    simulate_medium_balanced,
+    simulate_with_outliers,
 )
 
-# Create package logger
-logger = logging.getLogger(__name__)
+# Module 3: Data Profiler
+from .profiler import (
+    DataProfile,
+    RNAseqDataProfiler,
+    profile_data_quick,
+)
 
-# Welcome message (only shown once per session)
-_WELCOME_SHOWN = False
+# Module 2: Quality Assessment
+from .quality_assessment import (
+    DataQualityAssessor,
+    QualityReport,
+    quick_quality_check,
+)
 
-def _show_welcome():
-    """Display welcome message on first import."""
-    print("""
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║                     🦖 RAPTOR v2.1.2                             ║
-    ║   RNA-seq Analysis Pipeline Testing & Optimization Resource      ║
-    ║                                                                  ║
-    ║          🤖 ML-POWERED RECOMMENDATIONS                           ║
-    ║          📊 ADVANCED QUALITY ASSESSMENT                          ║
-    ║          🎯 ADAPTIVE THRESHOLD OPTIMIZER (NEW!)                  ║
-    ║          📄 AUTOMATED REPORTING                                  ║
-    ║                                                                  ║
-    ║              Created by Ayeh Bolouki                             ║
-    ║             University of Liège, Belgium                         ║
-    ║                                                                  ║
-    ╚══════════════════════════════════════════════════════════════════╝
+# Module 4: Pipeline Recommender (Rule-based)
+from .recommender import (
+    PipelineRecommender,
+    Recommendation,
+    recommend_pipeline,
+)
+
+# Module 4: ML-Based Recommender
+from .ml_recommender import (
+    MLRecommender,
+    TrainingConfig,
+    MLRecommendation,
+    train_recommender,
+    load_recommender,
+)
+
+# Synthetic Benchmarks
+from .synthetic_benchmarks import (
+    SyntheticBenchmarkGenerator,
+    generate_training_data,
+)
+
+# =============================================================================
+# OPTIONAL MODULE IMPORTS (May Not Be Available)
+# =============================================================================
+
+# Module 5: Pipeline Base Classes
+try:
+    from .pipelines import (
+        get_pipeline,
+        list_pipelines,
+        BasePipeline,
+    )
+    _PIPELINES_AVAILABLE = True
+except ImportError:
+    get_pipeline = None
+    list_pipelines = None
+    BasePipeline = None
+    _PIPELINES_AVAILABLE = False
+
+# Module 7: DE Import
+try:
+    from .de_import import (
+        DEResult,
+        DEImporter,
+        import_deseq2,
+        import_edger,
+        import_limma,
+        import_wilcoxon,
+        import_de_result,
+        compare_de_results,
+        merge_de_results,
+    )
+    _DE_IMPORT_AVAILABLE = True
+except ImportError:
+    DEResult = None
+    DEImporter = None
+    import_deseq2 = None
+    import_edger = None
+    import_limma = None
+    import_wilcoxon = None
+    import_de_result = None
+    compare_de_results = None
+    merge_de_results = None
+    _DE_IMPORT_AVAILABLE = False
+
+# Module 8: Parameter Optimization
+try:
+    from .parameter_optimization import (
+        # Core classes
+        ParameterSpace,
+        OptimizationResult,
+        ParameterOptimizer,
+        
+        # Optimizer classes (4 methods)
+        GroundTruthOptimizer,
+        FDRControlOptimizer,
+        StabilityOptimizer,
+        ReproducibilityOptimizer,
+        
+        # Convenience functions (4 methods)
+        optimize_with_ground_truth,
+        optimize_with_fdr_control,
+        optimize_with_stability,
+        optimize_with_reproducibility,
+    )
+    _PARAM_OPTIMIZATION_AVAILABLE = True
+except ImportError:
+    ParameterSpace = None
+    OptimizationResult = None
+    ParameterOptimizer = None
+    GroundTruthOptimizer = None
+    FDRControlOptimizer = None
+    StabilityOptimizer = None
+    ReproducibilityOptimizer = None
+    optimize_with_ground_truth = None
+    optimize_with_fdr_control = None
+    optimize_with_stability = None
+    optimize_with_reproducibility = None
+    _PARAM_OPTIMIZATION_AVAILABLE = False
+
+# Module 9: Ensemble Analysis
+try:
+    from .ensemble import (
+        # Result class
+        EnsembleResult,
+        
+        # Main ensemble functions (5 methods)
+        ensemble_fisher,
+        ensemble_brown,
+        ensemble_rra,
+        ensemble_voting,
+        ensemble_weighted,
+        
+        # Unified functions
+        ensemble_pvalue_combination,
+        
+        # Lower-level functions
+        fishers_method,
+        browns_method,
+        robust_rank_aggregation,
+        check_direction_consistency,
+        get_consensus_direction,
+        calculate_direction_consistency_table,
+        combine_pvalues_across_methods,
+        calculate_meta_lfc,
+    )
+    _ENSEMBLE_AVAILABLE = True
+except ImportError:
+    EnsembleResult = None
+    ensemble_fisher = None
+    ensemble_brown = None
+    ensemble_rra = None
+    ensemble_voting = None
+    ensemble_weighted = None
+    ensemble_pvalue_combination = None
+    fishers_method = None
+    browns_method = None
+    robust_rank_aggregation = None
+    check_direction_consistency = None
+    get_consensus_direction = None
+    calculate_direction_consistency_table = None
+    combine_pvalues_across_methods = None
+    calculate_meta_lfc = None
+    _ENSEMBLE_AVAILABLE = False
+
+# =============================================================================
+# PUBLIC API (__all__)
+# =============================================================================
+
+__all__ = [
+    # Version info
+    '__version__',
+    '__author__',
+    '__email__',
     
-    What's New in v2.1.2:
-    • 🎯 Adaptive Threshold Optimizer (ATO) for DE analysis
-      - Data-driven logFC and padj threshold selection
-      - Multiple p-value adjustment methods (BH, BY, q-value, Holm...)
-      - π₀ estimation for true null proportion
-      - Interactive dashboard integration
+    # =============================================================================
+    # UTILS (Validation & Error Handling)
+    # =============================================================================
     
-    Quick Start:
-    • pip install raptor-rnaseq                        # Install from PyPI
-    • raptor profile --counts data.csv --use-ml       # Get ML recommendation
-    • python launch_dashboard.py                       # Launch web dashboard
-    • raptor --help                                    # See all commands
+    # Basic validation functions
+    'validate_count_matrix',
+    'validate_metadata',
+    'validate_group_column',
+    'validate_file_path',
+    'validate_directory_path',
+    'validate_numeric_range',
+    'validate_positive_integer',
+    'validate_probability',
     
-    Threshold Optimizer:
-    • from raptor import optimize_thresholds
-    • result = optimize_thresholds(de_results, goal='discovery')
-    • print(result.summary())
+    # Module 8: Parameter optimization validation
+    'validate_de_result',
+    'validate_ground_truth',
+    'validate_fdr_target',
+    'validate_bootstrap_iterations',
+    'MIN_VALIDATED_GENES_ABSOLUTE',
+    'MIN_VALIDATED_GENES_RECOMMENDED',
+    'IDEAL_VALIDATED_GENES',
     
-    PyPI: https://pypi.org/project/raptor-rnaseq/
-    GitHub: https://github.com/AyehBlk/RAPTOR
-    Making free science for everybody around the world 🌍
-    """)
+    # Module 9: Ensemble analysis validation
+    'validate_de_results_dict',
+    'validate_ensemble_method',
+    'validate_significance_threshold',
+    'validate_direction_threshold',
+    'validate_weights_dict',
+    'validate_min_methods',
+    'validate_filters_dict',
+    'MIN_METHODS_ENSEMBLE',
+    'RECOMMENDED_METHODS_ENSEMBLE',
+    'IDEAL_METHODS_ENSEMBLE',
+    
+    # Error classes
+    'RAPTORError',
+    'ValidationError',
+    'DependencyError',
+    'PipelineError',
+    'OptimizationError',
+    'GroundTruthError',
+    'InsufficientDataError',
+    'EnsembleError',
+    'MethodMismatchError',
+    'DirectionInconsistencyError',
+    'CombinationFailedError',
+    
+    # Error handlers
+    'handle_errors',
+    'check_file_exists',
+    'validate_output_writable',
+    
+    # =============================================================================
+    # CORE MODULES (Always Available)
+    # =============================================================================
+    
+    # Simulation
+    'SimulationConfig',
+    'SimulationResult',
+    'RNAseqSimulator',
+    'simulate_rnaseq',
+    'simulate_diverse_datasets',
+    'simulate_small_sample_high_dispersion',
+    'simulate_large_sample_low_dispersion',
+    'simulate_medium_balanced',
+    'simulate_with_outliers',
+    
+    # Module 3: Data Profiler
+    'DataProfile',
+    'RNAseqDataProfiler',
+    'profile_data_quick',
+    
+    # Module 2: Quality Assessment
+    'DataQualityAssessor',
+    'QualityReport',
+    'quick_quality_check',
+    
+    # Module 4: Recommender (Rule-based)
+    'PipelineRecommender',
+    'Recommendation',
+    'recommend_pipeline',
+    
+    # Module 4: ML Recommender
+    'MLRecommender',
+    'TrainingConfig',
+    'MLRecommendation',
+    'train_recommender',
+    'load_recommender',
+    
+    # Synthetic Benchmarks
+    'SyntheticBenchmarkGenerator',
+    'generate_training_data',
+    
+    # =============================================================================
+    # OPTIONAL MODULES (May Not Be Available)
+    # =============================================================================
+    
+    # Module 5: Pipelines
+    'get_pipeline',
+    'list_pipelines',
+    'BasePipeline',
+    
+    # Module 7: DE Import
+    'DEResult',
+    'DEImporter',
+    'import_deseq2',
+    'import_edger',
+    'import_limma',
+    'import_wilcoxon',
+    'import_de_result',
+    'compare_de_results',
+    'merge_de_results',
+    
+    # Module 8: Parameter Optimization
+    'ParameterSpace',
+    'OptimizationResult',
+    'ParameterOptimizer',
+    'GroundTruthOptimizer',
+    'FDRControlOptimizer',
+    'StabilityOptimizer',
+    'ReproducibilityOptimizer',
+    'optimize_with_ground_truth',
+    'optimize_with_fdr_control',
+    'optimize_with_stability',
+    'optimize_with_reproducibility',
+    
+    # Module 9: Ensemble Analysis
+    'EnsembleResult',
+    'ensemble_fisher',
+    'ensemble_brown',
+    'ensemble_rra',
+    'ensemble_voting',
+    'ensemble_weighted',
+    'ensemble_pvalue_combination',
+    'fishers_method',
+    'browns_method',
+    'robust_rank_aggregation',
+    'check_direction_consistency',
+    'get_consensus_direction',
+    'calculate_direction_consistency_table',
+    'combine_pvalues_across_methods',
+    'calculate_meta_lfc',
+]
 
-# Show welcome message
-if not _WELCOME_SHOWN:
-    try:
-        _show_welcome()
-        _WELCOME_SHOWN = True
-    except:
-        pass  # Suppress errors in non-interactive environments
-
-
-# ==============================================================================
-# Convenience functions
-# ==============================================================================
+# =============================================================================
+# PACKAGE INFORMATION FUNCTIONS
+# =============================================================================
 
 def get_version():
-    """Return the current RAPTOR version."""
+    """Get RAPTOR version string."""
     return __version__
 
 
-def check_installation():
-    """Check which RAPTOR components are available."""
-    components = {
-        'core': True,
-        'ml_recommender': False,
-        'threshold_optimizer': THRESHOLD_OPTIMIZER_AVAILABLE,
-        'dashboard': False,
+def get_info():
+    """
+    Get package information.
+    
+    Returns
+    -------
+    dict
+        Package metadata
+    """
+    return {
+        'name': 'RAPTOR',
+        'version': __version__,
+        'author': __author__,
+        'email': __email__,
+        'description': 'RNA-seq Analysis Pipeline Testing and Optimization Resource',
+        'url': 'https://github.com/AyehBlk/RAPTOR',
+    }
+
+
+def get_available_modules():
+    """
+    Get list of available modules.
+    
+    Returns
+    -------
+    dict
+        Module availability status
+    """
+    modules = {
+        'utils': _UTILS_AVAILABLE,
+        'simulation': True,
+        'profiler': True,  # Module 3
+        'quality_assessment': True,  # Module 2
+        'recommender': True,  # Module 4 (rule-based)
+        'ml_recommender': True,  # Module 4 (ML)
+        'synthetic_benchmarks': True,
+        'pipelines': _PIPELINES_AVAILABLE,  # Module 5
+        'de_import': _DE_IMPORT_AVAILABLE,  # Module 7
+        'parameter_optimization': _PARAM_OPTIMIZATION_AVAILABLE,  # Module 8
+        'ensemble': _ENSEMBLE_AVAILABLE,  # Module 9
+    }
+    return modules
+
+
+def validate_installation():
+    """
+    Comprehensive installation validation.
+    
+    Checks:
+    1. All __all__ exports exist
+    2. All modules are importable
+    3. Dependencies are available
+    
+    Returns
+    -------
+    dict
+        Validation report with keys:
+        - version: RAPTOR version
+        - exports_valid: bool, whether all exports exist
+        - modules_available: dict of module availability
+        - missing_exports: list of missing items from __all__
+        - issues: list of detected issues
+    
+    Examples
+    --------
+    >>> import raptor
+    >>> report = raptor.validate_installation()
+    >>> if report['exports_valid']:
+    ...     print("✅ Installation valid")
+    ... else:
+    ...     print(f"❌ Missing exports: {report['missing_exports']}")
+    """
+    import sys
+    
+    report = {
+        'version': __version__,
+        'exports_valid': False,
+        'modules_available': {},
+        'missing_exports': [],
+        'issues': []
     }
     
-    try:
-        from raptor.ml_recommender import MLPipelineRecommender
-        components['ml_recommender'] = True
-    except ImportError:
-        pass
+    # Check exports
+    current_module = sys.modules[__name__]
     
-    try:
-        import streamlit
-        components['dashboard'] = True
-    except ImportError:
-        pass
+    missing_exports = []
+    for name in __all__:
+        if not hasattr(current_module, name):
+            missing_exports.append(name)
     
-    return components
+    report['exports_valid'] = len(missing_exports) == 0
+    report['missing_exports'] = missing_exports
+    
+    if missing_exports:
+        report['issues'].append(
+            f"{len(missing_exports)} exports in __all__ don't exist: {', '.join(missing_exports[:5])}"
+            f"{'...' if len(missing_exports) > 5 else ''}"
+        )
+    
+    # Check modules
+    modules = get_available_modules()
+    report['modules_available'] = modules
+    
+    unavailable = [k for k, v in modules.items() if not v]
+    if unavailable:
+        report['issues'].append(
+            f"{len(unavailable)} modules unavailable: {', '.join(unavailable)}"
+        )
+    
+    return report
 
 
-def print_status():
-    """Print installation status."""
-    components = check_installation()
-    print("\n🦖 RAPTOR Installation Status:")
-    print("=" * 40)
-    for name, available in components.items():
-        status = "✅" if available else "❌"
-        print(f"  {status} {name}")
-    print("=" * 40)
-    print(f"  Version: {__version__}")
-    print()
+# =============================================================================
+# INTERNAL VALIDATION (Development Mode)
+# =============================================================================
+
+def _validate_exports():
+    """
+    Validate that all items in __all__ actually exist.
+    
+    This catches typos, missing imports, or import failures.
+    Run during development with: RAPTOR_VALIDATE_EXPORTS=true
+    
+    Returns
+    -------
+    bool
+        True if all exports exist, False otherwise
+    """
+    import sys
+    current_module = sys.modules[__name__]
+    
+    missing = []
+    for name in __all__:
+        if not hasattr(current_module, name):
+            missing.append(name)
+    
+    if missing:
+        import warnings
+        warnings.warn(
+            f"❌ __all__ contains {len(missing)} non-existent exports:\n"
+            f"   {', '.join(missing[:10])}\n"
+            f"   {'...' if len(missing) > 10 else ''}\n"
+            f"   This indicates import errors or typos in __init__.py"
+        )
+        return False
+    
+    return True
+
+
+# =============================================================================
+# LOGGING SETUP
+# =============================================================================
+
+import logging
+import os
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+# Run validation in development mode
+if os.environ.get('RAPTOR_VALIDATE_EXPORTS', 'false').lower() == 'true':
+    if _validate_exports():
+        logger.info("✅ All exports validated successfully")
+    else:
+        logger.warning("⚠️  Export validation failed - see warnings above")
+
+# Log version on import
+logger.info(f"RAPTOR v{__version__} loaded successfully")
+
+# Log available modules
+modules = get_available_modules()
+available = [k for k, v in modules.items() if v]
+unavailable = [k for k, v in modules.items() if not v]
+
+logger.debug(f"Available modules: {', '.join(available)}")
+if unavailable:
+    logger.debug(f"Unavailable modules: {', '.join(unavailable)}")
+
+# Add helper functions to __all__
+__all__.extend([
+    'get_version',
+    'get_info',
+    'get_available_modules',
+    'validate_installation',
+])

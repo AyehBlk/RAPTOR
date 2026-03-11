@@ -1,529 +1,1088 @@
+#!/usr/bin/env python3
 """
-Pipeline Recommender
+RAPTOR v2.2.0 Pipeline Recommender Module
 
-Intelligent recommendation system that matches RNA-seq data characteristics
-to optimal analysis pipelines. Uses scoring system to evaluate pipeline
-suitability based on data profile.
+ML-based pipeline recommendation system for RNA-seq differential expression.
+
+This module recommends the optimal DE pipeline based on data characteristics
+extracted by the profiler. Recommendations are based on extensive benchmarking
+literature and empirical evidence.
+
+============================================================================
+DECISION FRAMEWORK (Literature-Based)
+============================================================================
+
+The recommendation system uses a hierarchical decision tree based on:
+
+1. SAMPLE SIZE (Most Critical)
+   - n < 3 per group: Limited options, DESeq2 preferred (conservative)
+   - n = 3-7 per group: DESeq2 or edgeR (both appropriate)
+   - n ≥ 8 per group: All methods work; Wilcoxon may have better FDR control
+   - n > 20 per group: limma-voom recommended for efficiency
+
+2. DISPERSION / BCV
+   - Low BCV (<0.2): limma-voom works well
+   - Moderate BCV (0.2-0.4): DESeq2 or edgeR
+   - High BCV (>0.4): edgeR (handles overdispersion better)
+
+3. OUTLIERS
+   - Outliers + small samples: edgeR_robust
+   - Outliers + large samples: limma-voom (robust)
+   - No outliers: Standard methods
+
+4. LOW COUNT GENES
+   - Many low counts (>30%): edgeR preferred
+   - Few low counts: All methods appropriate
+
+5. DESIGN COMPLEXITY
+   - Simple (2 groups): Any method
+   - Complex (multiple factors): limma-voom preferred
+
+============================================================================
+PIPELINE CHARACTERISTICS
+============================================================================
+
+DESeq2:
+- Best for: Small samples, batch effects, general use
+- Statistical model: Negative binomial with shrinkage estimation
+- Normalization: Median-of-ratios (RLE)
+- Strengths: Conservative, handles batch effects, good documentation
+- Weaknesses: Slower for very large datasets
+
+edgeR:
+- Best for: Low counts, overdispersed data, small samples
+- Statistical model: Negative binomial with empirical Bayes
+- Normalization: TMM (Trimmed Mean of M-values)
+- Strengths: Fast, handles low counts well, robust mode available
+- Weaknesses: Can be anti-conservative for some datasets
+
+limma-voom:
+- Best for: Large samples, complex designs, speed
+- Statistical model: Linear model with precision weights
+- Normalization: TMM + log-CPM transformation
+- Strengths: Very fast, robust, handles complex designs
+- Weaknesses: Needs sufficient replication (≥3 per group)
+
+Wilcoxon (TMM + rank test):
+- Best for: Very large samples (n ≥ 8 per group), FDR control
+- Statistical model: Non-parametric
+- Normalization: TMM
+- Strengths: Best FDR control for large samples (Li et al. 2022)
+- Weaknesses: Lower power for small samples, no covariate adjustment
+
+============================================================================
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
+Version: 2.2.0
 """
 
 import numpy as np
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple, Any
+from dataclasses import dataclass, field
+import json
+
+# RAPTOR v2.2.0 imports
+from raptor.profiler import DataProfile, RNAseqDataProfiler
+
 import logging
+
+from raptor.utils.validation import (
+    validate_count_matrix,
+    validate_metadata,
+    validate_group_column,
+    validate_file_path,
+    validate_directory_path,
+    validate_numeric_range,
+    validate_positive_integer,
+    validate_probability
+)
+
+from raptor.utils.errors import (
+    handle_errors,
+    ValidationError,
+    DependencyError,
+    check_file_exists,
+    validate_output_writable
+)
 
 logger = logging.getLogger(__name__)
 
 
-# Pipeline definitions with characteristics
-PIPELINES = {
-    1: {
-        'name': 'STAR-RSEM-DESeq2',
-        'description': 'Gold standard for accuracy',
-        'alignment': 'STAR',
-        'quantification': 'RSEM',
-        'statistics': 'DESeq2',
-        'speed': 'slow',
-        'memory': 'high',
-        'accuracy': 'highest',
-        'strengths': [
-            'Highest accuracy',
-            'Excellent normalization',
-            'Handles high variation well',
-            'Good for low replication'
-        ],
-        'best_for': 'Publication-quality results, difficult data'
+# =============================================================================
+# CLI PARAMETERS & MODULE METADATA - v2.2.0
+# =============================================================================
+
+RECOMMENDER_CLI_PARAMS = {
+    'counts': {
+        'flag': '--counts',
+        'short': '-c',
+        'required': True,
+        'type': 'file',
+        'help': 'Count matrix CSV file (genes x samples)',
+        'validation': 'Must be CSV with gene IDs as rows, sample IDs as columns'
     },
-    2: {
-        'name': 'HISAT2-StringTie-Ballgown',
-        'description': 'Novel transcript discovery',
-        'alignment': 'HISAT2',
-        'quantification': 'StringTie',
-        'statistics': 'Ballgown',
-        'speed': 'medium',
-        'memory': 'medium',
-        'accuracy': 'medium',
-        'strengths': [
-            'Novel transcript discovery',
-            'Isoform-level analysis',
-            'Good for non-model organisms'
-        ],
-        'best_for': 'Transcriptome assembly, isoform analysis'
+    'metadata': {
+        'flag': '--metadata',
+        'short': '-m',
+        'type': 'file',
+        'help': 'Sample metadata CSV (optional, enables group-aware recommendations)',
+        'validation': 'Must contain group/condition column'
     },
-    3: {
-        'name': 'Salmon-edgeR',
-        'description': 'Best balance',
-        'alignment': 'Salmon (pseudo)',
-        'quantification': 'Salmon',
-        'statistics': 'edgeR',
-        'speed': 'fast',
-        'memory': 'low',
-        'accuracy': 'high',
-        'strengths': [
-            'Excellent balance',
-            '3-5× faster than alignment',
-            'Low memory usage',
-            'Good accuracy'
-        ],
-        'best_for': 'Most RNA-seq experiments'
+    'group_column': {
+        'flag': '--group-column',
+        'short': '-g',
+        'default': 'condition',
+        'type': 'str',
+        'help': 'Column name for grouping samples (default: condition)'
     },
-    4: {
-        'name': 'Kallisto-Sleuth',
-        'description': 'Ultra-fast',
-        'alignment': 'Kallisto (pseudo)',
-        'quantification': 'Kallisto',
-        'statistics': 'Sleuth',
-        'speed': 'fastest',
-        'memory': 'lowest',
-        'accuracy': 'good',
-        'strengths': [
-            'Fastest option',
-            'Minimal memory',
-            'Good for exploration',
-            'Handles large cohorts'
-        ],
-        'best_for': 'Large datasets, exploratory analysis'
+    'profile_file': {
+        'flag': '--profile',
+        'short': '-p',
+        'type': 'file',
+        'help': 'Pre-computed data profile JSON (alternative to counts/metadata)',
+        'validation': 'Must be valid profile JSON from profiler module'
     },
-    5: {
-        'name': 'STAR-HTSeq-limma-voom',
-        'description': 'Flexible modeling',
-        'alignment': 'STAR',
-        'quantification': 'HTSeq',
-        'statistics': 'limma-voom',
-        'speed': 'medium',
-        'memory': 'high',
-        'accuracy': 'high',
-        'strengths': [
-            'Flexible statistical modeling',
-            'Excellent for complex designs',
-            'Good batch correction'
-        ],
-        'best_for': 'Complex experimental designs'
+    'output': {
+        'flag': '--output',
+        'short': '-o',
+        'default': 'recommendation.json',
+        'type': 'file',
+        'help': 'Output recommendation JSON file'
     },
-    6: {
-        'name': 'STAR-featureCounts-NOISeq',
-        'description': 'Non-parametric',
-        'alignment': 'STAR',
-        'quantification': 'featureCounts',
-        'statistics': 'NOISeq',
-        'speed': 'slow',
-        'memory': 'high',
-        'accuracy': 'medium',
-        'strengths': [
-            'No distribution assumptions',
-            'Robust to outliers'
-        ],
-        'best_for': 'Data not fitting standard distributions'
-    },
-    7: {
-        'name': 'Bowtie2-RSEM-EBSeq',
-        'description': 'Bayesian approach',
-        'alignment': 'Bowtie2',
-        'quantification': 'RSEM',
-        'statistics': 'EBSeq',
-        'speed': 'very_slow',
-        'memory': 'high',
-        'accuracy': 'medium',
-        'strengths': [
-            'Bayesian framework',
-            'Handles isoform uncertainty'
-        ],
-        'best_for': 'Isoform switching analysis'
-    },
-    8: {
-        'name': 'HISAT2-Cufflinks-Cuffdiff',
-        'description': 'Legacy comparison',
-        'alignment': 'HISAT2',
-        'quantification': 'Cufflinks',
-        'statistics': 'Cuffdiff',
-        'speed': 'slow',
-        'memory': 'medium',
-        'accuracy': 'low',
-        'strengths': [
-            'Historical reference',
-            'Widely published'
-        ],
-        'best_for': 'Comparison with legacy studies'
+    'verbose': {
+        'flag': '--verbose',
+        'short': '-v',
+        'action': 'store_true',
+        'help': 'Print detailed recommendation reasoning'
     }
 }
 
+# Module metadata
+MODULE_NAME = "Pipeline Recommender"
+MODULE_VERSION = "2.2.0"
+MODULE_ID = "M4"
+MODULE_STAGE = 4
+
+__all__ = [
+    # Main class
+    'PipelineRecommender',
+    
+    # Data class
+    'Recommendation',
+    
+    # Convenience function
+    'recommend_pipeline',
+    
+    # CLI integration
+    'RECOMMENDER_CLI_PARAMS',
+    'MODULE_NAME',
+    'MODULE_VERSION',
+    'MODULE_ID',
+    'MODULE_STAGE'
+]
+
+
+# =============================================================================
+# DATA CLASSES
+# =============================================================================
+
+@dataclass
+class PipelineInfo:
+    """Information about a DE pipeline."""
+    name: str
+    full_name: str
+    description: str
+    model: str
+    normalization: str
+    strengths: List[str]
+    weaknesses: List[str]
+    min_replicates: int
+    best_for: List[str]
+    r_packages: List[str]
+    reference: str
+
+
+@dataclass
+class Recommendation:
+    """Pipeline recommendation with explanation."""
+    
+    # Primary recommendation
+    primary_pipeline: str
+    primary_score: float  # 0-100 confidence
+    primary_reason: str
+    
+    # Alternative recommendation
+    alternative_pipeline: str
+    alternative_score: float
+    alternative_reason: str
+    
+    # Third option if applicable
+    third_option: Optional[str] = None
+    third_score: Optional[float] = None
+    
+    # Decision factors
+    decision_factors: Dict[str, Any] = field(default_factory=dict)
+    
+    # Warnings
+    warnings: List[str] = field(default_factory=list)
+    
+    # R code snippets
+    r_code_primary: str = ""
+    r_code_alternative: str = ""
+    
+    # Full ranking of all pipelines
+    all_scores: Dict[str, float] = field(default_factory=dict)
+    
+    def summary(self) -> str:
+        """Generate human-readable recommendation summary."""
+        lines = [
+            "",
+            "╔" + "═" * 68 + "╗",
+            "║" + "  🦖 RAPTOR PIPELINE RECOMMENDATION".center(68) + "║",
+            "╠" + "═" * 68 + "╣",
+            "",
+            f"  🥇 PRIMARY RECOMMENDATION: {self.primary_pipeline}",
+            f"     Confidence: {self.primary_score:.0f}%",
+            f"     Reason: {self.primary_reason}",
+            "",
+            f"  🥈 ALTERNATIVE: {self.alternative_pipeline}",
+            f"     Confidence: {self.alternative_score:.0f}%",
+            f"     Reason: {self.alternative_reason}",
+        ]
+        
+        if self.third_option:
+            lines.extend([
+                "",
+                f"  🥉 THIRD OPTION: {self.third_option}",
+                f"     Confidence: {self.third_score:.0f}%"
+            ])
+        
+        if self.warnings:
+            lines.extend([
+                "",
+                "  ⚠️  WARNINGS:",
+            ])
+            for w in self.warnings:
+                lines.append(f"     • {w}")
+        
+        lines.extend([
+            "",
+            "  📊 DECISION FACTORS:",
+        ])
+        for factor, value in self.decision_factors.items():
+            if isinstance(value, float):
+                lines.append(f"     {factor}: {value:.3f}")
+            else:
+                lines.append(f"     {factor}: {value}")
+        
+        lines.extend([
+            "",
+            "╚" + "═" * 68 + "╝",
+            ""
+        ])
+        
+        return "\n".join(lines)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            'primary_pipeline': self.primary_pipeline,
+            'primary_score': self.primary_score,
+            'primary_reason': self.primary_reason,
+            'alternative_pipeline': self.alternative_pipeline,
+            'alternative_score': self.alternative_score,
+            'alternative_reason': self.alternative_reason,
+            'third_option': self.third_option,
+            'third_score': self.third_score,
+            'decision_factors': self.decision_factors,
+            'warnings': self.warnings,
+            'all_scores': self.all_scores
+        }
+
+
+# =============================================================================
+# PIPELINE DEFINITIONS
+# =============================================================================
+
+PIPELINES = {
+    'DESeq2': PipelineInfo(
+        name='DESeq2',
+        full_name='DESeq2 (Differential Expression analysis for Sequence count data 2)',
+        description='Negative binomial GLM with shrinkage estimation for dispersion and fold changes',
+        model='Negative Binomial with shrinkage',
+        normalization='Median-of-ratios (RLE)',
+        strengths=[
+            'Conservative - good FDR control',
+            'Handles batch effects well',
+            'Automatic outlier detection (Cook\'s distance)',
+            'Shrinkage of fold changes reduces noise',
+            'Excellent documentation and support'
+        ],
+        weaknesses=[
+            'Can be slow for very large datasets',
+            'May be too conservative for some applications',
+            'Requires ≥2 replicates per condition'
+        ],
+        min_replicates=2,
+        best_for=[
+            'Small sample sizes (3-10 per group)',
+            'Studies with batch effects',
+            'General-purpose RNA-seq analysis',
+            'When reliability is more important than power'
+        ],
+        r_packages=['DESeq2'],
+        reference='Love et al. (2014) Genome Biology 15:550'
+    ),
+    
+    'edgeR': PipelineInfo(
+        name='edgeR',
+        full_name='edgeR (empirical analysis of DGE in R)',
+        description='Negative binomial GLM with empirical Bayes moderation of dispersion',
+        model='Negative Binomial with tagwise dispersion',
+        normalization='TMM (Trimmed Mean of M-values)',
+        strengths=[
+            'Fast computation',
+            'Handles low counts well',
+            'Good for overdispersed data',
+            'Robust mode available (edgeR_robust)',
+            'Flexible GLM framework'
+        ],
+        weaknesses=[
+            'Can be anti-conservative in some cases',
+            'May have inflated FDR for large samples'
+        ],
+        min_replicates=2,
+        best_for=[
+            'Datasets with many low-count genes',
+            'Highly overdispersed data',
+            'When outliers are a concern (use robust)',
+            'Fast exploratory analysis'
+        ],
+        r_packages=['edgeR'],
+        reference='Robinson et al. (2010) Bioinformatics 26:139-140'
+    ),
+    
+    'limma-voom': PipelineInfo(
+        name='limma-voom',
+        full_name='limma with voom transformation',
+        description='Linear model with precision weights estimated from mean-variance trend',
+        model='Linear model with empirical Bayes',
+        normalization='TMM + log-CPM transformation',
+        strengths=[
+            'Very fast',
+            'Excellent for large datasets',
+            'Handles complex designs well',
+            'Robust to outliers in large samples',
+            'Well-established methodology'
+        ],
+        weaknesses=[
+            'Needs sufficient replication (≥3 per group)',
+            'Sensitive to outliers in small samples',
+            'Assumes approximate normality after transformation'
+        ],
+        min_replicates=3,
+        best_for=[
+            'Large sample sizes (>20 per group)',
+            'Complex experimental designs',
+            'Multi-factor experiments',
+            'When speed is important'
+        ],
+        r_packages=['limma', 'edgeR'],
+        reference='Law et al. (2014) Genome Biology 15:R29'
+    ),
+    
+    'Wilcoxon': PipelineInfo(
+        name='Wilcoxon',
+        full_name='Wilcoxon rank-sum test with TMM normalization',
+        description='Non-parametric rank-based test after TMM normalization',
+        model='Non-parametric (rank-based)',
+        normalization='TMM',
+        strengths=[
+            'Best FDR control for large samples',
+            'No distributional assumptions',
+            'Robust to outliers',
+            'Simple and interpretable'
+        ],
+        weaknesses=[
+            'Lower power for small samples (<8 per group)',
+            'Cannot adjust for covariates',
+            'Requires large sample sizes'
+        ],
+        min_replicates=8,
+        best_for=[
+            'Large sample sizes (≥8 per group)',
+            'Population-level studies',
+            'When FDR control is critical',
+            'Validation of parametric results'
+        ],
+        r_packages=['edgeR', 'stats'],
+        reference='Li et al. (2022) Genome Biology 23:79'
+    ),
+    
+    'edgeR_robust': PipelineInfo(
+        name='edgeR_robust',
+        full_name='edgeR with robust dispersion estimation',
+        description='edgeR with observation weights to downweight outliers',
+        model='Negative Binomial with robust estimation',
+        normalization='TMM',
+        strengths=[
+            'Handles outliers well',
+            'Maintains power while controlling FDR',
+            'Better for heterogeneous datasets'
+        ],
+        weaknesses=[
+            'Slightly more conservative than standard edgeR',
+            'Requires edgeR version ≥ 3.8'
+        ],
+        min_replicates=2,
+        best_for=[
+            'Datasets with known outliers',
+            'Small samples with suspected outliers',
+            'Heterogeneous experimental conditions'
+        ],
+        r_packages=['edgeR'],
+        reference='Zhou et al. (2014) Nucleic Acids Research'
+    )
+}
+
+
+# =============================================================================
+# MAIN RECOMMENDER CLASS
+# =============================================================================
 
 class PipelineRecommender:
     """
-    Recommend optimal RNA-seq pipeline based on data profile.
+    ML-based pipeline recommendation system.
     
-    Uses a scoring system that considers data characteristics (variation,
-    zero-inflation, sample size, depth) and user priorities (accuracy,
-    speed, memory) to recommend the best pipeline.
+    Recommends the optimal DE pipeline based on data profile features.
+    Uses a combination of rule-based decisions and scoring functions
+    derived from benchmarking literature.
     
     Parameters
     ----------
-    profile : dict
-        Data profile from RNAseqDataProfiler
-    
-    Attributes
-    ----------
-    profile : dict
-        Input data profile
-    pipelines : dict
-        Pipeline definitions
+    profile : DataProfile
+        Data profile from RNAseqDataProfiler.
     
     Examples
     --------
-    >>> from raptor import RNAseqDataProfiler, PipelineRecommender
-    >>> profiler = RNAseqDataProfiler(counts)
+    >>> profiler = RNAseqDataProfiler(counts, metadata)
     >>> profile = profiler.run_full_profile()
     >>> recommender = PipelineRecommender(profile)
-    >>> rec = recommender.get_recommendation(priority='balanced')
-    >>> print(rec['primary']['pipeline_name'])
-    'Salmon-edgeR'
+    >>> recommendation = recommender.get_recommendation()
+    >>> print(recommendation.summary())
     """
     
-    def __init__(self, profile: Dict):
+    @handle_errors(exit_on_error=False)
+    def __init__(self, profile: DataProfile):
         """Initialize recommender with data profile."""
-        self.profile = profile
-        self.pipelines = PIPELINES
-        logger.info("Initialized PipelineRecommender")
-    
-    def get_recommendation(self, priority: str = 'balanced') -> Dict:
-        """
-        Get pipeline recommendation with reasoning.
+        # Validate profile
+        if not profile:
+            raise ValidationError("Profile cannot be empty")
         
-        Parameters
-        ----------
-        priority : str
-            Optimization priority: 'accuracy', 'speed', 'memory', or 'balanced'
+        # Validate profile has required fields
+        required_fields = ['n_samples', 'n_groups', 'mean_bcv', 'min_group_size']
+        if isinstance(profile, dict):
+            missing = set(required_fields) - set(profile.keys())
+            if missing:
+                raise ValidationError(f"Profile missing required fields: {missing}")
+        elif hasattr(profile, '__dict__'):
+            # DataProfile object
+            for field in required_fields:
+                if not hasattr(profile, field) or getattr(profile, field) is None:
+                    raise ValidationError(f"Profile missing required field: {field}")
+        
+        self.profile = profile
+        self.scores = {}
+        self.warnings = []
+    
+    def get_recommendation(self) -> Recommendation:
+        """
+        Generate pipeline recommendation.
         
         Returns
         -------
-        dict
-            Recommendation containing:
-            - primary: Top recommended pipeline with score and reasoning
-            - alternatives: Alternative options
-            - all_scores: Scores for all pipelines
-        
-        Raises
-        ------
-        ValueError
-            If priority is not one of the valid options
-        
-        Examples
-        --------
-        >>> rec = recommender.get_recommendation(priority='accuracy')
-        >>> print(f"{rec['primary']['pipeline_name']} (Score: {rec['primary']['score']})")
-        STAR-RSEM-DESeq2 (Score: 165.3)
+        Recommendation
+            Complete recommendation with explanations.
         """
-        valid_priorities = ['accuracy', 'speed', 'memory', 'balanced']
-        if priority not in valid_priorities:
-            raise ValueError(f"Priority must be one of {valid_priorities}, got '{priority}'")
+        logger.info("Generating pipeline recommendation...")
         
-        logger.info(f"Generating recommendation (priority: {priority})")
+        # Calculate scores for each pipeline
+        self._calculate_scores()
         
-        # Calculate scores for all pipelines
-        all_scores = {}
-        for pipeline_id in self.pipelines.keys():
-            score, reasoning = self._score_pipeline(pipeline_id, priority)
-            all_scores[pipeline_id] = {
-                'score': score,
-                'reasoning': reasoning,
-                'pipeline': self.pipelines[pipeline_id]
-            }
+        # Generate warnings
+        self._generate_warnings()
         
-        # Sort by score
-        sorted_pipelines = sorted(all_scores.items(), key=lambda x: x[1]['score'], reverse=True)
+        # Sort pipelines by score
+        sorted_pipelines = sorted(
+            self.scores.items(), 
+            key=lambda x: x[1], 
+            reverse=True
+        )
         
-        # Prepare recommendation
-        top_id, top_data = sorted_pipelines[0]
+        # Create recommendation
+        primary = sorted_pipelines[0]
+        alternative = sorted_pipelines[1]
+        third = sorted_pipelines[2] if len(sorted_pipelines) > 2 else (None, None)
         
-        recommendation = {
-            'primary': {
-                'pipeline_id': top_id,
-                'pipeline_name': self.pipelines[top_id]['name'],
-                'score': top_data['score'],
-                'reasoning': top_data['reasoning'],
-                'details': self.pipelines[top_id]
-            },
-            'alternatives': [],
-            'all_scores': {k: v['score'] for k, v in all_scores.items()}
-        }
+        recommendation = Recommendation(
+            primary_pipeline=primary[0],
+            primary_score=primary[1],
+            primary_reason=self._get_reason(primary[0]),
+            alternative_pipeline=alternative[0],
+            alternative_score=alternative[1],
+            alternative_reason=self._get_reason(alternative[0]),
+            third_option=third[0],
+            third_score=third[1],
+            decision_factors=self._get_decision_factors(),
+            warnings=self.warnings,
+            all_scores=self.scores
+        )
         
-        # Add alternatives (top 3)
-        for alt_id, alt_data in sorted_pipelines[1:3]:
-            recommendation['alternatives'].append({
-                'pipeline_id': alt_id,
-                'pipeline_name': self.pipelines[alt_id]['name'],
-                'score': alt_data['score'],
-                'reasoning': alt_data['reasoning'][:2],  # Brief reasoning
-                'details': self.pipelines[alt_id]
-            })
-        
-        logger.info(f"Recommended: {recommendation['primary']['pipeline_name']} "
-                   f"(Score: {recommendation['primary']['score']:.1f})")
+        # Add R code
+        recommendation.r_code_primary = self._get_r_code(primary[0])
+        recommendation.r_code_alternative = self._get_r_code(alternative[0])
         
         return recommendation
     
-    def _score_pipeline(self, pipeline_id: int, priority: str) -> tuple:
-        """
-        Calculate score for a specific pipeline.
+    def _calculate_scores(self):
+        """Calculate recommendation scores for each pipeline."""
+        p = self.profile
         
-        Parameters
-        ----------
-        pipeline_id : int
-            Pipeline ID (1-8)
-        priority : str
-            User priority
-        
-        Returns
-        -------
-        tuple
-            (score, reasoning_list)
-        
-        Notes
-        -----
-        Scoring components:
-        - Data difficulty matching (40%)
-        - Sequencing quality matching (30%)
-        - Priority weighting (20%)
-        - Design complexity (10%)
-        
-        Score range: 0-200
-        """
-        pipeline = self.pipelines[pipeline_id]
-        score = 0
-        reasoning = []
+        # Initialize base scores
+        self.scores = {
+            'DESeq2': 70.0,
+            'edgeR': 70.0,
+            'limma-voom': 70.0,
+            'Wilcoxon': 50.0,  # Lower base - only good for specific cases
+            'edgeR_robust': 60.0  # Lower base - specialized
+        }
         
         # =====================================================================
-        # 1. Data Difficulty Matching (40% weight, max 80 points)
+        # SAMPLE SIZE SCORING (Most Critical Factor)
         # =====================================================================
+        min_n = p.min_group_size
         
-        difficulty = self.profile['summary']['difficulty']
-        
-        if pipeline_id == 1:  # STAR-RSEM-DESeq2
-            if difficulty == 'challenging':
-                score += 80
-                reasoning.append("DESeq2 excels with challenging data")
-            elif difficulty == 'moderate':
-                score += 60
-                reasoning.append("DESeq2 works well with moderate difficulty")
-            else:
-                score += 40
-                reasoning.append("May be overcautious for easy data")
-        
-        elif pipeline_id == 3:  # Salmon-edgeR
-            if difficulty == 'easy':
-                score += 80
-                reasoning.append("Excellent balance for high-quality data")
-            elif difficulty == 'moderate':
-                score += 70
-                reasoning.append("Good performance with moderate difficulty")
-            else:
-                score += 50
-                reasoning.append("May struggle with very challenging data")
-        
-        elif pipeline_id == 4:  # Kallisto-Sleuth
-            if difficulty == 'easy':
-                score += 70
-                reasoning.append("Speed advantage with high-quality data")
-            elif difficulty == 'moderate':
-                score += 50
-                reasoning.append("Acceptable for moderate difficulty")
-            else:
-                score += 20
-                reasoning.append("Not recommended for challenging data")
-        
-        # Library size variation
-        cv = self.profile['library_stats']['cv']
-        if cv > 0.5:  # High variation
-            if pipeline_id in [1, 5]:  # DESeq2, limma-voom
-                score += 20
-                reasoning.append("Robust normalization for high library variation")
-        
-        # Zero-inflation
-        zero_pct = self.profile['count_distribution']['zero_pct']
-        if zero_pct > 60:  # High zero-inflation
-            if pipeline_id == 1:  # DESeq2
-                score += 15
-                reasoning.append("Handles zero-inflation excellently")
-        
-        # Low replication
-        min_reps = self.profile['design']['min_replicates']
-        if min_reps < 3:
-            if pipeline_id in [1, 7]:  # DESeq2, EBSeq
-                score += 15
-                reasoning.append("Shrinkage estimators work well with low replication")
+        if min_n < 3:
+            # Very small samples - DESeq2 most conservative
+            self.scores['DESeq2'] += 20
+            self.scores['edgeR'] += 10
+            self.scores['limma-voom'] -= 20  # Not recommended
+            self.scores['Wilcoxon'] -= 30  # Definitely not
+        elif min_n >= 3 and min_n < 8:
+            # Standard small samples - all parametric methods OK
+            self.scores['DESeq2'] += 15
+            self.scores['edgeR'] += 15
+            self.scores['limma-voom'] += 10
+            self.scores['Wilcoxon'] -= 20  # Still too small
+        elif min_n >= 8 and min_n < 20:
+            # Medium samples - all methods appropriate
+            self.scores['DESeq2'] += 10
+            self.scores['edgeR'] += 10
+            self.scores['limma-voom'] += 15
+            self.scores['Wilcoxon'] += 15  # Now appropriate
+        else:
+            # Large samples - limma-voom and Wilcoxon shine
+            self.scores['limma-voom'] += 20
+            self.scores['Wilcoxon'] += 25  # Best FDR control
+            self.scores['DESeq2'] += 5  # Still OK but slower
+            self.scores['edgeR'] += 5  # May have inflated FDR
         
         # =====================================================================
-        # 2. Sequencing Quality Matching (30% weight, max 60 points)
+        # DISPERSION / BCV SCORING
         # =====================================================================
+        bcv = p.bcv
         
-        depth = self.profile['sequencing']['depth_category']
-        
-        if depth == 'low':
-            if pipeline_id in [1, 2]:  # Alignment-based
-                score += 40
-                reasoning.append("Alignment more accurate at low depth")
-        elif depth in ['high', 'very_high']:
-            if pipeline_id in [3, 4]:  # Pseudo-alignment
-                score += 50
-                reasoning.append("Pseudo-alignment sufficient at high depth")
-            elif pipeline_id == 1:
-                score += 30
-                reasoning.append("Alignment-based may be overkill at high depth")
-        
-        # Detection rate
-        detection_rate = self.profile['sequencing']['detection_rate']
-        if detection_rate > 0.7:
-            if pipeline_id in [3, 4]:
-                score += 10
-                reasoning.append("Good detection enables fast methods")
+        if bcv < 0.2:
+            # Low dispersion - limma-voom appropriate
+            self.scores['limma-voom'] += 10
+            self.scores['DESeq2'] += 5
+        elif bcv < 0.4:
+            # Moderate dispersion - all NB methods good
+            self.scores['DESeq2'] += 10
+            self.scores['edgeR'] += 10
+            self.scores['limma-voom'] += 5
+        else:
+            # High dispersion - edgeR handles best
+            self.scores['edgeR'] += 15
+            self.scores['edgeR_robust'] += 10
+            self.scores['DESeq2'] += 5
+            self.scores['limma-voom'] -= 5
         
         # =====================================================================
-        # 3. Priority Weighting (20% weight, max 40 points)
+        # OUTLIER SCORING
         # =====================================================================
-        
-        if priority == 'accuracy':
-            accuracy_scores = {'highest': 40, 'high': 30, 'medium': 20, 'good': 25, 'low': 10}
-            score += accuracy_scores.get(pipeline['accuracy'], 20)
-            if pipeline['accuracy'] == 'highest':
-                reasoning.append("Prioritizing accuracy as requested")
-        
-        elif priority == 'speed':
-            speed_scores = {'fastest': 40, 'fast': 35, 'medium': 20, 'slow': 10, 'very_slow': 5}
-            score += speed_scores.get(pipeline['speed'], 15)
-            if pipeline['speed'] in ['fastest', 'fast']:
-                reasoning.append("Fast method matches speed priority")
-        
-        elif priority == 'memory':
-            memory_scores = {'lowest': 40, 'low': 35, 'medium': 20, 'high': 10}
-            score += memory_scores.get(pipeline['memory'], 15)
-            if pipeline['memory'] in ['lowest', 'low']:
-                reasoning.append("Low memory usage matches priority")
-        
-        else:  # balanced
-            # Balanced scoring based on data characteristics
-            n_samples = self.profile['design']['n_samples']
-            if n_samples > 10 and pipeline_id in [3, 4]:
-                score += 30
-                reasoning.append("Fast methods appropriate for large sample size")
-            elif n_samples < 6 and pipeline_id in [1, 5]:
-                score += 35
-                reasoning.append("Robust methods important for small samples")
-            else:
-                score += 20
-        
-        # =====================================================================
-        # 4. Design Complexity (10% weight, max 20 points)
-        # =====================================================================
-        
-        n_conditions = self.profile['design'].get('n_conditions', 2)
-        
-        if n_conditions > 2:  # Multi-group comparison
-            if pipeline_id == 5:  # limma-voom
-                score += 20
-                reasoning.append("Flexible modeling for complex designs")
-            elif pipeline_id in [1, 3]:
-                score += 15
-            else:
-                score += 10
-        else:  # Simple two-group
-            score += 15  # All methods handle this
-        
-        # =====================================================================
-        # Penalties
-        # =====================================================================
-        
-        # Penalize outdated methods
-        if pipeline_id == 8:  # Cuffdiff
-            score -= 20
-            reasoning.append("Note: This is a legacy method")
-        
-        # Penalize very slow methods for large datasets
-        if n_samples > 20 and pipeline['speed'] in ['slow', 'very_slow']:
-            score -= 15
-            reasoning.append("Consider faster alternatives for large dataset")
-        
-        # Ensure score is in range [0, 200]
-        score = max(0, min(200, score))
-        
-        return score, reasoning
-    
-    def compare_pipelines(self, pipeline_ids: List[int], priority: str = 'balanced') -> Dict:
-        """
-        Compare specific pipelines side-by-side.
-        
-        Parameters
-        ----------
-        pipeline_ids : list of int
-            Pipeline IDs to compare
-        priority : str
-            Optimization priority
-        
-        Returns
-        -------
-        dict
-            Comparison with scores and reasoning for each pipeline
-        
-        Examples
-        --------
-        >>> comparison = recommender.compare_pipelines([1, 3, 4])
-        >>> for p_id, data in comparison.items():
-        ...     print(f"Pipeline {p_id}: {data['score']}")
-        Pipeline 1: 145.5
-        Pipeline 3: 162.3
-        Pipeline 4: 125.7
-        """
-        comparison = {}
-        
-        for pipeline_id in pipeline_ids:
-            if pipeline_id not in self.pipelines:
-                logger.warning(f"Invalid pipeline ID: {pipeline_id}")
-                continue
+        if p.has_outliers:
+            severity = p.outlier_severity
             
-            score, reasoning = self._score_pipeline(pipeline_id, priority)
-            comparison[pipeline_id] = {
-                'pipeline': self.pipelines[pipeline_id],
-                'score': score,
-                'reasoning': reasoning
-            }
+            if severity == 'mild':
+                self.scores['edgeR_robust'] += 10
+                self.scores['DESeq2'] += 5  # Has Cook's distance
+            elif severity == 'moderate':
+                self.scores['edgeR_robust'] += 20
+                self.scores['DESeq2'] += 5
+                self.scores['edgeR'] -= 5
+                self.scores['limma-voom'] -= 5 if min_n < 10 else 5  # Robust for large
+            else:  # severe
+                self.scores['edgeR_robust'] += 25
+                self.scores['edgeR'] -= 10
+                self.scores['limma-voom'] -= 10 if min_n < 10 else 0
         
-        return comparison
+        # =====================================================================
+        # LOW COUNT SCORING
+        # =====================================================================
+        low_counts = p.low_count_proportion
+        
+        if low_counts > 0.3:
+            # Many low counts - edgeR handles well
+            self.scores['edgeR'] += 10
+            self.scores['edgeR_robust'] += 5
+            self.scores['DESeq2'] += 5
+        elif low_counts > 0.5:
+            # Very many low counts
+            self.scores['edgeR'] += 15
+            self.scores['edgeR_robust'] += 10
+            self.scores['limma-voom'] -= 5
+        
+        # =====================================================================
+        # SPARSITY SCORING
+        # =====================================================================
+        if p.sparsity > 0.6:
+            # High sparsity - NB models handle better
+            self.scores['DESeq2'] += 5
+            self.scores['edgeR'] += 5
+        
+        # =====================================================================
+        # LIBRARY SIZE VARIATION SCORING
+        # =====================================================================
+        lib_cv = p.library_size_cv
+        
+        if lib_cv > 0.3:
+            # High variation - normalization critical
+            self.scores['DESeq2'] += 5  # RLE robust
+            self.scores['edgeR'] += 5  # TMM robust
+        
+        if p.library_size_range > 5:
+            # Very different library sizes
+            self.scores['DESeq2'] += 5
+        
+        # =====================================================================
+        # BATCH EFFECT SCORING
+        # =====================================================================
+        if p.has_batch_effect:
+            # Batch effects - DESeq2 handles well
+            self.scores['DESeq2'] += 10
+            self.scores['limma-voom'] += 5  # Can include in model
+            self.scores['Wilcoxon'] -= 10  # Can't adjust for covariates
+            
+            if p.batch_confounded:
+                # Severe warning - no method can really fix this
+                for key in self.scores:
+                    self.scores[key] -= 10
+        
+        # =====================================================================
+        # DESIGN COMPLEXITY SCORING
+        # =====================================================================
+        if p.design_complexity == 'complex':
+            self.scores['limma-voom'] += 15
+            self.scores['DESeq2'] += 5
+            self.scores['Wilcoxon'] -= 15  # Can't handle complex designs
+        
+        # =====================================================================
+        # NORMALIZE SCORES
+        # =====================================================================
+        # Cap at 0-100 range
+        for key in self.scores:
+            self.scores[key] = max(0, min(100, self.scores[key]))
+        
+        # Ensure minimum replicates are met
+        for pipeline, info in PIPELINES.items():
+            if min_n < info.min_replicates:
+                self.scores[pipeline] = max(0, self.scores[pipeline] - 30)
+    
+    def _generate_warnings(self):
+        """Generate warnings based on data characteristics."""
+        p = self.profile
+        
+        if p.min_group_size < 3:
+            self.warnings.append(
+                f"Low replication (n={p.min_group_size}): Results may be unreliable. "
+                f"Consider increasing biological replicates."
+            )
+        
+        if p.bcv > 0.5:
+            self.warnings.append(
+                f"High biological variation (BCV={p.bcv:.2f}): "
+                f"Consider using edgeR or DESeq2 for robust dispersion estimation."
+            )
+        
+        if p.has_outliers:
+            self.warnings.append(
+                f"Outliers detected ({p.outlier_severity}): "
+                f"Consider removing outliers or using robust methods."
+            )
+        
+        if p.has_batch_effect:
+            self.warnings.append(
+                "Batch effect detected: Include batch as covariate in DE model."
+            )
+            if p.batch_confounded:
+                self.warnings.append(
+                    "⚠️ CRITICAL: Batch is confounded with condition! "
+                    "Results may not separate biological from technical effects."
+                )
+        
+        if p.sparsity > 0.7:
+            self.warnings.append(
+                f"High sparsity ({p.sparsity:.1%} zeros): "
+                f"Consider this is expected for your data type (e.g., low-input RNA-seq)."
+            )
+        
+        if p.library_size_range > 10:
+            self.warnings.append(
+                f"Large library size variation ({p.library_size_range:.1f}x): "
+                f"Ensure normalization is working correctly."
+            )
+    
+    def _get_decision_factors(self) -> Dict[str, Any]:
+        """Get key decision factors."""
+        p = self.profile
+        return {
+            'sample_size_per_group': p.min_group_size,
+            'n_groups': p.n_groups,
+            'bcv': p.bcv,
+            'bcv_category': p.bcv_category,
+            'library_size_cv': p.library_size_cv,
+            'low_count_proportion': p.low_count_proportion,
+            'sparsity': p.sparsity,
+            'has_outliers': p.has_outliers,
+            'has_batch_effect': p.has_batch_effect,
+            'design_complexity': p.design_complexity
+        }
+    
+    def _get_reason(self, pipeline: str) -> str:
+        """Get reason for recommending a pipeline."""
+        p = self.profile
+        
+        reasons = {
+            'DESeq2': self._get_deseq2_reason(),
+            'edgeR': self._get_edger_reason(),
+            'limma-voom': self._get_limma_reason(),
+            'Wilcoxon': self._get_wilcoxon_reason(),
+            'edgeR_robust': self._get_edger_robust_reason()
+        }
+        
+        return reasons.get(pipeline, "General-purpose recommendation")
+    
+    def _get_deseq2_reason(self) -> str:
+        p = self.profile
+        reasons = []
+        
+        if p.min_group_size < 8:
+            reasons.append("appropriate for small samples")
+        if p.has_batch_effect:
+            reasons.append("handles batch effects well")
+        if p.bcv >= 0.2 and p.bcv <= 0.4:
+            reasons.append("suitable for moderate dispersion")
+        
+        if not reasons:
+            reasons.append("reliable general-purpose choice")
+        
+        return "DESeq2: " + ", ".join(reasons)
+    
+    def _get_edger_reason(self) -> str:
+        p = self.profile
+        reasons = []
+        
+        if p.low_count_proportion > 0.3:
+            reasons.append("handles low counts well")
+        if p.bcv > 0.4:
+            reasons.append("good for high dispersion")
+        
+        if not reasons:
+            reasons.append("fast and flexible NB model")
+        
+        return "edgeR: " + ", ".join(reasons)
+    
+    def _get_limma_reason(self) -> str:
+        p = self.profile
+        reasons = []
+        
+        if p.min_group_size >= 20:
+            reasons.append("efficient for large samples")
+        if p.design_complexity == 'complex':
+            reasons.append("handles complex designs")
+        if p.bcv < 0.2:
+            reasons.append("appropriate for low dispersion")
+        
+        if not reasons:
+            reasons.append("fast linear modeling approach")
+        
+        return "limma-voom: " + ", ".join(reasons)
+    
+    def _get_wilcoxon_reason(self) -> str:
+        p = self.profile
+        reasons = []
+        
+        if p.min_group_size >= 8:
+            reasons.append("excellent FDR control for large samples")
+        reasons.append("non-parametric, robust")
+        
+        return "Wilcoxon: " + ", ".join(reasons)
+    
+    def _get_edger_robust_reason(self) -> str:
+        p = self.profile
+        reasons = []
+        
+        if p.has_outliers:
+            reasons.append("handles outliers well")
+        reasons.append("robust dispersion estimation")
+        
+        return "edgeR_robust: " + ", ".join(reasons)
+    
+    def _get_r_code(self, pipeline: str) -> str:
+        """Generate R code snippet for the pipeline."""
+        
+        code_templates = {
+            'DESeq2': '''
+# DESeq2 Analysis
+library(DESeq2)
+
+# Create DESeqDataSet
+dds <- DESeqDataSetFromMatrix(
+    countData = counts,
+    colData = metadata,
+    design = ~ condition  # Add batch if needed: ~ batch + condition
+)
+
+# Pre-filter low counts
+keep <- rowSums(counts(dds) >= 10) >= min(table(metadata$condition))
+dds <- dds[keep, ]
+
+# Run DESeq2
+dds <- DESeq(dds)
+
+# Get results
+results <- results(dds, alpha = 0.05)
+results <- lfcShrink(dds, coef = 2, type = "apeglm")  # Recommended
+
+# Significant genes
+sig_genes <- subset(results, padj < 0.05 & abs(log2FoldChange) > 1)
+''',
+            
+            'edgeR': '''
+# edgeR Analysis
+library(edgeR)
+
+# Create DGEList
+dge <- DGEList(counts = counts, group = metadata$condition)
+
+# Filter low counts
+keep <- filterByExpr(dge)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+
+# Normalize
+dge <- calcNormFactors(dge, method = "TMM")
+
+# Estimate dispersion
+design <- model.matrix(~ condition, data = metadata)
+dge <- estimateDisp(dge, design)
+
+# Test for DE
+fit <- glmQLFit(dge, design)
+qlf <- glmQLFTest(fit, coef = 2)
+
+# Get results
+results <- topTags(qlf, n = Inf)$table
+sig_genes <- subset(results, FDR < 0.05 & abs(logFC) > 1)
+''',
+            
+            'limma-voom': '''
+# limma-voom Analysis
+library(limma)
+library(edgeR)
+
+# Create DGEList
+dge <- DGEList(counts = counts)
+
+# Filter low counts
+keep <- filterByExpr(dge, group = metadata$condition)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+
+# Normalize
+dge <- calcNormFactors(dge, method = "TMM")
+
+# Design matrix
+design <- model.matrix(~ condition, data = metadata)
+
+# voom transformation
+v <- voom(dge, design, plot = TRUE)
+
+# Fit linear model
+fit <- lmFit(v, design)
+fit <- eBayes(fit)
+
+# Get results
+results <- topTable(fit, coef = 2, n = Inf)
+sig_genes <- subset(results, adj.P.Val < 0.05 & abs(logFC) > 1)
+''',
+            
+            'Wilcoxon': '''
+# Wilcoxon rank-sum test (TMM normalized)
+library(edgeR)
+
+# Create DGEList and normalize
+dge <- DGEList(counts = counts)
+dge <- calcNormFactors(dge, method = "TMM")
+
+# Get normalized counts
+norm_counts <- cpm(dge, log = TRUE, prior.count = 1)
+
+# Wilcoxon test for each gene
+group <- metadata$condition
+group1 <- which(group == levels(factor(group))[1])
+group2 <- which(group == levels(factor(group))[2])
+
+pvalues <- apply(norm_counts, 1, function(x) {
+    wilcox.test(x[group1], x[group2])$p.value
+})
+
+# Adjust p-values
+padj <- p.adjust(pvalues, method = "BH")
+
+# Log fold change
+logFC <- rowMeans(norm_counts[, group2]) - rowMeans(norm_counts[, group1])
+
+# Results
+results <- data.frame(logFC = logFC, pvalue = pvalues, padj = padj)
+sig_genes <- subset(results, padj < 0.05 & abs(logFC) > 1)
+''',
+            
+            'edgeR_robust': '''
+# edgeR robust Analysis
+library(edgeR)
+
+# Create DGEList
+dge <- DGEList(counts = counts, group = metadata$condition)
+
+# Filter low counts
+keep <- filterByExpr(dge)
+dge <- dge[keep, , keep.lib.sizes = FALSE]
+
+# Normalize
+dge <- calcNormFactors(dge, method = "TMM")
+
+# Design matrix
+design <- model.matrix(~ condition, data = metadata)
+
+# Estimate dispersion with robust method
+dge <- estimateGLMRobustDisp(dge, design)
+
+# Fit with robust method
+fit <- glmFit(dge, design)
+lrt <- glmLRT(fit, coef = 2)
+
+# Get results
+results <- topTags(lrt, n = Inf)$table
+sig_genes <- subset(results, FDR < 0.05 & abs(logFC) > 1)
+'''
+        }
+        
+        return code_templates.get(pipeline, "# Code not available")
 
 
 # =============================================================================
-# Convenience Functions
+# CONVENIENCE FUNCTIONS
 # =============================================================================
 
-def quick_recommend(profile: Dict, priority: str = 'balanced') -> str:
+def recommend_pipeline(profile: DataProfile) -> Recommendation:
     """
-    Get quick recommendation as pipeline name.
+    Get pipeline recommendation from data profile.
     
     Parameters
     ----------
-    profile : dict
-        Data profile
-    priority : str
-        Optimization priority
+    profile : DataProfile
+        Data profile from profiler.
     
     Returns
     -------
-    str
-        Recommended pipeline name
+    Recommendation
+        Pipeline recommendation with explanations.
     
     Examples
     --------
-    >>> pipeline_name = quick_recommend(profile, priority='speed')
-    >>> print(pipeline_name)
-    'Kallisto-Sleuth'
+    >>> from raptor import profile_data_quick, recommend_pipeline
+    >>> profile = profile_data_quick(counts, metadata)
+    >>> recommendation = recommend_pipeline(profile)
+    >>> print(recommendation.summary())
     """
     recommender = PipelineRecommender(profile)
-    rec = recommender.get_recommendation(priority)
-    return rec['primary']['pipeline_name']
+    return recommender.get_recommendation()
 
+
+def get_pipeline_info(pipeline_name: str) -> Optional[PipelineInfo]:
+    """
+    Get detailed information about a pipeline.
+    
+    Parameters
+    ----------
+    pipeline_name : str
+        Name of pipeline (DESeq2, edgeR, limma-voom, Wilcoxon, edgeR_robust)
+    
+    Returns
+    -------
+    PipelineInfo or None
+        Pipeline information or None if not found.
+    """
+    return PIPELINES.get(pipeline_name)
+
+
+def list_pipelines() -> List[str]:
+    """List all available pipelines."""
+    return list(PIPELINES.keys())
+
+
+# =============================================================================
+# MAIN
+# =============================================================================
 
 if __name__ == '__main__':
-    print("RAPTOR Pipeline Recommender")
-    print("===========================")
-    print("\nAvailable pipelines:")
-    for pid, pipeline in PIPELINES.items():
-        print(f"  {pid}. {pipeline['name']} - {pipeline['description']}")
+    print("""
+╔═══════════════════════════════════════════════════════════════════════════╗
+║            🦖 RAPTOR Pipeline Recommender Module v2.2.0                   ║
+╠═══════════════════════════════════════════════════════════════════════════╣
+║                                                                           ║
+║  ML-based pipeline recommendation for RNA-seq differential expression.   ║
+║                                                                           ║
+║  SUPPORTED PIPELINES:                                                     ║
+║  ────────────────────                                                     ║
+║  • DESeq2      - General purpose, conservative, handles batch effects    ║
+║  • edgeR       - Fast, handles low counts and high dispersion            ║
+║  • limma-voom  - Very fast, best for large samples, complex designs      ║
+║  • Wilcoxon    - Non-parametric, best FDR control for n≥8               ║
+║  • edgeR_robust - Handles outliers well                                  ║
+║                                                                           ║
+║  DECISION FACTORS:                                                        ║
+║  ─────────────────                                                        ║
+║  1. Sample size per group (most critical)                                ║
+║  2. Biological coefficient of variation (BCV)                            ║
+║  3. Presence of outliers                                                 ║
+║  4. Low count gene proportion                                            ║
+║  5. Design complexity                                                    ║
+║  6. Batch effects                                                        ║
+║                                                                           ║
+║  USAGE:                                                                   ║
+║  ──────                                                                   ║
+║  from raptor import RNAseqDataProfiler, PipelineRecommender              ║
+║                                                                           ║
+║  profiler = RNAseqDataProfiler(counts, metadata)                         ║
+║  profile = profiler.run_full_profile()                                   ║
+║  recommender = PipelineRecommender(profile)                              ║
+║  recommendation = recommender.get_recommendation()                       ║
+║  print(recommendation.summary())                                         ║
+║                                                                           ║
+║  # R code for recommended pipeline                                       ║
+║  print(recommendation.r_code_primary)                                    ║
+║                                                                           ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+    """)

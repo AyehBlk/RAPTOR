@@ -1,0 +1,238 @@
+# =============================================================================
+# RAPTOR v2.2.0 - Kallisto Pipeline Configuration
+# =============================================================================
+#
+# This configuration file defines default parameters for the Kallisto pipeline.
+# Parameters can be overridden via CLI or programmatically.
+#
+# Author: Ayeh Bolouki
+# Version: 2.2.0
+# =============================================================================
+
+# =============================================================================
+# PIPELINE METADATA
+# =============================================================================
+pipeline:
+  name: kallisto
+  version: 2.2.0
+  description: Kallisto pseudo-alignment (ultra-fast, no BAM)
+  stage: 2  # Production pipeline
+  module: M5
+
+# =============================================================================
+# KALLISTO QUANTIFICATION PARAMETERS
+# =============================================================================
+kallisto:
+  # Bootstrap parameters
+  bootstraps: 0            # Number of bootstrap samples (0=disabled, 100+ recommended)
+  seed: 42                 # Random seed for bootstrap sampling
+  
+  # Fragment length parameters (REQUIRED for single-end reads)
+  fragment_length: null    # Mean fragment length (e.g., 200 for RNA-seq)
+  fragment_sd: null        # Fragment length standard deviation (e.g., 20)
+  
+  # Strandedness
+  rf_stranded: false       # Strand-specific: first read reverse (dUTP protocol)
+  fr_stranded: false       # Strand-specific: first read forward (ligation protocol)
+  
+  # Output options
+  plaintext: false         # Output plaintext instead of HDF5 (larger files)
+  fusion: false            # Enable fusion detection (experimental)
+  
+  # Gene aggregation
+  tx2gene: null            # Path to transcript-to-gene mapping file (optional)
+                           # Format: transcript_id<TAB>gene_id
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - DOCKER
+# =============================================================================
+docker:
+  enabled: false  # Set to true to use Docker containers
+  
+  # Docker image
+  image: zlskidmore/kallisto:0.50.0
+  
+  # Docker options
+  volumes:  # Additional volumes to mount
+    - /data:/data
+    - /ref:/ref:ro
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - HPC CLUSTER
+# =============================================================================
+hpc:
+  enabled: false  # Set to true for HPC execution
+  
+  # Module name (adjust for your HPC system)
+  module: kallisto
+  
+  # Resource requirements
+  memory: 4G           # Very low memory usage
+  time: "2:00:00"      # Wall time (Kallisto is very fast)
+  nodes: 1
+  tasks_per_node: 1
+  cpus_per_task: 8     # Override with --threads
+
+# =============================================================================
+# PERFORMANCE SETTINGS
+# =============================================================================
+performance:
+  threads: 8           # Number of CPU threads
+  memory_gb: 4         # Memory in GB (Kallisto uses very little)
+  
+  # Temporary directory
+  temp_dir: null       # Uses system default if null
+
+# =============================================================================
+# OUTPUT SETTINGS
+# =============================================================================
+output:
+  # Main output directory structure
+  base_dir: results/production
+  
+  # Output files
+  gene_counts: gene_counts.csv   # Gene count matrix (if tx2gene provided)
+  tx_counts: tx_counts.csv       # Transcript count matrix
+  tpm: tpm.csv                   # TPM normalized matrix
+  quant_dir: quant/              # Per-sample quantification directories
+  logs_dir: logs/                # Log files
+  
+  # Keep intermediate files
+  keep_h5: true                  # Keep HDF5 files (smaller than plaintext)
+  keep_json: true                # Keep run_info.json files
+
+# =============================================================================
+# VALIDATION SETTINGS (v2.2.0)
+# =============================================================================
+validation:
+  # Enable input validation (recommended)
+  validate_inputs: true
+  
+  # Validation rules
+  min_threads: 1
+  max_threads: 128
+  min_memory_gb: 1
+  max_memory_gb: 512
+  min_bootstraps: 0
+  max_bootstraps: 1000
+  
+  # Fragment length validation (for single-end)
+  min_fragment_length: 50
+  max_fragment_length: 1000
+  min_fragment_sd: 1
+  max_fragment_sd: 200
+  
+  # Index validation
+  check_index_exists: true  # Verify index file exists
+  
+  # Sample sheet validation
+  check_fastq_exists: true  # Verify FASTQ files exist
+  check_sample_ids: true    # Check for duplicate sample IDs
+  warn_single_end_no_fragment: true  # Warn if single-end without fragment params
+
+# =============================================================================
+# ERROR HANDLING (v2.2.0)
+# =============================================================================
+error_handling:
+  # Fail fast or continue on error
+  fail_fast: true  # Stop pipeline on first error
+  
+  # Retry settings
+  max_retries: 0  # Number of retries for failed samples
+  
+  # Logging
+  log_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  save_logs: true  # Save logs to files
+
+# =============================================================================
+# QUALITY CONTROL THRESHOLDS (Optional)
+# =============================================================================
+qc_thresholds:
+  # Minimum pseudoalignment rate to pass QC
+  min_pseudoalignment_rate: 50.0  # Percentage
+  
+  # Warn if below these thresholds
+  warn_pseudoalignment_rate: 70.0
+  
+  # Minimum number of reads processed
+  min_reads_processed: 1000000  # 1 million reads
+
+# =============================================================================
+# BOOTSTRAP RECOMMENDATIONS
+# =============================================================================
+bootstrap:
+  # Bootstrap guidelines
+  disabled: 0              # No bootstraps (fastest, no uncertainty estimates)
+  minimal: 30              # Minimal bootstraps for quick uncertainty check
+  standard: 100            # Standard for differential expression
+  publication: 200         # Publication-quality uncertainty estimates
+  
+  # Use cases
+  quick_de: 0              # Quick differential expression
+  standard_de: 100         # Standard differential expression
+  isoform_analysis: 200    # Isoform-level analysis needs more bootstraps
+
+# =============================================================================
+# FRAGMENT LENGTH RECOMMENDATIONS
+# =============================================================================
+fragment_length_guide:
+  # Common fragment lengths by protocol
+  rna_seq:
+    length: 200
+    sd: 20
+  small_rna:
+    length: 50
+    sd: 10
+  long_reads:
+    length: 300
+    sd: 30
+  
+  # How to determine fragment length
+  # - Use Bioanalyzer or TapeStation trace
+  # - Or estimate from paired-end insert size distribution
+  # - Or use conservative values: length=200, sd=20
+
+# =============================================================================
+# NOTES FOR v2.2.0
+# =============================================================================
+#
+# New in v2.2.0:
+# - Full input validation with clear error messages
+# - Enhanced error handling with @handle_errors decorator
+# - Better documentation with examples
+# - Validation schemas for all parameters
+# - Quality control thresholds
+#
+# Advantages of Kallisto:
+# - Ultra-fast: 100+ samples in hours
+# - Very low memory: ~4GB (vs 8GB for Salmon, 32GB for STAR)
+# - No BAM files: saves disk space
+# - Transcript-level: better for isoform analysis
+# - Bootstraps: uncertainty quantification
+#
+# Disadvantages:
+# - No GC bias correction (unlike Salmon)
+# - No BAM files (can't visualize alignments)
+# - Less accurate than alignment-based methods
+# - Sensitive to index quality
+#
+# Best for:
+# - Quick differential expression
+# - High-throughput projects (many samples)
+# - Limited RAM systems
+# - When disk space is limited
+# - Transcript isoform analysis
+#
+# Not recommended for:
+# - Samples with high GC bias
+# - Novel transcript discovery
+# - When you need BAM files
+# - Publication-critical accuracy (use STAR+featureCounts)
+#
+# Single-End Requirements:
+# - MUST provide --fragment-length and --fragment-sd
+# - Use Bioanalyzer/TapeStation data if available
+# - Conservative defaults: length=200, sd=20
+# - Error if not provided (fail fast)
+#
+# =============================================================================

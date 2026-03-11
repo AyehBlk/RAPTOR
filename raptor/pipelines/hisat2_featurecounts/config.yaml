@@ -1,0 +1,205 @@
+# =============================================================================
+# RAPTOR v2.2.0 - HISAT2 + featureCounts Pipeline Configuration
+# =============================================================================
+#
+# This configuration file defines default parameters for the HISAT2+featureCounts
+# pipeline. Parameters can be overridden via CLI or programmatically.
+#
+# Author: Ayeh Bolouki
+# Version: 2.2.0
+# =============================================================================
+
+# =============================================================================
+# PIPELINE METADATA
+# =============================================================================
+pipeline:
+  name: hisat2_featurecounts
+  version: 2.2.0
+  description: HISAT2 alignment + featureCounts (low memory)
+  stage: 2  # Production pipeline
+  module: M5
+
+# =============================================================================
+# HISAT2 ALIGNMENT PARAMETERS
+# =============================================================================
+hisat2:
+  # Intron length constraints
+  min_intron_len: 20        # Minimum intron length (bp)
+  max_intron_len: 500000    # Maximum intron length (bp)
+  
+  # Strandedness (for paired-end: RF/FR, for single-end: F/R, or empty for unstranded)
+  rna_strandness: ""        # Options: "", "RF", "FR", "F", "R"
+  
+  # Transcript assembly options
+  dta: false                # Report alignments for transcript assembly
+  dta_cufflinks: false      # Report alignments for Cufflinks
+  
+  # Splicing penalty parameters (advanced)
+  pen_cansplice: 0          # Penalty for canonical splice sites
+  pen_noncansplice: 12      # Penalty for non-canonical splice sites
+  pen_canintronlen: "G,-8,1"     # Canonical intron length penalty function
+  pen_noncanintronlen: "G,-8,1"  # Non-canonical intron length penalty function
+  
+  # Alignment options
+  no_softclip: false        # Disable soft-clipping
+  no_spliced_alignment: false  # Disable spliced alignment
+  
+  # Output novel splice sites (optional)
+  novel_splicesite_outfile: null  # Path to output file (or null)
+
+# =============================================================================
+# FEATURECOUNTS QUANTIFICATION PARAMETERS
+# =============================================================================
+featurecounts:
+  # Feature selection
+  feature_type: exon        # GTF feature type to count (typically "exon")
+  attribute_type: gene_id   # GTF attribute for grouping features (typically "gene_id")
+  
+  # Strandedness (0=unstranded, 1=stranded, 2=reverse stranded)
+  strand_specific: 0
+  
+  # Multi-mapping reads
+  count_multimapping: false  # Count multi-mapping reads (use -M flag)
+  
+  # Paired-end options (automatically detected from sample sheet)
+  # count_read_pairs: true  # Count read pairs instead of reads (auto-enabled for PE)
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - DOCKER
+# =============================================================================
+docker:
+  enabled: false  # Set to true to use Docker containers
+  
+  # Docker images (from BioContainers)
+  hisat2_image: quay.io/biocontainers/hisat2:2.2.1
+  subread_image: quay.io/biocontainers/subread:2.0.3
+  samtools_image: quay.io/biocontainers/samtools:1.17
+  
+  # Docker options
+  volumes:  # Additional volumes to mount
+    - /data:/data
+    - /ref:/ref:ro
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - HPC CLUSTER
+# =============================================================================
+hpc:
+  enabled: false  # Set to true for HPC execution
+  
+  # Module names (adjust for your HPC system)
+  modules:
+    - hisat2/2.2.1
+    - subread/2.0.3
+    - samtools/1.17
+  
+  # Resource requirements
+  memory: 16G          # Lower than STAR (typically 16GB vs 32GB)
+  time: "8:00:00"     # Wall time
+  nodes: 1
+  tasks_per_node: 1
+  cpus_per_task: 8    # Override with --threads
+
+# =============================================================================
+# PERFORMANCE SETTINGS
+# =============================================================================
+performance:
+  threads: 8           # Number of CPU threads
+  memory_gb: 16        # Memory in GB (HISAT2 uses less than STAR)
+  
+  # Temporary directory (for large intermediate files)
+  temp_dir: null       # Uses system default if null
+
+# =============================================================================
+# OUTPUT SETTINGS
+# =============================================================================
+output:
+  # Main output directory structure
+  base_dir: results/production
+  
+  # Output files
+  gene_counts: gene_counts.csv   # Gene count matrix
+  bam_dir: bam/                  # BAM files directory
+  logs_dir: logs/                # Log files
+  
+  # Keep intermediate files
+  keep_bam: true                 # Keep BAM files (recommended)
+  keep_sam: false                # Delete SAM files (save disk space)
+  keep_unsorted_bam: false       # Delete unsorted BAM files
+
+# =============================================================================
+# VALIDATION SETTINGS (v2.2.0)
+# =============================================================================
+validation:
+  # Enable input validation (recommended)
+  validate_inputs: true
+  
+  # Validation rules
+  min_threads: 1
+  max_threads: 128
+  min_memory_gb: 8
+  max_memory_gb: 512
+  
+  # GTF validation
+  require_gtf_extension: true
+  check_gtf_format: false  # Set to true for strict GTF format checking
+  
+  # Sample sheet validation
+  check_fastq_exists: true  # Verify FASTQ files exist
+  check_sample_ids: true    # Check for duplicate sample IDs
+
+# =============================================================================
+# ERROR HANDLING (v2.2.0)
+# =============================================================================
+error_handling:
+  # Fail fast or continue on error
+  fail_fast: true  # Stop pipeline on first error
+  
+  # Retry settings
+  max_retries: 0  # Number of retries for failed samples
+  
+  # Logging
+  log_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  save_logs: true  # Save logs to files
+
+# =============================================================================
+# QUALITY CONTROL THRESHOLDS (Optional)
+# =============================================================================
+qc_thresholds:
+  # Minimum alignment rate to pass QC
+  min_alignment_rate: 50.0  # Percentage
+  
+  # Minimum assignment rate (featureCounts)
+  min_assignment_rate: 40.0  # Percentage
+  
+  # Warn if below these thresholds
+  warn_alignment_rate: 70.0
+  warn_assignment_rate: 60.0
+
+# =============================================================================
+# NOTES FOR v2.2.0
+# =============================================================================
+#
+# New in v2.2.0:
+# - Full input validation with clear error messages
+# - Enhanced error handling with @handle_errors decorator
+# - Better documentation with examples
+# - Validation schemas for all parameters
+# - Quality control thresholds
+#
+# Memory Usage:
+# - HISAT2: ~16GB (much lower than STAR's ~32GB)
+# - Ideal for systems with limited RAM
+# - Can process more samples in parallel
+#
+# Performance:
+# - Similar speed to STAR for most genomes
+# - Faster index building
+# - Lower disk space requirements
+#
+# Use Cases:
+# - Systems with <32GB RAM
+# - Large-scale projects (many samples)
+# - Standard differential expression analysis
+# - When BAM files are needed for visualization
+#
+# =============================================================================

@@ -1,0 +1,270 @@
+# =============================================================================
+# RAPTOR v2.2.0 - STAR + RSEM Pipeline Configuration
+# =============================================================================
+#
+# Gold standard for isoform-level quantification.
+# Uses STAR for alignment and RSEM for EM-based quantification.
+#
+# Author: Ayeh Bolouki
+# Version: 2.2.0
+# =============================================================================
+
+# =============================================================================
+# PIPELINE METADATA
+# =============================================================================
+pipeline:
+  name: star_rsem
+  version: 2.2.0
+  description: STAR + RSEM (gold standard, isoform-level)
+  stage: 2  # Production pipeline
+  module: M6
+
+# =============================================================================
+# RSEM QUANTIFICATION PARAMETERS
+# =============================================================================
+rsem:
+  # Strandedness (CRITICAL for accuracy!)
+  strandedness: none     # 'none', 'forward', or 'reverse'
+  
+  # EM algorithm options
+  estimate_rspd: true    # Estimate read start position distribution
+  
+  # Credibility intervals (SLOW!)
+  calc_ci: false         # Calculate 95% credibility intervals
+  ci_memory: 1024        # Memory for CI calculation (MB)
+  
+  # Reproducibility
+  seed: 12345            # Random seed for EM algorithm
+  
+  # Single-end fragment length (optional, for single-end only)
+  fragment_length_mean: null    # Mean fragment length (e.g., 200)
+  fragment_length_sd: null      # Fragment length SD (e.g., 30)
+  
+  # BAM output options
+  no_bam_output: false           # Disable BAM output
+  output_genome_bam: false       # Output genome BAM
+  sort_bam_by_coordinate: true   # Sort by coordinate (recommended)
+  sort_bam_by_read_name: false   # Sort by read name
+  sampling_for_bam: false        # Sample reads for BAM
+
+# =============================================================================
+# STAR PASS-THROUGH PARAMETERS
+# =============================================================================
+star:
+  # Output genome BAM from STAR
+  output_genome_bam: true
+  
+  # Splice junction database overhang
+  sjdb_overhang: 100     # Typically 100 for 100bp reads
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - DOCKER
+# =============================================================================
+docker:
+  enabled: false
+  
+  # Docker image
+  image: quay.io/biocontainers/rsem:1.3.3
+  
+  # RSEM includes STAR, so one image is sufficient
+  star_included: true
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - HPC CLUSTER
+# =============================================================================
+hpc:
+  enabled: false
+  
+  # Module names
+  modules:
+    - STAR/2.7.10b
+    - rsem/1.3.3
+    - samtools/1.17
+  
+  # Resource requirements (HIGH for STAR+RSEM!)
+  memory: 32G            # Both STAR and RSEM need high memory
+  time: "12:00:00"       # Long runtime (EM algorithm)
+  nodes: 1
+  tasks_per_node: 1
+  cpus_per_task: 8
+
+# =============================================================================
+# PERFORMANCE SETTINGS
+# =============================================================================
+performance:
+  threads: 8
+  memory_gb: 32          # STAR+RSEM requires high memory!
+
+# =============================================================================
+# OUTPUT SETTINGS
+# =============================================================================
+output:
+  base_dir: results/production
+  
+  # Output files
+  gene_counts: gene_counts.csv      # Gene-level expected counts
+  tx_counts: tx_counts.csv          # Transcript-level counts
+  gene_tpm: gene_tpm.csv            # Gene TPM
+  tx_tpm: tx_tpm.csv                # Transcript TPM
+  
+  # Directories
+  rsem_dir: rsem/                   # RSEM output directory
+  bam_dir: bam/                     # BAM files (if kept)
+  logs_dir: logs/                   # Log files
+  
+  # Keep intermediate files
+  keep_bam: true                    # Keep genome BAM files
+
+# =============================================================================
+# VALIDATION SETTINGS (v2.2.0)
+# =============================================================================
+validation:
+  validate_inputs: true
+  
+  # Numeric ranges
+  min_threads: 1
+  max_threads: 128
+  min_memory_gb: 16        # RSEM minimum
+  max_memory_gb: 512
+  
+  # Strandedness validation
+  valid_strandedness: ['none', 'forward', 'reverse']
+  
+  # Seed validation
+  min_seed: 1
+  max_seed: 2147483647     # Max int32
+  
+  # Fragment length validation (for single-end)
+  min_fragment_length: 50
+  max_fragment_length: 1000
+  min_fragment_sd: 1
+  max_fragment_sd: 200
+  
+  # CI memory validation
+  min_ci_memory: 512
+  max_ci_memory: 16384     # 16GB
+
+# =============================================================================
+# ERROR HANDLING (v2.2.0)
+# =============================================================================
+error_handling:
+  fail_fast: true
+  max_retries: 0
+  log_level: INFO
+  save_logs: true
+
+# =============================================================================
+# QUALITY CONTROL THRESHOLDS
+# =============================================================================
+qc_thresholds:
+  # RSEM alignment
+  min_alignment_rate: 50.0
+  warn_alignment_rate: 70.0
+  
+  # EM convergence
+  check_convergence: true
+
+# =============================================================================
+# STRANDEDNESS GUIDE
+# =============================================================================
+strandedness_guide:
+  none:
+    description: "Unstranded (default)"
+    forward_prob: 0.5
+    use_when: "Standard RNA-seq, most common"
+    library_prep: "TruSeq, most kits"
+  
+  forward:
+    description: "First read forward strand"
+    forward_prob: 1.0
+    use_when: "Ligation-based protocols"
+    library_prep: "Ligation-based kits"
+  
+  reverse:
+    description: "First read reverse strand (dUTP)"
+    forward_prob: 0.0
+    use_when: "Illumina stranded (most common stranded)"
+    library_prep: "dUTP, Illumina stranded"
+
+# =============================================================================
+# NOTES FOR v2.2.0
+# =============================================================================
+#
+# New in v2.2.0:
+# - Full input validation with clear error messages
+# - Enhanced error handling with @handle_errors
+# - Comprehensive parameter validation
+# - Strandedness validation
+# - Fragment length validation for single-end
+# - RSEM reference validation
+# - Quality control thresholds
+#
+# STAR + RSEM Advantages:
+# - Gold standard for isoform quantification
+# - EM algorithm for multi-mapping reads
+# - Both gene and transcript counts
+# - BAM files for visualization
+# - Widely validated and trusted
+# - Most accurate for isoforms
+#
+# STAR + RSEM Disadvantages:
+# - High memory (~32GB minimum)
+# - Slower than pseudo-aligners
+# - More complex than featureCounts
+# - CI calculation is VERY slow
+# - Large disk space needed
+#
+# When to Use STAR + RSEM:
+# - Isoform-level differential expression
+# - Alternative splicing analysis
+# - Accurate transcript quantification
+# - Need both gene and transcript counts
+# - Multi-mapping read resolution
+# - Publication-quality isoform analysis
+#
+# When NOT to Use:
+# - Only need gene-level counts (use STAR+featureCounts)
+# - Limited memory (<32GB)
+# - Speed is critical (use Kallisto/Salmon)
+# - Simple DE analysis (use Salmon)
+# - Don't need isoform resolution
+#
+# Memory Requirements:
+# - Human genome: 32GB minimum
+# - Mouse genome: 32GB minimum
+# - With CI: 32GB + ci_memory
+# - Larger genomes: 48-64GB
+#
+# Time Estimates:
+# - Single sample: 45-90 minutes
+# - 100M reads: ~1.5 hours
+# - With CI: 3-5x slower!
+# - EM algorithm: iterative (slower)
+#
+# Credibility Intervals:
+# - calc_ci: false (default, faster)
+# - calc_ci: true (publication quality, SLOW!)
+# - Adds 3-5x runtime per sample
+# - ci_memory: 1024-4096 MB recommended
+# - Only needed for uncertainty quantification
+#
+# Strandedness Selection:
+# - 'none': Most common (unstranded)
+# - 'reverse': dUTP protocols (Illumina stranded)
+# - 'forward': Ligation protocols (rare)
+# - CRITICAL: Wrong setting = wrong results!
+# - Check your library prep protocol
+#
+# RSEM vs featureCounts:
+# - RSEM: Isoform-level, EM algorithm, slower
+# - featureCounts: Gene-level only, counting, faster
+# - RSEM: Better for isoforms
+# - featureCounts: Better for genes only
+#
+# Single-End Recommendations:
+# - Provide fragment_length_mean and fragment_length_sd
+# - RSEM can estimate, but providing improves accuracy
+# - Typical: mean=200, sd=30
+# - Check your library prep protocol
+#
+# =============================================================================
