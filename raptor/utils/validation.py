@@ -11,7 +11,7 @@ Version: 2.2.0
 import pandas as pd
 import numpy as np
 from pathlib import Path
-from typing import Optional, List, Union, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 import logging
 
 logger = logging.getLogger(__name__)
