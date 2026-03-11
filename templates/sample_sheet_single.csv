@@ -1,0 +1,7 @@
+sample_id,condition,batch,fastq
+Sample1,Control,Batch1,/path/to/data/Sample1.fastq.gz
+Sample2,Control,Batch1,/path/to/data/Sample2.fastq.gz
+Sample3,Control,Batch2,/path/to/data/Sample3.fastq.gz
+Sample4,Treatment,Batch1,/path/to/data/Sample4.fastq.gz
+Sample5,Treatment,Batch1,/path/to/data/Sample5.fastq.gz
+Sample6,Treatment,Batch2,/path/to/data/Sample6.fastq.gz
