@@ -1,4 +1,4 @@
-cff-version: 2.2.0
+cff-version: 1.2.0
 message: "If you use RAPTOR in your research, please cite it using the metadata from this file."
 title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
 abstract: >-
@@ -12,8 +12,8 @@ authors:
   - family-names: Bolouki
     given-names: Ayeh
     email: ayehbolouki1988@gmail.com
-    orcid: "https://orcid.org/0009-0008-1605-7594"
-    affiliation: "University of liege, Belgium"
+    orcid: "0009-0008-1605-7594"
+    affiliation: "University of Liège, Belgium"
 repository-code: "https://github.com/AyehBlk/RAPTOR"
 url: "https://github.com/AyehBlk/RAPTOR"
 repository-artifact: "https://pypi.org/project/raptor-rnaseq/"
@@ -26,12 +26,13 @@ keywords:
   - transcriptomics
   - computational biology
   - threshold optimization
+  - ensemble analysis
+  - parameter optimization
   - data-driven analysis
 license: MIT
 version: "2.2.0"
-date-released: "2026-03"
-doi: "10.5281/zenodo.17607161"
-
+date-released: "2026-03-XX"
+doi: "10.5281/zenodo.XXXXXXX"
 preferred-citation:
   type: software
   title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
@@ -39,11 +40,11 @@ preferred-citation:
     - family-names: Bolouki
       given-names: Ayeh
       email: ayehbolouki1988@gmail.com
-      orcid: "https://orcid.org/0009-0008-1605-7594"
-      affiliation: "University of liege, Belgium"
+      orcid: "0009-0008-1605-7594"
+      affiliation: "University of Liège, Belgium"
   year: 2026
   version: "2.2.0"
-  doi: "10.5281/zenodo.17607161"
+  doi: "10.5281/zenodo.XXXXXXX" 
   url: "https://github.com/AyehBlk/RAPTOR"
   repository-code: "https://github.com/AyehBlk/RAPTOR"
   license: MIT
