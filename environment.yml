@@ -1,0 +1,126 @@
+name: raptor
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # ==========================================================================
+  # Python - v2.2.0 supports Python 3.8-3.12
+  # ==========================================================================
+  - python>=3.8,<3.13
+  
+  # ==========================================================================
+  # Core Scientific Computing
+  # ==========================================================================
+  - numpy>=1.19.0
+  - pandas>=1.1.0
+  - scipy>=1.5.0
+  - scikit-learn>=0.24.0
+  - joblib>=1.0.0
+  
+  # ==========================================================================
+  # Visualization
+  # ==========================================================================
+  - matplotlib>=3.3.0
+  - seaborn>=0.11.0
+  - plotly>=5.0.0
+  
+  # ==========================================================================
+  # Statistics
+  # ==========================================================================
+  - statsmodels>=0.12.0
+  
+  # ==========================================================================
+  # Configuration Management
+  # ==========================================================================
+  - pyyaml>=5.3.0
+  - toml>=0.10.0              # NEW in v2.2.0 - TOML config support
+  
+  # ==========================================================================
+  # CLI and Utilities
+  # ==========================================================================
+  - click>=7.0
+  - colorama>=0.4.0
+  - tqdm>=4.50.0
+  
+  # ==========================================================================
+  # Optional: Dashboard (comment out if not needed)
+  # ==========================================================================
+  - streamlit>=1.20.0
+  - altair>=4.0.0
+  
+  # ==========================================================================
+  # Optional: Development Tools (comment out for production)
+  # ==========================================================================
+  # - pytest>=6.0.0
+  # - pytest-cov>=2.10.0
+  # - pytest-mock>=3.6.0
+  # - black>=21.0
+  # - flake8>=3.8.0
+  # - isort>=5.0.0
+  # - mypy>=0.900
+  
+  # ==========================================================================
+  # Optional: Documentation (comment out if not building docs)
+  # ==========================================================================
+  # - sphinx>=3.5.0
+  # - sphinx_rtd_theme>=0.5.0
+  # - myst-parser>=0.15.0
+  
+  # ==========================================================================
+  # Pip packages and RAPTOR installation
+  # ==========================================================================
+  - pip
+  - pip:
+    # Install RAPTOR from PyPI
+    - raptor-rnaseq>=2.2.0
+    
+    # Optional: Advanced features (uncomment if needed)
+    # - bayesian-optimization>=1.2.0   # Bayesian optimization for Module 8
+    # - jinja2>=3.0.0                  # PDF report generation
+    # - markdown>=3.3.0                # PDF report generation
+    # - psutil>=5.8.0                  # Resource monitoring
+    # - colorlog>=6.6.0                # Colored logging
+
+
+# =============================================================================
+# USAGE INSTRUCTIONS
+# =============================================================================
+
+# Create environment:
+#   conda env create -f environment.yml
+
+# Activate environment:
+#   conda activate raptor
+
+# Update environment:
+#   conda env update -f environment.yml --prune
+
+# Remove environment:
+#   conda env remove -n raptor
+
+# Export current environment:
+#   conda env export > environment-current.yml
+
+
+# =============================================================================
+# NOTES
+# =============================================================================
+
+# This is the CORE environment for RAPTOR Python package only.
+# 
+# Does NOT include:
+#   - Bioinformatics tools (STAR, Salmon, Kallisto, etc.)
+#   - R packages (DESeq2, edgeR, limma)
+#   - Development tools (by default)
+#   - Documentation tools (by default)
+#
+# For full bioinformatics environment, see: environment-full.yml
+#
+# External tools required for pipelines (install separately):
+#   - STAR, HISAT2, Salmon, Kallisto (for alignment/quantification)
+#   - Samtools, featureCounts, RSEM (for post-processing)
+#   - R with DESeq2, edgeR, limma (for differential expression)
+#
+# Install R packages:
+#   Rscript raptor/external_modules/module6_de_analysis/r_scripts/install_packages.R

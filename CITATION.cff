@@ -1,0 +1,49 @@
+cff-version: 1.2.0
+message: "If you use RAPTOR in your research, please cite it using the metadata from this file."
+title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
+abstract: >-
+  RAPTOR is a comprehensive framework for benchmarking and optimizing RNA-seq 
+  differential expression analysis pipelines. It provides ML-powered pipeline 
+  recommendations, adaptive threshold optimization, interactive dashboards, 
+  ensemble analysis, and automated reporting to make pipeline selection 
+  evidence-based rather than guesswork.
+type: software
+authors:
+  - family-names: Bolouki
+    given-names: Ayeh
+    email: ayehbolouki1988@gmail.com
+    orcid: "https://orcid.org/0009-0008-1605-7594"
+    affiliation: "University of Namur, Belgium"
+repository-code: "https://github.com/AyehBlk/RAPTOR"
+url: "https://github.com/AyehBlk/RAPTOR"
+repository-artifact: "https://pypi.org/project/raptor-rnaseq/"
+keywords:
+  - RNA-seq
+  - differential expression
+  - bioinformatics
+  - pipeline benchmarking
+  - machine learning
+  - transcriptomics
+  - computational biology
+  - threshold optimization
+  - data-driven analysis
+license: MIT
+version: "2.1.1"
+date-released: "2025-12-15"
+doi: "10.5281/zenodo.17607161"
+
+preferred-citation:
+  type: software
+  title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
+  authors:
+    - family-names: Bolouki
+      given-names: Ayeh
+      email: ayehbolouki1988@gmail.com
+      orcid: "https://orcid.org/0009-0008-1605-7594"
+      affiliation: "University of Namur, Belgium"
+  year: 2025
+  version: "2.1.1"
+  doi: "10.5281/zenodo.17607161"
+  url: "https://github.com/AyehBlk/RAPTOR"
+  repository-code: "https://github.com/AyehBlk/RAPTOR"
+  license: MIT
