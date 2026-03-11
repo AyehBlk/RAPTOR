@@ -1,0 +1,6 @@
+Optional (Enhancement)
+
+Add raptor de-analysis command to main CLI
+Add progress bars to Python wrapper
+Add caching for R package checks
+Add parallel execution support

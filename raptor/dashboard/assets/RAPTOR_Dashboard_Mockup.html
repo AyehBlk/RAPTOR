@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAPTOR Dashboard Mockup</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #ffffff;
+            color: #262730;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ===========================
+           SIDEBAR
+           =========================== */
+        .sidebar {
+            width: 300px;
+            background-color: #f0f2f6;
+            padding: 2rem 1.5rem;
+            overflow-y: auto;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+            border-radius: 12px;
+            color: white;
+        }
+
+        .logo-emoji {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .logo-version {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .sidebar hr {
+            border: none;
+            border-top: 1px solid #d0d0d0;
+            margin: 1.5rem 0;
+        }
+
+        .sidebar h3 {
+            color: #2E7D32;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 1rem;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #0c5460;
+        }
+
+        .module-list {
+            list-style: none;
+            margin-top: 0.5rem;
+        }
+
+        .module-list li {
+            margin-bottom: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        /* ===========================
+           MAIN CONTENT
+           =========================== */
+        .main-content {
+            flex: 1;
+            padding: 2rem 3rem;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .main-header {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2E7D32;
+            border-bottom: 3px solid #2E7D32;
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .main-subtitle {
+            font-size: 1.125rem;
+            color: #666;
+            font-weight: 500;
+            margin-bottom: 2rem;
+        }
+
+        .separator {
+            border: none;
+            border-top: 2px solid #e0e0e0;
+            margin: 2rem 0;
+        }
+
+        /* Info banner */
+        .info-banner {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .info-banner strong {
+            color: #0c5460;
+        }
+
+        .info-banner ul {
+            margin-top: 0.5rem;
+            margin-left: 1.5rem;
+        }
+
+        .info-banner li {
+            margin-bottom: 0.25rem;
+            color: #0c5460;
+        }
+
+        /* Metrics */
+        .metrics-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2E7D32;
+        }
+
+        /* Section title */
+        .section-title {
+            font-size: 1.5rem;
+            color: #388E3C;
+            border-bottom: 2px solid #388E3C;
+            padding-bottom: 0.3rem;
+            margin-bottom: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        /* Feature cards */
+        .feature-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-card {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+
+        .feature-card h3 {
+            color: #2E7D32;
+            font-size: 1.25rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+            font-size: 0.9rem;
+        }
+
+        /* Expander */
+        .expander {
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .expander-header {
+            background-color: #f8f9fa;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            color: #2E7D32;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .expander-header:hover {
+            background-color: #e8f5e9;
+        }
+
+        .expander-content {
+            padding: 1.5rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .expander-content ul {
+            margin-left: 1.5rem;
+        }
+
+        .expander-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Activity box */
+        .activity-box {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            color: #0c5460;
+            margin-bottom: 2rem;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #666;
+        }
+
+        .footer-title {
+            font-weight: 700;
+            color: #2E7D32;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer p {
+            font-size: 0.875rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .footer-small {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: 0.5rem;
+        }
+
+        /* Buttons (for demonstration) */
+        .button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .button:hover {
+            background-color: #45a049;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .metrics-container,
+            .feature-cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+            }
+
+            .metrics-container,
+            .feature-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Mockup indicator */
+        .mockup-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);
+            color: white;
+            padding: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .container {
+            margin-top: 40px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Mockup Indicator -->
+    <div class="mockup-banner">
+        📱 VISUAL MOCKUP - This shows how your RAPTOR dashboard will look (not functional)
+    </div>
+
+    <div class="container">
+        <!-- ===========================
+             SIDEBAR
+             =========================== -->
+        <aside class="sidebar">
+            <!-- Logo -->
+            <div class="logo-container">
+                <div class="logo-emoji">🦖</div>
+                <div class="logo-text">RAPTOR</div>
+                <div class="logo-version">v2.2.0</div>
+            </div>
+
+            <hr>
+
+            <!-- Navigation -->
+            <h3>📋 Navigation</h3>
+            <div class="info-box">
+                <strong>Available Modules:</strong>
+                <ul class="module-list">
+                    <li>1. 🏠 Home</li>
+                    <li>2. ⚡ Quick Count</li>
+                    <li>3. ☑️ Quality Assessment</li>
+                    <li>4. 📊 Data Profiler</li>
+                    <li>5. 🤖 ML Recommender</li>
+                    <li>6. 📥 Import DE</li>
+                    <li>7. ⚙️ Optimization</li>
+                    <li>8. 🧬 Ensemble Analysis</li>
+                    <li>9. 📋 Reports</li>
+                    <li>10. ⚙️ Settings</li>
+                </ul>
+                <br>
+                <em>Select a page above to begin!</em>
+            </div>
+        </aside>
+
+        <!-- ===========================
+             MAIN CONTENT
+             =========================== -->
+        <main class="main-content">
+            <!-- Header -->
+            <h1 class="main-header">🦖 RAPTOR Dashboard v2.2.0</h1>
+            <p class="main-subtitle">RNA-seq Analysis Pipeline - Professional Interface</p>
+
+            <!-- Info Banner -->
+            <div class="info-banner">
+                <strong>👈 Select a page from the sidebar to begin!</strong>
+                <p style="margin-top: 0.5rem;">This dashboard provides a user-friendly interface for RAPTOR modules:</p>
+                <ul>
+                    <li>📥 Import differential expression results</li>
+                    <li>🔬 Run ensemble analysis</li>
+                    <li>📊 Visualize results</li>
+                    <li>📋 Export publication-ready reports</li>
+                </ul>
+            </div>
+
+            <!-- Metrics -->
+            <div class="metrics-container">
+                <div class="metric-card">
+                    <div class="metric-label">🦖 Version</div>
+                    <div class="metric-value">2.2.0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">📦 Modules</div>
+                    <div class="metric-value">9</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">✅ Status</div>
+                    <div class="metric-value" style="font-size: 1.5rem;">Ready</div>
+                </div>
+            </div>
+
+            <hr class="separator">
+
+            <!-- Feature Cards -->
+            <h2 class="section-title">🎯 Key Features</h2>
+            <div class="feature-cards">
+                <div class="feature-card">
+                    <h3>📊 Quality Control</h3>
+                    <p>Comprehensive QC with 6-method outlier detection, batch effect analysis, and quality scoring.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>🧬 Ensemble Analysis</h3>
+                    <p>Combine DESeq2, edgeR, and limma results using Fisher's method, RRA, or voting strategies.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>⚙️ Optimization</h3>
+                    <p>4 scientific methods to find optimal FDR and log2FC thresholds for your data.</p>
+                </div>
+            </div>
+
+            <hr class="separator">
+
+            <!-- Recent Activity -->
+            <h2 class="section-title">📋 Recent Activity</h2>
+            <div class="activity-box">
+                No recent activity. Start by importing DE results!
+            </div>
+
+            <!-- Expander Example -->
+            <div class="expander">
+                <div class="expander-header">📚 Getting Started Guide</div>
+                <div class="expander-content">
+                    <h4>For New Users:</h4>
+                    <ol>
+                        <li><strong>Import DE Results</strong> (📥 Import DE)
+                            <ul>
+                                <li>Upload DESeq2, edgeR, or limma results</li>
+                                <li>Auto-detection and validation</li>
+                            </ul>
+                        </li>
+                        <li><strong>Run Ensemble Analysis</strong> (🔬 Ensemble)
+                            <ul>
+                                <li>Combine multiple DE methods</li>
+                                <li>Get robust consensus genes</li>
+                            </ul>
+                        </li>
+                        <li><strong>Visualize Results</strong> (📈 Visualizations)
+                            <ul>
+                                <li>Interactive volcano plots</li>
+                                <li>Heatmaps, Venn diagrams</li>
+                            </ul>
+                        </li>
+                        <li><strong>Export Reports</strong> (📋 Reports)
+                            <ul>
+                                <li>PDF reports</li>
+                                <li>CSV gene lists</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <h4 style="margin-top: 1rem;">Quick Links:</h4>
+                    <ul>
+                        <li>📖 <a href="https://github.com/AyehBlk/RAPTOR" style="color: #2E7D32;">Documentation</a></li>
+                        <li>💬 <a href="https://github.com/AyehBlk/RAPTOR/issues" style="color: #2E7D32;">Support</a></li>
+                        <li>📧 <a href="mailto:ayehbolouki1988@gmail.com" style="color: #2E7D32;">Email</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                <p class="footer-title">🦖 RAPTOR v2.2.0</p>
+                <p>RNA-seq Analysis Pipeline Testing and Optimization Resource</p>
+                <p>Making free science for everybody around the world 🌍</p>
+                <p>Author: Ayeh Bolouki | Email: ayehbolouki1988@gmail.com</p>
+                <p class="footer-small">© 2026 Ayeh Bolouki. All rights reserved.</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

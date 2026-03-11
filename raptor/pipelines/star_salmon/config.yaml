@@ -1,0 +1,262 @@
+# =============================================================================
+# RAPTOR v2.2.0 - STAR + Salmon Pipeline Configuration
+# =============================================================================
+#
+# Hybrid pipeline combining STAR alignment with Salmon quantification.
+# Best of both worlds: BAM files + bootstrap uncertainty.
+#
+# ⚠️  REQUIRES TWO INDEXES:
+#     1. STAR genome index (--index)
+#     2. Salmon transcriptome index (--salmon-index)
+#
+# Author: Ayeh Bolouki
+# Version: 2.2.0
+# =============================================================================
+
+# =============================================================================
+# PIPELINE METADATA
+# =============================================================================
+pipeline:
+  name: star_salmon
+  version: 2.2.0
+  description: STAR + Salmon (BAM + bootstraps)
+  stage: 2  # Production pipeline
+  module: M7
+
+# =============================================================================
+# STAR ALIGNMENT PARAMETERS
+# =============================================================================
+star:
+  # Two-pass mode
+  two_pass_mode: Basic       # 'Basic' or 'None'
+  
+  # Multi-mapping
+  out_filter_multimap_nmax: 20
+  out_filter_mismatch_nmax: 10
+  
+  # Intron constraints
+  align_intron_max: 1000000  # 1Mb
+
+# =============================================================================
+# SALMON QUANTIFICATION PARAMETERS
+# =============================================================================
+salmon:
+  # Library type (CRITICAL for accuracy!)
+  library_type: "A"          # A = auto-detect (recommended)
+  
+  # Bootstraps for uncertainty estimation
+  bootstraps: 100            # 100+ recommended for DE
+  
+  # Bias correction
+  gc_bias: true              # GC bias correction
+  seq_bias: true             # Sequence bias correction
+  
+  # Gibbs sampling (alternative to bootstraps)
+  num_gibbs_samples: 0       # 0 = disabled
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - DOCKER
+# =============================================================================
+docker:
+  enabled: false
+  
+  # Docker images
+  star_image: quay.io/biocontainers/star:2.7.10b
+  salmon_image: combinelab/salmon:1.10.0
+  samtools_image: quay.io/biocontainers/samtools:1.17
+
+# =============================================================================
+# EXECUTION ENVIRONMENT - HPC CLUSTER
+# =============================================================================
+hpc:
+  enabled: false
+  
+  # Module names
+  modules:
+    - STAR/2.7.10b
+    - salmon/1.10.0
+    - samtools/1.17
+  
+  # Resource requirements (HIGH for STAR!)
+  memory: 32G              # STAR needs high memory
+  time: "12:00:00"         # Long runtime
+  nodes: 1
+  tasks_per_node: 1
+  cpus_per_task: 8
+
+# =============================================================================
+# PERFORMANCE SETTINGS
+# =============================================================================
+performance:
+  threads: 8
+  memory_gb: 32            # STAR requires high memory!
+
+# =============================================================================
+# OUTPUT SETTINGS
+# =============================================================================
+output:
+  base_dir: results/production
+  gene_counts: gene_counts.csv
+  tpm: tpm.csv
+  star_dir: star/          # STAR output directory
+  salmon_dir: salmon/      # Salmon output directory
+  bam_dir: bam/            # BAM files directory
+  logs_dir: logs/
+  keep_bam: true           # Keep genome BAM files
+
+# =============================================================================
+# VALIDATION SETTINGS (v2.2.0)
+# =============================================================================
+validation:
+  validate_inputs: true
+  
+  # Numeric ranges
+  min_threads: 1
+  max_threads: 128
+  min_memory_gb: 16        # STAR minimum
+  max_memory_gb: 512
+  
+  # STAR validation
+  valid_two_pass_modes: ['None', 'Basic']
+  min_multimap_nmax: 1
+  max_multimap_nmax: 1000
+  
+  # Salmon validation
+  valid_library_types: ['A', 'IU', 'ISF', 'ISR', 'MU', 'MSF', 'MSR', 
+                        'OU', 'OSF', 'OSR', 'SF', 'SR', 'U']
+  min_bootstraps: 0
+  max_bootstraps: 1000
+  
+  # Check file existence
+  check_star_index_exists: true
+  check_salmon_index_exists: true   # CRITICAL!
+  check_fastq_exists: true
+
+# =============================================================================
+# ERROR HANDLING (v2.2.0)
+# =============================================================================
+error_handling:
+  fail_fast: true
+  max_retries: 0
+  log_level: INFO
+  save_logs: true
+
+# =============================================================================
+# QUALITY CONTROL THRESHOLDS
+# =============================================================================
+qc_thresholds:
+  # STAR mapping
+  min_unique_mapping_rate: 50.0
+  warn_unique_mapping_rate: 70.0
+  
+  # Salmon mapping (from lib_format_counts.json)
+  min_salmon_mapping_rate: 50.0
+  warn_salmon_mapping_rate: 70.0
+
+# =============================================================================
+# TWO-INDEX REQUIREMENT EXPLANATION
+# =============================================================================
+#
+# Why TWO indexes?
+# ----------------
+# This hybrid pipeline runs in TWO stages:
+#
+# Stage 1: STAR Alignment
+#   - Uses STAR genome index
+#   - Produces genome BAM (for visualization)
+#   - Produces transcriptome BAM (for Salmon)
+#
+# Stage 2: Salmon Quantification
+#   - Uses Salmon transcriptome index
+#   - Reads from transcriptome BAM
+#   - Produces quant.sf with bootstraps
+#
+# Building the indexes:
+# ---------------------
+# STAR genome index:
+#   STAR --runMode genomeGenerate \
+#        --genomeDir star_index \
+#        --genomeFastaFiles genome.fa \
+#        --sjdbGTFfile annotation.gtf \
+#        --sjdbOverhang 100
+#
+# Salmon transcriptome index:
+#   salmon index \
+#          -t transcripts.fa \
+#          -i salmon_index
+#
+# =============================================================================
+# NOTES FOR v2.2.0
+# =============================================================================
+#
+# New in v2.2.0:
+# - Full input validation with clear error messages
+# - Enhanced error handling with @handle_errors
+# - Validates BOTH indexes (STAR + Salmon)
+# - Two-stage validation and error messages
+# - Library type validation
+# - Bootstrap validation
+# - Quality control thresholds
+#
+# STAR + Salmon Advantages:
+# - BAM files for visualization (IGV, UCSC)
+# - Bootstrap uncertainty for differential expression
+# - Combines benefits of both tools
+# - Bias correction from Salmon
+# - Novel junction detection from STAR
+# - Compatible with sleuth
+#
+# STAR + Salmon Disadvantages:
+# - Requires TWO indexes (setup complexity)
+# - High memory (~32GB minimum)
+# - Slower than pure Salmon
+# - More disk space (BAM files)
+# - Two-stage process (more complex)
+#
+# When to Use STAR + Salmon:
+# - Need BAM files AND uncertainty estimates
+# - sleuth differential expression
+# - Want genome visualization + bootstrap DE
+# - Publication with both IGV figures and DE
+# - Need both alignment and quantification
+#
+# When NOT to Use:
+# - Only need gene counts (use STAR+featureCounts)
+# - Only need DE with uncertainty (use Salmon)
+# - Don't need BAM files (use Salmon)
+# - Limited memory (<32GB)
+# - Limited disk space
+# - Want simplest workflow
+#
+# Memory Requirements:
+# - Human genome: 32GB minimum (from STAR)
+# - Mouse genome: 32GB minimum
+# - Salmon adds minimal memory
+# - Total: ~32GB
+#
+# Time Estimates:
+# - Single sample: 40-70 minutes
+# - STAR: 30-50 minutes
+# - Salmon: 10-20 minutes
+# - Total slower than Salmon alone
+#
+# vs Other Pipelines:
+# - vs STAR+featureCounts: Adds bootstrap uncertainty
+# - vs STAR+RSEM: Faster, no isoforms, has bootstraps
+# - vs Salmon: Slower, adds BAM files
+# - vs Kallisto: Slower, more accurate, adds BAM
+#
+# Bootstrap Recommendations:
+# - 0: No bootstraps (fastest, no uncertainty)
+# - 30: Minimal for quick check
+# - 100: Standard for differential expression
+# - 200+: Publication quality
+#
+# Library Type Guide:
+# - 'A': Auto-detect (recommended, safest)
+# - 'IU': Inward, unstranded
+# - 'ISF': Inward, stranded forward
+# - 'ISR': Inward, stranded reverse (dUTP - most common)
+# - See Salmon docs for full list
+#
+# =============================================================================
