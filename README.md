@@ -135,16 +135,81 @@ All **9 pages** functionally tested with real data:
 
 ### Option 1: Interactive Dashboard (Recommended)
 
+**Install with dashboard support:**
+```bash
+pip install raptor-rnaseq[dashboard]
+```
+
+**Launch the dashboard** — choose the method that matches your setup:
+
+| Scenario | Command |
+|----------|---------|
+| **pip install** (recommended) | `python -m raptor.launch_dashboard` |
+| **Cloned from GitHub** | `python launch_dashboard.py` |
+| **Direct streamlit** | `python -m streamlit run raptor/dashboard/app.py` |
+| **Inside a virtual environment** | Activate venv first, then any command above |
+
+The dashboard opens at **http://localhost:8501**. Upload data → Profile → Get recommendation → Run ensemble → Done!
+
+**Detailed instructions by setup:**
+
+<details>
+<summary><strong>A. Installed via pip (most users)</strong></summary>
+
 ```bash
 # Install
-pip install raptor-rnaseq
+pip install raptor-rnaseq[dashboard]
 
-# Launch dashboard
-streamlit run raptor/dashboard/app.py
-
-# Opens at http://localhost:8501
-# Upload data → Profile → Get recommendation → Run ensemble → Done!
+# Launch
+python -m raptor.launch_dashboard
 ```
+</details>
+
+<details>
+<summary><strong>B. Cloned from GitHub (developers)</strong></summary>
+
+```bash
+git clone https://github.com/AyehBlk/RAPTOR.git
+cd RAPTOR
+pip install -e .[dashboard]
+
+# Launch from repo root
+python launch_dashboard.py
+
+# Or directly
+python -m streamlit run raptor/dashboard/app.py
+```
+</details>
+
+<details>
+<summary><strong>C. Using a virtual environment</strong></summary>
+
+```bash
+# Create and activate venv
+python -m venv .venv
+
+# Windows
+.venv\Scripts\Activate
+
+# Linux/macOS
+source .venv/bin/activate
+
+# Install and launch
+pip install raptor-rnaseq[dashboard]
+python -m raptor.launch_dashboard
+```
+</details>
+
+<details>
+<summary><strong>D. Conda environment</strong></summary>
+
+```bash
+conda env create -f environment.yml
+conda activate raptor
+pip install streamlit altair
+python -m streamlit run raptor/dashboard/app.py
+```
+</details>
 
 ### Option 2: Command Line
 
@@ -707,6 +772,103 @@ Copyright (c) 2026 Ayeh Bolouki
 - **🐛 Issues:** [GitHub Issues](https://github.com/AyehBlk/RAPTOR/issues)
 - **💬 Discussions:** [GitHub Discussions](https://github.com/AyehBlk/RAPTOR/discussions)
 - **📧 Email:** ayehbolouki1988@gmail.com
+
+---
+
+## ⚠️ Known Issues & Troubleshooting
+
+### v2.2.1 Known Issues
+
+| Issue | Status | Workaround |
+|-------|--------|------------|
+| `raptor dashboard` CLI command fails with `ModuleNotFoundError` | Fix planned for v2.2.2 | Use `python -m raptor.launch_dashboard` instead |
+| `raptor --version` shows 2.2.0 instead of 2.2.1 | Cosmetic only | The package is correctly 2.2.1 (`python -c "import raptor; print(raptor.__version__)"`) |
+| ML Recommender requires pre-trained model file | By design | Use rule-based recommender (`--method rule`) or train your own model |
+| 16 test files skipped in `test_generate_report.py` | Known | Scripts subfolder import path issue, does not affect functionality |
+
+### Common Errors
+
+<details>
+<summary><strong>"streamlit: not recognized" or "command not found"</strong></summary>
+
+Streamlit is not installed or not on your PATH.
+
+```bash
+# Fix: install with dashboard extras
+pip install raptor-rnaseq[dashboard]
+
+# Or install streamlit directly
+pip install streamlit
+
+# If using a virtual environment, make sure it's activated first
+# Windows: .venv\Scripts\Activate
+# Linux/macOS: source .venv/bin/activate
+```
+</details>
+
+<details>
+<summary><strong>"ModuleNotFoundError: No module named 'raptor'"</strong></summary>
+
+This happens when running `raptor dashboard` from the CLI. The entry point has a bug in v2.2.1.
+
+```bash
+# Workaround: use the Python module launcher instead
+python -m raptor.launch_dashboard
+
+# Or run streamlit directly
+python -m streamlit run raptor/dashboard/app.py
+```
+</details>
+
+<details>
+<summary><strong>"raptor --version" shows wrong version</strong></summary>
+
+The CLI has hardcoded version strings. The package itself is correct.
+
+```bash
+# Check the real version
+python -c "import raptor; print(raptor.__version__)"
+# Should print: 2.2.1
+```
+</details>
+
+<details>
+<summary><strong>Dashboard pages show errors with no data loaded</strong></summary>
+
+The dashboard requires data to be uploaded or loaded into session state before most pages will work. Start by:
+
+1. Go to the **Quality Assessment** page and upload a count matrix CSV and metadata CSV
+2. Or go to **Import DE** and upload DESeq2/edgeR/limma result files
+3. Pages will populate once data is available in the session
+</details>
+
+<details>
+<summary><strong>Import errors on Windows (path issues)</strong></summary>
+
+If you see path-related errors on Windows:
+
+```bash
+# Make sure you're not inside a folder named 'raptor' — this shadows the package
+cd C:\Users\YourName
+python -c "import raptor; print(raptor.__version__)"
+
+# If using the source code, install in editable mode
+cd C:\path\to\RAPTOR
+pip install -e .
+```
+</details>
+
+### Reporting Bugs
+
+Found a new bug? Please report it:
+
+1. Check [existing issues](https://github.com/AyehBlk/RAPTOR/issues) first
+2. Create a [new issue](https://github.com/AyehBlk/RAPTOR/issues/new?template=bug_report.md) with:
+   - RAPTOR version (`python -c "import raptor; print(raptor.__version__)"`)
+   - Python version (`python --version`)
+   - Operating system
+   - Full error traceback
+   - Steps to reproduce
 
 ---
 
