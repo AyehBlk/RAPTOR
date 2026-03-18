@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.2.0-brightgreen?style=for-the-badge" alt="RAPTOR v2.2.0"/>
+  <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.2.1-brightgreen?style=for-the-badge" alt="RAPTOR v2.2.1"/>
 </p>
 
 <h1 align="center">RAPTOR</h1>
@@ -14,7 +14,7 @@
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.8--3.12-blue.svg" alt="Python 3.8-3.12"/></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License"/></a>
   <a href="https://doi.org/10.5281/zenodo.17607161"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.17607161.svg" alt="DOI"/></a>
-  <a href="https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.0"><img src="https://img.shields.io/badge/Release-v2.2.0-orange.svg" alt="Release v2.2.0"/></a>
+  <a href="https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.1"><img src="https://img.shields.io/badge/Release-v2.2.1-orange.svg" alt="Release v2.2.1"/></a>
 </p>
 
 <p align="center">
@@ -101,13 +101,33 @@
 </tr>
 </table>
 
-### 🎨 Interactive Dashboard
+### 🎨 Interactive Dashboard (Verified in v2.2.1)
 
-- Web-based interface (no coding!)
-- Real-time visualizations
-- Drag-and-drop data upload
-- One-click ensemble analysis
-- Export publication-ready reports
+All **9 pages** functionally tested with real data:
+
+- **Quality Assessment** — 7 visualization tabs: PCA (2D/3D), sample correlation, expression distribution, RLE plot, dendrogram, mean-variance/BCV
+- **Data Profiler** — 32-feature extraction with professional CSS styling
+- **Pipeline Recommender** — rule-based recommendations with confidence scoring
+- **Import DE** — drag-and-drop DESeq2/edgeR/limma result files
+- **Parameter Optimization** — interactive sliders + 4 scientific methods (FDR Control, Ground Truth, Stability, Reproducibility)
+- **Ensemble Analysis** — Fisher's, Brown's, RRA with column name mapping
+- **Reports** — generate QC, DE, and ensemble reports
+- **Settings** — configure analysis parameters
+- **Visualization** — 12 plot types including volcano, MA, heatmap, and 7 gene expression styles (box, violin, beeswarm, raincloud, lollipop, heatmap bar, forest plot)
+
+---
+
+## 🆕 What's New in v2.2.1
+
+**Dashboard verified and enhanced** — all 9 Streamlit pages tested with real data:
+
+- **16 bugs fixed** across Import DE, Ensemble, Optimization, Reports, and Quality pages
+- **Quality Assessment** expanded to 7 visualization tabs (PCA 2D/3D, correlation, RLE, dendrogram, BCV)
+- **Parameter Optimization** now integrates all 4 scientific methods from Module 8
+- **Visualization** completely rewritten with 12 plot types and 7 gene expression styles
+- **Professional styling** across all pages (emoji cleanup, CSS cards, clean typography)
+- **413 tests passing**, 0 failures, 55 CLI commands verified
+- **Column name mapping** fixed between Module 7 (standardized) and Modules 8/9 (expected)
 
 ---
 
@@ -255,7 +275,7 @@ RAPTOR is organized into **9 modules** spanning 4 analysis stages:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    RAPTOR v2.2.0                            │
+│                    RAPTOR v2.2.1                            │
 │         RNA-seq Analysis Pipeline Framework                 │
 └─────────────────────────────────────────────────────────────┘
 
@@ -278,7 +298,7 @@ Stage 3: Differential Expression
 ├── Module 6: DE Analysis (R: DESeq2, edgeR, limma)
 └── Module 7: DE Import (standardize any format)
 
-Stage 4: Advanced Analysis ⭐ NEW in v2.2.0
+Stage 4: Advanced Analysis ⭐ NEW in v2.2.1
 ├── Module 8: Parameter Optimization (4 methods)
 │    ├── Ground Truth Optimization
 │    ├── FDR Control Optimization
@@ -340,8 +360,8 @@ raptor pipeline run --name salmon --samples samples.csv --index salmon_index/
 ```
 RAPTOR/
 ├── raptor/                         # Core Python package
-│   ├── __init__.py                 # Package initialization (v2.2.0)
-│   ├── cli.py                      # Command-line interface (11 commands)
+│   ├── __init__.py                 # Package initialization (v2.2.1)
+│   ├── cli.py                      # Command-line interface (55 commands)
 │   ├── quality_assessment.py       # Module 2: QC (6 methods)
 │   ├── profiler.py                 # Module 3: Profiling (32 features)
 │   ├── recommender.py              # Module 4: Rule-based
@@ -396,11 +416,12 @@ RAPTOR/
 │   ├── 08_Parameter_Optimization.py            ⭐ NEW
 │   └── 09_Ensemble_Analysis.py                 ⭐ NEW
 │
-├── tests/                          # Test suite (85%+ coverage)
+├── tests/                          # Test suite (413 tests passing)
 │   ├── test_profiler.py
 │   ├── test_quality_assessment.py
 │   ├── test_parameter_optimization.py          ⭐ NEW
 │   ├── test_ensemble.py                        ⭐ NEW
+│   ├── test_cli_comprehensive.py               ⭐ NEW (55 commands)
 │   └── ...
 │
 ├── templates/                      # Sample sheets
@@ -410,6 +431,9 @@ RAPTOR/
 ├── .github/                        # GitHub templates
 │   └── ISSUE_TEMPLATE/
 │
+├── .streamlit/                     # Dashboard theme configuration
+│   └── config.toml
+│
 ├── setup.py                        # Package setup
 ├── requirements.txt                # Python dependencies
 ├── environment.yml                 # Conda environment (core)
@@ -417,6 +441,7 @@ RAPTOR/
 ├── CITATION.cff                    # Citation metadata
 ├── CHANGELOG.md                    # Version history
 ├── CONTRIBUTING.md                 # Contribution guidelines
+├── .gitignore                      # Git ignore rules
 └── LICENSE                         # MIT License
 ```
 
@@ -431,7 +456,7 @@ RAPTOR/
 | [Installation](#-installation) | Detailed installation instructions |
 | [CONDA_ENVIRONMENTS.md](docs/CONDA_ENVIRONMENTS.md) | Conda setup (core vs full) |
 
-### Core Features (v2.2.0)
+### Core Features (v2.2.1)
 | Document | Description |
 |----------|-------------|
 | [MODULE_2_Quality_Assessment.md](docs/MODULE_2_Quality_Assessment.md) | QC with 6 outlier methods |
@@ -454,7 +479,7 @@ RAPTOR/
 
 ## 💡 Usage Examples
 
-### Example 1: Complete Workflow (v2.2.0)
+### Example 1: Complete Workflow (v2.2.1)
 
 ```python
 from raptor import (
@@ -551,7 +576,7 @@ final_result.to_csv('final_consensus.csv')
 
 ```bash
 #!/bin/bash
-# Complete RAPTOR v2.2.0 workflow using CLI
+# Complete RAPTOR v2.2.1 workflow using CLI
 
 # Step 1: QC
 raptor qc --counts counts.csv --metadata metadata.csv --output qc_results/
@@ -645,7 +670,7 @@ If you use RAPTOR in your research, please cite:
   author       = {Bolouki, Ayeh},
   title        = {RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource},
   year         = {2026},
-  version      = {2.2.0},
+  version      = {2.2.1},
   publisher    = {Zenodo},
   doi          = {10.5281/zenodo.17607161},
   url          = {https://github.com/AyehBlk/RAPTOR}
@@ -710,7 +735,7 @@ RAPTOR builds on the excellent work of the RNA-seq community:
 </p>
 
 <p align="center">
-  <em>RAPTOR v2.2.0 - Making pipeline selection evidence-based, not guesswork 🦖</em>
+  <em>RAPTOR v2.2.1 - Making pipeline selection evidence-based, not guesswork 🦖</em>
 </p>
 
 <p align="center">
