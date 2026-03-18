@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-RAPTOR Dashboard Launcher v2.2.0
+RAPTOR Dashboard Launcher v2.2.1
 
 Quick launcher for the interactive web dashboard.
 
 Author: Ayeh Bolouki
-Version: 2.2.0
-Date: January 2026
+Version: 2.2.1
+Date: March 2026
 """
 
 import subprocess
@@ -117,20 +117,20 @@ def main():
     # Display launch information
     print(f"""
     ╔═══════════════════════════════════════════════════════════════╗
-    ║          🦖 Launching RAPTOR v2.2.0 Dashboard                 ║
+    ║          🦖 Launching RAPTOR v2.2.1 Dashboard                 ║
     ║            Professional RNA-seq Analysis Interface            ║
     ╚═══════════════════════════════════════════════════════════════╝
     
     Dashboard Location: {dashboard_path.parent}
     Core Modules: {core_status}
     
-    🆕 NEW in v2.2.0:
+    NEW in v2.2.1:
     ────────────────────────────────────────────────────────────────
-    • Complete workflow integration (Modules 2-4, 7-9)
-    • Professional multi-page interface
-    • Enhanced ensemble analysis (Fisher, Brown, RRA)
-    • Real-time progress tracking
-    • Publication-ready exports
+    - All 9 dashboard pages verified with real data
+    - Quality Assessment: 7 visualization tabs (PCA 2D/3D, RLE, BCV)
+    - Optimization: 4 scientific methods integrated
+    - Visualization: 12 plot types, 7 gene expression styles
+    - Professional styling, 16 bugs fixed
     
     📋 Available Features:
     ────────────────────────────────────────────────────────────────
