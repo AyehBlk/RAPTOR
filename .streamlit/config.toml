@@ -1,0 +1,85 @@
+# RAPTOR Dashboard Theme Configuration
+# ======================================
+#
+# This file defines the color scheme and styling for the RAPTOR dashboard.
+# Copy this to .streamlit/config.toml in your project root.
+#
+# Author: Ayeh Bolouki
+# Version: 2.2.0
+
+[theme]
+# Primary colors
+primaryColor = "#2E7D32"        # Dark green (RAPTOR brand)
+backgroundColor = "#FFFFFF"      # White background
+secondaryBackgroundColor = "#F0F2F6"  # Light gray for sidebar
+
+# Text colors
+textColor = "#262730"           # Dark gray for text
+font = "sans serif"             # Font family
+
+# ============================================================================
+# ALTERNATIVE THEMES
+# ============================================================================
+
+# Uncomment one of the following themes to use it:
+
+# --- Dark Theme ---
+# [theme]
+# primaryColor = "#81C784"
+# backgroundColor = "#1E1E1E"
+# secondaryBackgroundColor = "#2D2D2D"
+# textColor = "#E0E0E0"
+# font = "sans serif"
+
+# --- High Contrast Theme ---
+# [theme]
+# primaryColor = "#00C853"
+# backgroundColor = "#FFFFFF"
+# secondaryBackgroundColor = "#E8F5E9"
+# textColor = "#000000"
+# font = "sans serif"
+
+# --- Blue Theme ---
+# [theme]
+# primaryColor = "#1976D2"
+# backgroundColor = "#FFFFFF"
+# secondaryBackgroundColor = "#E3F2FD"
+# textColor = "#263238"
+# font = "sans serif"
+
+# ============================================================================
+# CUSTOMIZATION GUIDE
+# ============================================================================
+#
+# primaryColor:
+#   - Used for: Interactive elements, buttons, selected items
+#   - Recommendation: Choose a color that represents your brand
+#
+# backgroundColor:
+#   - Used for: Main content area background
+#   - Recommendation: Keep light for readability
+#
+# secondaryBackgroundColor:
+#   - Used for: Sidebar, expanders, and secondary elements
+#   - Recommendation: Slightly darker/lighter than backgroundColor
+#
+# textColor:
+#   - Used for: All text content
+#   - Recommendation: High contrast with backgroundColor
+#
+# ============================================================================
+# COLOR PALETTE
+# ============================================================================
+#
+# RAPTOR Green Palette:
+#   - Primary:   #2E7D32
+#   - Light:     #81C784
+#   - Dark:      #1B5E20
+#   - Accent:    #4CAF50
+#
+# Complementary Colors:
+#   - Success:   #4CAF50 (Green)
+#   - Info:      #2196F3 (Blue)
+#   - Warning:   #FF9800 (Orange)
+#   - Error:     #F44336 (Red)
+#

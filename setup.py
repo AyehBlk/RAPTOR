@@ -7,7 +7,7 @@ CLI support and automatic dependency management.
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
-Version: 2.2.0
+Version: 2.2.1
 Repository: https://github.com/AyehBlk/RAPTOR
 """
 
@@ -285,66 +285,39 @@ setup(
 # Post-Install Message
 # =============================================================================
 
-print("""
-╔════════════════════════════════════════════════════════════════════════╗
-║                                                                        ║
-║  🦖 RAPTOR v2.2.0 Installation Complete!                             ║
-║                                                                        ║
-║  RNA-seq Analysis Pipeline Testing and Optimization Resource          ║
-║                                                                        ║
-╚════════════════════════════════════════════════════════════════════════╝
+try:
+    import sys
+    sys.stdout.reconfigure(encoding='utf-8')
+    print("""
+========================================================================
+  RAPTOR v2.2.0 Installation Complete!
+  RNA-seq Analysis Pipeline Testing and Optimization Resource
+========================================================================
 
-✅ Core package installed successfully!
+  Core package installed successfully!
 
-📋 Quick Start:
-   • CLI: raptor --help
-   • Dashboard: streamlit run raptor/dashboard/app.py
-   • Python API: from raptor import ensemble_fisher
+  Quick Start:
+    CLI:        raptor --help
+    Dashboard:  streamlit run raptor/dashboard/app.py
+    Python API: from raptor import ensemble_fisher
 
-📚 Documentation: https://github.com/AyehBlk/RAPTOR/tree/main/docs
+  Documentation: https://github.com/AyehBlk/RAPTOR/tree/main/docs
 
-🔬 Available Modules:
-   ✓ Module 2: Quality Assessment
-   ✓ Module 3: Data Profiler
-   ✓ Module 4: Pipeline Recommender (Rule-based + ML)
-   ✓ Module 5: Production Pipelines (Kallisto, Salmon, STAR, etc.)
-   ✓ Module 6: Differential Expression (DESeq2, edgeR, limma)
-   ✓ Module 7: DE Import & Comparison
-   ✓ Module 8: Parameter Optimization
-   ✓ Module 9: Ensemble Analysis
+  Test Installation:
+    python -c "import raptor; print(raptor.get_info())"
+    raptor --version
 
-⚙️  Pipeline Tools Available:
-   • Kallisto (quick & full)
-   • Salmon (quick & full)
-   • STAR + FeatureCounts
-   • STAR + RSEM
-   • STAR + Salmon
-   • HISAT2 + FeatureCounts
+  Optional Features:
+    Dashboard:     pip install .[dashboard]
+    Development:   pip install .[dev]
+    Documentation: pip install .[docs]
+    Everything:    pip install .[all]
 
-⚠️  External Dependencies Required:
-   
-   R Packages (for Module 6 - DE Analysis):
-   • DESeq2, edgeR, limma
-   • Install with: Rscript raptor/external_modules/module6_de_analysis/r_scripts/install_packages.R
-   
-   Alignment Tools (for Module 5 - Pipelines):
-   • STAR, HISAT2 (alignment)
-   • Kallisto, Salmon (pseudoalignment)
-   • Samtools, FeatureCounts, RSEM (counting)
+  Support:
+    Email:  ayehbolouki1988@gmail.com
+    GitHub: https://github.com/AyehBlk/RAPTOR/issues
 
-💡 Test Installation:
-   python -c "import raptor; print(raptor.get_info())"
-   raptor --version
-
-📦 Optional Features:
-   • Dashboard: pip install .[dashboard]
-   • Development: pip install .[dev]
-   • Documentation: pip install .[docs]
-   • Everything: pip install .[all]
-
-🆘 Support:
-   • Email: ayehbolouki1988@gmail.com
-   • GitHub Issues: https://github.com/AyehBlk/RAPTOR/issues
-
-Happy analyzing! 🧬
+========================================================================
 """)
+except Exception:
+    print("RAPTOR v2.2.0 installed successfully! Run: raptor --help")

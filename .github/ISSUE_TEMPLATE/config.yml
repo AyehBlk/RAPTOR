@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/AyehBlk/RAPTOR/blob/main/README.md
+    about: Check the documentation for answers to common questions
+  - name: 💬 Discussions
+    url: https://github.com/AyehBlk/RAPTOR/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📧 Direct Contact
+    url: mailto:ayehbolouki1988@gmail.com
+    about: For private inquiries, reach out via email

@@ -9,7 +9,7 @@ Email: ayehbolouki1988@gmail.com
 Version: 2.2.0
 """
 
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 __author__ = "Ayeh Bolouki"
 __email__ = "ayehbolouki1988@gmail.com"
 
