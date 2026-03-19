@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   # ==========================================================================
-  # Python - v2.2.0 supports Python 3.8-3.12
+  # Python - v2.2.1 supports Python 3.8-3.12
   # ==========================================================================
   - python>=3.8,<3.13
   
@@ -73,7 +73,7 @@ dependencies:
   - pip
   - pip:
     # Install RAPTOR from PyPI
-    - raptor-rnaseq>=2.2.0
+    - raptor-rnaseq>=2.2.1
     
     # Optional: Advanced features (uncomment if needed)
     # - bayesian-optimization>=1.2.0   # Bayesian optimization for Module 8

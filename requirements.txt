@@ -1,7 +1,7 @@
-# RAPTOR v2.2.0 Requirements
+# RAPTOR v2.2.1 Requirements
 # RNA-seq Analysis Pipeline Testing and Optimization Resource
 # Python 3.8+
-# Updated: January 2026
+# Updated: March 2026
 
 # ============================================================================
 # CORE DEPENDENCIES - REQUIRED FOR ALL FEATURES
@@ -36,7 +36,7 @@ tqdm>=4.50.0                     # Progress bars
 
 
 # ============================================================================
-# v2.2.0 NEW MODULES - CORE FEATURES
+# v2.2.0+ NEW MODULES - CORE FEATURES
 # ============================================================================
 
 # ---------- Module 8: Parameter Optimization ----------
@@ -213,7 +213,7 @@ tqdm>=4.50.0                     # Progress bars
 #   - Versions tested: Python 3.8, 3.9, 3.10, 3.11, 3.12
 #   - Core dependencies kept minimal for broad compatibility
 
-# Why no new dependencies in v2.2.0:
+# Why no new dependencies in v2.2.x:
 #   - Module 8 and 9 designed to use existing scipy, numpy, pandas
 #   - Ensemble methods use standard statistical functions
 #   - Parameter optimization uses scipy.optimize
@@ -259,7 +259,7 @@ tqdm>=4.50.0                     # Progress bars
 # CHANGES FROM v2.1.1
 # ============================================================================
 
-# Added in v2.2.0:
+# Added in v2.2.0 (unchanged in v2.2.1):
 #   - toml>=0.10.0 (TOML configuration support)
 #   - Aligned version numbers with setup.py
 #   - Removed bayesian-optimization from required (moved to optional)

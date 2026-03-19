@@ -1,4 +1,4 @@
-# MANIFEST.in for RAPTOR v2.2.0
+# MANIFEST.in for RAPTOR v2.2.1
 # =============================================================================
 # This file tells setuptools which non-Python files to include when building
 # the distribution packages (sdist, wheel).
@@ -151,4 +151,4 @@ global-exclude dmypy.json
 # 6. Unwanted cache and temp files are excluded
 #
 # Test with: python setup.py sdist
-# Check contents with: tar -tzf dist/raptor-2.2.0.tar.gz
+# Check contents with: tar -tzf dist/raptor-2.2.1.tar.gz

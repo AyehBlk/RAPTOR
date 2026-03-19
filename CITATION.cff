@@ -30,9 +30,9 @@ keywords:
   - parameter optimization
   - data-driven analysis
 license: MIT
-version: "2.2.0"
-date-released: "2026-03-XX"
-doi: "10.5281/zenodo.XXXXXXX"
+version: "2.2.1"
+date-released: "2026-03-18"
+doi: "10.5281/zenodo.17607161"
 preferred-citation:
   type: software
   title: "RAPTOR: RNA-seq Analysis Pipeline Testing and Optimization Resource"
@@ -43,8 +43,8 @@ preferred-citation:
       orcid: "0009-0008-1605-7594"
       affiliation: "University of Liège, Belgium"
   year: 2026
-  version: "2.2.0"
-  doi: "10.5281/zenodo.XXXXXXX" 
+  version: "2.2.1"
+  doi: "10.5281/zenodo.17607161" 
   url: "https://github.com/AyehBlk/RAPTOR"
   repository-code: "https://github.com/AyehBlk/RAPTOR"
   license: MIT

@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   # ==========================================================================
-  # Python - v2.2.0 supports Python 3.8-3.12
+  # Python - v2.2.1 supports Python 3.8-3.12
   # ==========================================================================
   - python>=3.8,<3.13
   
@@ -134,7 +134,7 @@ dependencies:
   - pip
   - pip:
     # Install RAPTOR from PyPI
-    - raptor-rnaseq[all]>=2.2.0
+    - raptor-rnaseq[all]>=2.2.1
     
     # Optional advanced features
     - bayesian-optimization>=1.2.0
@@ -228,5 +228,5 @@ dependencies:
 # =============================================================================
 
 # If conda installation is problematic, use Docker:
-#   docker pull ayehblk/raptor:2.2.0
-#   docker run -it ayehblk/raptor:2.2.0 raptor --version
+#   docker pull ayehblk/raptor:2.2.1
+#   docker run -it ayehblk/raptor:2.2.1 raptor --version

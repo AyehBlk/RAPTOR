@@ -7,7 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.2.0] - 2026-03-XX
+## [2.2.1] - 2026-03-18
+
+### Dashboard Verified & Enhanced
+
+All 9 Streamlit dashboard pages functionally tested with real RNA-seq data.
+
+### Fixed
+- **16 dashboard bugs** across Import DE, Ensemble, Optimization, Reports, and Quality pages
+- **Column name mapping** between Module 7 (standardized: `log2_fold_change`, `p_value`) and Modules 8/9 (expected: `log2FoldChange`, `pvalue`)
+- **Session state keys** aligned across all dashboard pages (`m7_de_results`, `m2_qc_report`, `m8_opt_result`)
+- **QC report page** reads from correct nested dict keys (`m2_qc_report['overall']['score']`)
+- **DE report** safely computes `n_up`/`n_down` from `results_df['direction']` column
+- **Ensemble page** checks for `gene_id` column before `reset_index()`, removes invalid `filters` kwarg
+- **Optimization page** reads `alpha` and `lfc_threshold` keys (not `lfc`/`log2fc`)
+- **PCA plot** uses `log2(counts+1)` + `StandardScaler` instead of broken `assessor.data`
+- **Correlation heatmap** applies `log2(counts+1)` before `.corr()` (was showing all 1.00)
+- **Plotly deprecation** `titlefont` replaced with `title=dict(text=..., font=dict(size=...))`
+
+### Enhanced
+- **Quality Assessment page** expanded to 7 visualization tabs: PCA (2D/3D), sample correlation (3 methods), expression distribution, RLE plot, sample dendrogram, mean-variance/BCV
+- **Optimization page** integrates all 4 scientific methods from Module 8 (FDR Control, Ground Truth, Stability, Reproducibility)
+- **Visualization page** completely rewritten with 12 plot types and 7 gene expression styles (box, violin, beeswarm, raincloud, lollipop, heatmap bar, forest plot)
+- **Professional styling** across all 9 pages (emoji cleanup, CSS cards, clean typography)
+- **Recommender page** verified with rule-based recommendation (DESeq2 primary, 95% confidence)
+
+### Added
+- `raptor/cli.py` — all 55 CLI commands tested, version strings updated
+- `tests/test_cli_comprehensive.py` — comprehensive CLI test suite
+- `.gitignore` — proper Python/build/IDE ignore rules
+- `.github/ISSUE_TEMPLATE/` — bug report, feature request, PR templates
+- `.streamlit/config.toml` — dashboard theme configuration (RAPTOR green palette)
+- `raptor/launch_dashboard.py` — pip-friendly dashboard launcher (`python -m raptor.launch_dashboard`)
+
+### Changed
+- Version bumped to 2.2.1 in `__init__.py`, `setup.py`, `cli.py` (15 locations)
+- `use_column_width` replaced with `use_container_width` (Streamlit 1.28+ deprecation)
+- Sidebar session state key changed from `m7_results` to `m7_de_results`
+
+### Known Issues
+- `raptor dashboard` CLI command broken (workaround: `python -m raptor.launch_dashboard`)
+- `raptor --version` shows 2.2.0 (cosmetic; `cli.py` was built before version bump fix in source)
+- ML Recommender inactive without pre-trained model file (rule-based works)
+
+### Test Suite
+- **413 passed, 0 failed, 50 expected skips** (unchanged from v2.2.0 baseline)
+
+---
+
+## [2.2.0] - 2026-03-12
 
 ### ⚠️ **Breaking Changes**
 
@@ -299,7 +347,13 @@ See [MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE_v2.1_to_v2.2.md) for details.
 
 ## [Unreleased]
 
+### Planned for v2.2.2
+- Fix `raptor dashboard` CLI command
+- Read version from `raptor.__version__` in `cli.py` (eliminate hardcoded strings)
+- Update CITATION.cff DOI after Zenodo release
+
 ### Planned for v2.3.0
+- Module 10: Biomarker Discovery
 - Sphinx documentation website
 - ReadTheDocs hosting
 - GitHub Actions CI/CD
@@ -308,5 +362,6 @@ See [MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE_v2.1_to_v2.2.md) for details.
 
 ---
 
+**[2.2.1]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.1  
 **[2.2.0]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.0  
 **[2.1.2]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.2
