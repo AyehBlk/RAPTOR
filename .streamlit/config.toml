@@ -1,9 +1,6 @@
 # RAPTOR Dashboard Theme Configuration
 # ======================================
 #
-# This file defines the color scheme and styling for the RAPTOR dashboard.
-# Copy this to .streamlit/config.toml in your project root.
-#
 # Author: Ayeh Bolouki
 # Version: 2.2.0
 
