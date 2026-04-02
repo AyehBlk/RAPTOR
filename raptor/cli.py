@@ -1,15 +1,16 @@
 """
-RAPTOR Command-Line Interface v2.2.1 - COMPLETE PRODUCTION VERSION
+RAPTOR Command-Line Interface v2.2.2 - COMPLETE PRODUCTION VERSION
 
 Complete CLI with all commands for Modules 1-9.
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
-Version: 2.2.1
+Version: 2.2.2
 """
 
 import click
 import sys
+import raptor
 import json
 import logging
 from pathlib import Path
@@ -89,7 +90,8 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 @click.group()
-@click.version_option(version='2.2.1', prog_name='RAPTOR')
+# Version read dynamically — never hardcode here
+@click.version_option(version=raptor.__version__, prog_name='RAPTOR')
 @click.option('--verbose', '-v', is_flag=True, help='Enable verbose output')
 @click.option('--quiet', '-q', is_flag=True, help='Suppress non-error output')
 def main(verbose, quiet):
@@ -100,7 +102,7 @@ def main(verbose, quiet):
     and pipeline optimization with ML-based recommendations.
     
     \b
-    WORKFLOW (v2.2.1 - Complete Architecture):
+    WORKFLOW (v2.2.2 - Complete Architecture):
     ══════════════════════════════════════════════════════════════
     
     STAGE 1: Fast Profiling (M1-M4)
@@ -231,7 +233,7 @@ def init(project_name, template):
         readme = project_path / 'README.md'
         readme.write_text(f"""# {project_name}
 
-RAPTOR v2.2.1 RNA-seq Analysis Project
+RAPTOR v2.2.2 RNA-seq Analysis Project
 
 ## Quick Start
 
@@ -439,7 +441,7 @@ def quick_count(method, samples, fastq_dir, index, tx2gene, output, threads,
         raptor recommend
     """
     try:
-        click.echo("\n🦖 RAPTOR v2.2.1 - Module 1: Quick Quantification")
+        click.echo("\n🦖 RAPTOR v2.2.2 - Module 1: Quick Quantification")
         click.echo("=" * 70)
         
         # =====================================================================
@@ -811,7 +813,7 @@ def qc(counts, metadata, output, normalization, consensus_threshold, plot, plot_
     """
     try:
         click.echo("╔═══════════════════════════════════════════════════════════════╗")
-        click.echo("║     🦖 RAPTOR v2.2.1 - Module 2: Quality Assessment          ║")
+        click.echo("║     🦖 RAPTOR v2.2.2 - Module 2: Quality Assessment          ║")
         click.echo("╚═══════════════════════════════════════════════════════════════╝")
         click.echo()
         
@@ -1149,7 +1151,7 @@ def qc(counts, metadata, output, normalization, consensus_threshold, plot, plot_
 
 
 # =============================================================================
-# MODULE 3: DATA PROFILER (FIXED v2.2.1)
+# MODULE 3: DATA PROFILER (FIXED v2.2.2)
 # =============================================================================
 
 @main.command('profile')
@@ -1201,7 +1203,7 @@ def profile(counts, metadata, group_column, min_count, output, verbose):
         raptor profile -c counts.csv --min-count 5 --verbose
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Module 3: Data Profiler")
+        click.echo("🦖 RAPTOR v2.2.2 - Module 3: Data Profiler")
         click.echo()
         
         # Validate inputs
@@ -1345,7 +1347,7 @@ def profile(counts, metadata, group_column, min_count, output, verbose):
         summary_file = output_path / 'profile_summary.txt'
         with open(summary_file, 'w', encoding='utf-8') as f:
             f.write("╔═══════════════════════════════════════════════════════════════╗\n")
-            f.write("║         🦖 RAPTOR v2.2.1 - Data Profile Summary               ║\n")
+            f.write("║         🦖 RAPTOR v2.2.2 - Data Profile Summary               ║\n")
             f.write("╚═══════════════════════════════════════════════════════════════╝\n\n")
             f.write(f"Generated: {pd.Timestamp.now()}\n")
             f.write(f"Count matrix: {counts_path}\n")
@@ -1452,7 +1454,7 @@ def recommend(profile, method, output, verbose_explanation):
         raptor recommend --verbose-explanation
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Module 4: Pipeline Recommender")
+        click.echo("🦖 RAPTOR v2.2.2 - Module 4: Pipeline Recommender")
         click.echo()
         
         # Determine profile path
@@ -1712,7 +1714,7 @@ def pipeline_list():
     Shows all registered pipelines with descriptions and requirements.
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Available Pipelines")
+        click.echo("🦖 RAPTOR v2.2.2 - Available Pipelines")
         click.echo("=" * 60)
         click.echo()
         
@@ -1791,7 +1793,7 @@ def pipeline_run(name, samples, genome_index, annotation, output, threads):
             -g star_index/ -a genes.gtf
     """
     try:
-        click.echo(f"🦖 RAPTOR v2.2.1 - Pipeline: {name}")
+        click.echo(f"🦖 RAPTOR v2.2.2 - Pipeline: {name}")
         click.echo()
         
         # Validate inputs
@@ -1989,7 +1991,7 @@ def compare_de(de_files, output, venn_diagram):
         raptor compare-de method1.pkl method2.pkl --venn-diagram
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Module 7: DE Comparison")
+        click.echo("🦖 RAPTOR v2.2.2 - Module 7: DE Comparison")
         click.echo()
         
         # Validate inputs
@@ -2202,7 +2204,7 @@ def optimize(de_result, method, ground_truth, fdr_target, counts, metadata, coho
         raptor optimize -d de_result.pkl -m stability
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Module 8: Parameter Optimization")
+        click.echo("🦖 RAPTOR v2.2.2 - Module 8: Parameter Optimization")
         click.echo()
         
         # Validate inputs
@@ -2407,7 +2409,7 @@ def ensemble(methods, deseq2, edger, limma, wilcoxon, output, threshold, min_met
             --deseq2 d.pkl --edger e.pkl --limma l.pkl -o all_methods/
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Module 9: Ensemble Analysis")
+        click.echo("🦖 RAPTOR v2.2.2 - Module 9: Ensemble Analysis")
         click.echo()
         
         # Collect DE results
@@ -2574,7 +2576,7 @@ def ensemble_compare(deseq2, edger, limma, output, threshold):
             --output comparison/ --threshold 0.05
     """
     try:
-        click.echo("🦖 RAPTOR v2.2.1 - Module 9: Ensemble Method Comparison")
+        click.echo("🦖 RAPTOR v2.2.2 - Module 9: Ensemble Method Comparison")
         click.echo()
         
         # Import ensemble module
