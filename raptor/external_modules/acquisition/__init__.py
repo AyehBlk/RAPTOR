@@ -1,4 +1,4 @@
-"""
+﻿"""
 RAPTOR v2.2.2 - Module 6: Data Acquisition
 
 Connect to public genomics repositories (GEO, TCGA, ArrayExpress, SRA),
@@ -36,6 +36,8 @@ from .datasets import (
 )
 
 # Cache manager (always available)
+from .base import SearchResult
+
 from .cache import (
     CacheManager,
     DEFAULT_CACHE_DIR,
@@ -137,6 +139,7 @@ __all__ = [
     # Utilities
     'GeneIDMapper',
     'PoolingEngine',
+    'SearchResult',
 
     # Info
     'get_available_components',
