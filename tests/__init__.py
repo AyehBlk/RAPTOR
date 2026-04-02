@@ -32,6 +32,7 @@ Test modules:
 - test_pipelines_cli.py        : M5 - CLI integration tests
 - test_de_import.py            : M7 - DE result import & standardization
 - test_parameter_optimization.py : M8 - Parameter optimization
+- test_acquisition.py           : M6b - Data acquisition & pooling
 
 Module 5 (Production Pipelines) Tests:
 ======================================
@@ -94,6 +95,29 @@ The Module 8 test suite covers:
    - Module 7 → Module 8 integration
    - CLI compatibility
 
+Module 6b (Data Acquisition) Tests:
+====================================
+The Module 6b test suite covers (88 tests):
+
+1. Data Containers (test_acquisition.py):
+   - AcquiredDataset: creation, validation, integrity, filtering,
+     subsetting, save/load (pkl + parquet), CSV export, from_csv
+   - PooledDataset: creation, studies, LOSO splits, save/load
+
+2. Cache & Catalog:
+   - CacheManager: hybrid mode, save/load/delete, CSV export, clear
+   - DataCatalog: register, search, filter, persistence
+
+3. Connectors:
+   - BaseConnector via MockConnector: search, download, auto-cache
+   - GEO, TCGA, ArrayExpress, SRA constructors (offline)
+   - SearchResult formatting
+
+4. Utilities:
+   - GeneIDMapper: auto-detection, species aliases, validation
+   - PoolingEngine: inner/outer join, 3 batch corrections,
+     sample conflict resolution, min genes threshold
+
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
 Version: 2.2.0
@@ -108,9 +132,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Module information
 MODULE_INFO = {
-    'test_suite_version': '2.2.0',
-    'modules_covered': ['M1', 'M2', 'M3', 'M4', 'M5', 'M7', 'M8'],
-    'total_test_files': 12,
+    'test_suite_version': '2.2.2',
+    'modules_covered': ['M1', 'M2', 'M3', 'M4', 'M5', 'M6b', 'M7', 'M8'],
+    'total_test_files': 13,
     'test_categories': [
         'unit',
         'integration', 
@@ -145,6 +169,10 @@ TEST_FILES = {
         'test_pipelines.py',
         'test_base_pipeline.py',
         'test_pipelines_cli.py'
+    ],
+    # Module 6b: Data Acquisition
+    'M6b': [
+        'test_acquisition.py'
     ],
     # Module 7: DE Import
     'M7': [
@@ -202,6 +230,7 @@ markers = [
     "m3: marks tests for Module 3 (Data Profiling)",
     "m4: marks tests for Module 4 (Pipeline Recommendation)",
     "m5: marks tests for Module 5 (Production Pipelines)",
+    "m6b: marks tests for Module 6b (Data Acquisition)",
     "m7: marks tests for Module 7 (DE Import)",
     "m8: marks tests for Module 8 (Parameter Optimization)",
     "requires_docker: marks tests that require Docker",

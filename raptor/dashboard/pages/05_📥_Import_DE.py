@@ -802,7 +802,7 @@ if st.session_state.get('m7_complete', False):
             if st.button("➡️ Go to Module 9", type="primary", use_container_width=True):
                 # Try to navigate to ensemble page
                 try:
-                    st.switch_page("pages/05_🔬_Ensemble.py")
+                    st.switch_page("pages/07_🔬_Ensemble.py")
                 except:
                     st.info("Navigate manually to Module 9 (Ensemble Analysis)")
         else:

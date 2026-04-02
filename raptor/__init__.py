@@ -1,15 +1,15 @@
 """
-RAPTOR v2.2.0 - RNA-seq Analysis Pipeline Testing and Optimization Resource
+RAPTOR v2.2.2 - RNA-seq Analysis Pipeline Testing and Optimization Resource
 
 A comprehensive framework for RNA-seq quality control, analysis,
 and pipeline optimization with ML-based recommendations.
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
-Version: 2.2.0
+Version: 2.2.2
 """
 
-__version__ = "2.2.1"
+__version__ = "2.2.2"
 __author__ = "Ayeh Bolouki"
 __email__ = "ayehbolouki1988@gmail.com"
 
@@ -238,6 +238,34 @@ except ImportError:
     calculate_meta_lfc = None
     _ENSEMBLE_AVAILABLE = False
 
+# Module 6b: Data Acquisition
+try:
+    from .external_modules.acquisition import (
+        AcquiredDataset,
+        PooledDataset,
+        CacheManager,
+        DataCatalog,
+        GEOConnector,
+        TCGAConnector,
+        ArrayExpConnector,
+        SRAConnector,
+        GeneIDMapper,
+        PoolingEngine,
+    )
+    _ACQUISITION_AVAILABLE = True
+except ImportError:
+    AcquiredDataset = None
+    PooledDataset = None
+    CacheManager = None
+    DataCatalog = None
+    GEOConnector = None
+    TCGAConnector = None
+    ArrayExpConnector = None
+    SRAConnector = None
+    GeneIDMapper = None
+    PoolingEngine = None
+    _ACQUISITION_AVAILABLE = False
+
 # =============================================================================
 # PUBLIC API (__all__)
 # =============================================================================
@@ -362,6 +390,18 @@ __all__ = [
     'calculate_direction_consistency_table',
     'combine_pvalues_across_methods',
     'calculate_meta_lfc',
+    
+    # Module 6b: Data Acquisition (optional)
+    'AcquiredDataset',
+    'PooledDataset',
+    'CacheManager',
+    'DataCatalog',
+    'GEOConnector',
+    'TCGAConnector',
+    'ArrayExpConnector',
+    'SRAConnector',
+    'GeneIDMapper',
+    'PoolingEngine',
 ]
 
 # =============================================================================
@@ -399,6 +439,7 @@ def get_available_modules():
         'de_import': _DE_IMPORT_AVAILABLE,
         'parameter_optimization': _PARAM_OPTIMIZATION_AVAILABLE,
         'ensemble': _ENSEMBLE_AVAILABLE,
+        'acquisition': _ACQUISITION_AVAILABLE,
     }
 
 

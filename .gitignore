@@ -37,3 +37,5 @@ Thumbs.db
 # MyPy
 .mypy_cache/
 dmypy.json
+
+.venv_test/

@@ -1,4 +1,4 @@
-# RAPTOR v2.2.1 Requirements
+# RAPTOR v2.2.2 Requirements
 # RNA-seq Analysis Pipeline Testing and Optimization Resource
 # Python 3.8+
 # Updated: March 2026
@@ -97,6 +97,24 @@ tqdm>=4.50.0                     # Progress bars
 #   - matplotlib/seaborn/plotly: Visualization
 #
 # NO additional dependencies required for Module 2!
+
+
+# ---------- Module 6b: Data Acquisition ----------
+# Core acquisition (always needed for acquisition features):
+requests>=2.25.0                 # HTTP client for GDC, EBI, ENA APIs
+pyarrow>=8.0.0                   # Parquet format for fast dataset caching
+
+# Repository connectors (install as needed):
+# GEOparse>=2.0.0               # GEO dataset parsing (pip install GEOparse)
+# biopython>=1.79                # NCBI Entrez search (pip install biopython)
+# mygene>=3.2.0                  # Gene ID mapping (pip install mygene)
+#
+# Optional batch correction for pooling:
+# combat>=0.3.0                  # ComBat batch correction (pip install combat)
+#
+# Install all acquisition dependencies at once:
+#   pip install GEOparse biopython mygene requests pyarrow
+#   pip install combat  # optional, for full ComBat batch correction
 
 
 # ============================================================================
@@ -199,6 +217,9 @@ tqdm>=4.50.0                     # Progress bars
 # Verify Module 7 (DE Import):
 #   python -c "from raptor import import_deseq2; print('✅ Module 7 Ready!')"
 
+# Verify Module 6b (Data Acquisition):
+#   python -c "from raptor import GEOConnector; print('✅ Acquisition Ready!')"
+
 # Verify CLI:
 #   raptor --help
 #   raptor ensemble --help
@@ -213,11 +234,12 @@ tqdm>=4.50.0                     # Progress bars
 #   - Versions tested: Python 3.8, 3.9, 3.10, 3.11, 3.12
 #   - Core dependencies kept minimal for broad compatibility
 
-# Why no new dependencies in v2.2.x:
-#   - Module 8 and 9 designed to use existing scipy, numpy, pandas
+# Why minimal new dependencies in v2.2.x:
+#   - Modules 7, 8, 9 designed to use existing scipy, numpy, pandas
+#   - Module 6b (Acquisition) adds requests + pyarrow as core,
+#     with GEOparse/biopython/mygene as optional per-connector deps
 #   - Ensemble methods use standard statistical functions
 #   - Parameter optimization uses scipy.optimize
-#   - No external optimization libraries required
 
 # External Tool Requirements (NOT Python packages):
 #   - R 4.0+ with packages: DESeq2, edgeR, limma (for Module 6)
@@ -258,6 +280,13 @@ tqdm>=4.50.0                     # Progress bars
 # ============================================================================
 # CHANGES FROM v2.1.1
 # ============================================================================
+
+# Added in v2.2.2:
+#   - requests>=2.25.0 (HTTP client for repository APIs)
+#   - pyarrow>=8.0.0 (Parquet caching for acquired datasets)
+#   - Optional: GEOparse, biopython, mygene (repository connectors)
+#   - Optional: combat (batch correction for dataset pooling)
+#   - Module 6b: Data Acquisition subpackage (GEO, TCGA, ArrayExpress, SRA)
 
 # Added in v2.2.0 (unchanged in v2.2.1):
 #   - toml>=0.10.0 (TOML configuration support)

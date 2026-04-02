@@ -5,7 +5,7 @@ channels:
 
 dependencies:
   # ==========================================================================
-  # Python - v2.2.1 supports Python 3.8-3.12
+  # Python - v2.2.2 supports Python 3.8-3.12
   # ==========================================================================
   - python>=3.8,<3.13
   
@@ -50,6 +50,13 @@ dependencies:
   - altair>=4.0.0
   
   # ==========================================================================
+  # Optional: Data Acquisition (Module 6b)
+  # ==========================================================================
+  - requests>=2.25.0
+  - pyarrow>=8.0.0
+  # - biopython>=1.79           # For GEO/SRA search via NCBI Entrez
+  
+  # ==========================================================================
   # Optional: Development Tools (comment out for production)
   # ==========================================================================
   # - pytest>=6.0.0
@@ -73,7 +80,12 @@ dependencies:
   - pip
   - pip:
     # Install RAPTOR from PyPI
-    - raptor-rnaseq>=2.2.1
+    - raptor-rnaseq>=2.2.2
+    
+    # Data Acquisition connectors (optional, install as needed)
+    # - GEOparse>=2.0.0             # GEO dataset parsing
+    # - mygene>=3.2.0               # Gene ID mapping via MyGene.info
+    # - combat>=0.3.0               # ComBat batch correction for pooling
     
     # Optional: Advanced features (uncomment if needed)
     # - bayesian-optimization>=1.2.0   # Bayesian optimization for Module 8
@@ -114,6 +126,7 @@ dependencies:
 #   - R packages (DESeq2, edgeR, limma)
 #   - Development tools (by default)
 #   - Documentation tools (by default)
+#   - Full acquisition connector deps (GEOparse, mygene - uncomment above)
 #
 # For full bioinformatics environment, see: environment-full.yml
 #

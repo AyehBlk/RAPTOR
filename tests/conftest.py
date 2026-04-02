@@ -460,3 +460,149 @@ def assert_outlier_result_valid(result):
     assert hasattr(result, 'consensus_threshold')
     assert result.n_outliers >= 0
     assert result.n_outliers == len(result.outlier_samples)
+
+
+# =============================================================================
+# Module 6b: Data Acquisition Fixtures
+# =============================================================================
+
+try:
+    from raptor.external_modules.acquisition import (
+        AcquiredDataset,
+        PooledDataset,
+        CacheManager,
+        DataCatalog,
+        PoolingEngine,
+    )
+    _ACQUISITION_AVAILABLE = True
+except ImportError:
+    _ACQUISITION_AVAILABLE = False
+
+
+@pytest.fixture
+def acquisition_count_matrix():
+    """NB-distributed count matrix for acquisition tests (500 genes x 8 samples)."""
+    np.random.seed(42)
+    counts = np.random.negative_binomial(n=5, p=0.3, size=(500, 8))
+    df = pd.DataFrame(
+        counts,
+        index=[f'GENE_{i:04d}' for i in range(500)],
+        columns=[f'Sample_{i}' for i in range(8)],
+    )
+    df.index.name = 'gene_id'
+    return df
+
+
+@pytest.fixture
+def acquisition_metadata():
+    """Sample metadata for acquisition tests."""
+    meta = pd.DataFrame({
+        'condition': ['control'] * 4 + ['treatment'] * 4,
+        'batch': ['A', 'A', 'B', 'B', 'A', 'A', 'B', 'B'],
+        'tissue': ['liver'] * 8,
+    }, index=[f'Sample_{i}' for i in range(8)])
+    meta.index.name = 'sample_id'
+    return meta
+
+
+@pytest.fixture
+def geo_source_info():
+    """Source info for a mock GEO dataset."""
+    return {
+        'repository': 'GEO',
+        'accession': 'GSE99999',
+        'organism': 'Homo sapiens',
+        'platform': 'GPL16791',
+        'data_type': 'raw_counts',
+        'description': 'Test RNA-seq dataset for liver cancer',
+    }
+
+
+@pytest.fixture
+def acquired_dataset(acquisition_count_matrix, acquisition_metadata, geo_source_info):
+    """A complete AcquiredDataset for testing."""
+    if not _ACQUISITION_AVAILABLE:
+        pytest.skip("Acquisition subpackage not available")
+    return AcquiredDataset(
+        counts_df=acquisition_count_matrix,
+        metadata=acquisition_metadata,
+        source_info=geo_source_info,
+        gene_id_type='symbol',
+    )
+
+
+@pytest.fixture
+def acquired_dataset_2():
+    """A second dataset with partial gene overlap for pooling tests."""
+    if not _ACQUISITION_AVAILABLE:
+        pytest.skip("Acquisition subpackage not available")
+    np.random.seed(123)
+    counts = pd.DataFrame(
+        np.random.negative_binomial(n=4, p=0.25, size=(500, 6)),
+        index=[f'GENE_{i:04d}' for i in range(200, 700)],
+        columns=[f'SampleB_{i}' for i in range(6)],
+    )
+    counts.index.name = 'gene_id'
+    meta = pd.DataFrame({
+        'condition': ['control'] * 3 + ['treatment'] * 3,
+        'batch': ['X', 'X', 'Y', 'X', 'Y', 'Y'],
+    }, index=[f'SampleB_{i}' for i in range(6)])
+    meta.index.name = 'sample_id'
+    return AcquiredDataset(
+        counts_df=counts,
+        metadata=meta,
+        source_info={
+            'repository': 'GEO',
+            'accession': 'GSE88888',
+            'organism': 'Homo sapiens',
+            'data_type': 'raw_counts',
+        },
+        gene_id_type='symbol',
+    )
+
+
+@pytest.fixture
+def acquisition_cache(tmp_path):
+    """CacheManager with a temporary directory."""
+    if not _ACQUISITION_AVAILABLE:
+        pytest.skip("Acquisition subpackage not available")
+    return CacheManager(cache_dir=tmp_path / 'raptor_test_cache', enabled=True)
+
+
+@pytest.fixture
+def acquisition_catalog(tmp_path):
+    """DataCatalog with a temporary directory."""
+    if not _ACQUISITION_AVAILABLE:
+        pytest.skip("Acquisition subpackage not available")
+    return DataCatalog(tmp_path / 'raptor_test_catalog')
+
+
+@pytest.fixture
+def pooling_engine():
+    """PoolingEngine for testing."""
+    if not _ACQUISITION_AVAILABLE:
+        pytest.skip("Acquisition subpackage not available")
+    return PoolingEngine(target_gene_id='symbol', species='Homo sapiens')
+
+
+# =============================================================================
+# Helper Functions - Module 6b (Acquisition)
+# =============================================================================
+
+def assert_acquired_dataset_valid(ds):
+    """Assert that an AcquiredDataset has expected structure."""
+    assert ds.n_genes > 0
+    assert ds.n_samples > 0
+    assert ds.counts_df.index.name == 'gene_id'
+    assert ds.source_info.get('repository') is not None
+    report = ds.validate_integrity()
+    assert report['valid'] is True
+
+
+def assert_pooled_dataset_valid(pool):
+    """Assert that a PooledDataset has expected structure."""
+    assert pool.n_genes > 0
+    assert pool.n_samples > 0
+    assert pool.n_studies >= 2
+    assert len(pool.studies) == pool.n_studies
+    assert 'study' in pool.metadata.columns

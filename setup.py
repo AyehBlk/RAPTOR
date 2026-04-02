@@ -1,5 +1,5 @@
 """
-RAPTOR v2.2.0 - RNA-seq Analysis Pipeline Testing and Optimization Resource
+RAPTOR v2.2.2 - RNA-seq Analysis Pipeline Testing and Optimization Resource
 Setup Configuration
 
 This setup.py enables RAPTOR to be installed as a Python package with full
@@ -7,7 +7,7 @@ CLI support and automatic dependency management.
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
-Version: 2.2.1
+Version: 2.2.2
 Repository: https://github.com/AyehBlk/RAPTOR
 """
 
@@ -29,7 +29,7 @@ if readme_file.exists():
 # Version Information
 # =============================================================================
 
-VERSION = "2.2.1"
+VERSION = "2.2.2"
 PYTHON_REQUIRES = ">=3.8"
 
 # =============================================================================
@@ -62,6 +62,10 @@ INSTALL_REQUIRES = [
     "tqdm>=4.50.0",        # Progress bars
     "colorama>=0.4.0",     # Colored terminal output
     "joblib>=1.0.0",       # Parallel processing
+    
+    # Data Acquisition (Module 6b)
+    "requests>=2.25.0",    # HTTP client for repository APIs
+    "pyarrow>=8.0.0",      # Parquet format for dataset caching
 ]
 
 # =============================================================================
@@ -90,12 +94,20 @@ DOCS_REQUIRES = [
     "sphinx-click>=3.0.0",
 ]
 
+ACQUISITION_REQUIRES = [
+    "GEOparse>=2.0.0",            # GEO dataset parsing
+    "biopython>=1.79",             # NCBI Entrez search
+    "mygene>=3.2.0",              # Gene ID mapping
+    "combat>=0.3.0",              # ComBat batch correction
+]
+
 # Combined extras
 EXTRAS_REQUIRE = {
     "dashboard": DASHBOARD_REQUIRES,
+    "acquisition": ACQUISITION_REQUIRES,
     "dev": DEV_REQUIRES,
     "docs": DOCS_REQUIRES,
-    "all": DASHBOARD_REQUIRES + DEV_REQUIRES + DOCS_REQUIRES,
+    "all": DASHBOARD_REQUIRES + ACQUISITION_REQUIRES + DEV_REQUIRES + DOCS_REQUIRES,
 }
 
 # =============================================================================
@@ -116,6 +128,7 @@ PACKAGE_DATA = {
         # Documentation files in submodules
         "external_modules/module6_de_analysis/documentation/*.md",
         "external_modules/module6_de_analysis/*.md",
+        "external_modules/acquisition/*.py",
         "pipelines/star_salmon/*.md",
         
         # Dashboard assets
@@ -205,6 +218,10 @@ KEYWORDS = [
     "quality control",
     "parameter optimization",
     "biomarker discovery",
+    "data acquisition",
+    "GEO",
+    "TCGA",
+    "meta-analysis",
     "kallisto",
     "salmon",
     "STAR",
@@ -290,7 +307,7 @@ try:
     sys.stdout.reconfigure(encoding='utf-8')
     print("""
 ========================================================================
-  RAPTOR v2.2.0 Installation Complete!
+  RAPTOR v2.2.2 Installation Complete!
   RNA-seq Analysis Pipeline Testing and Optimization Resource
 ========================================================================
 
@@ -309,6 +326,7 @@ try:
 
   Optional Features:
     Dashboard:     pip install .[dashboard]
+    Acquisition:   pip install .[acquisition]
     Development:   pip install .[dev]
     Documentation: pip install .[docs]
     Everything:    pip install .[all]
@@ -320,4 +338,4 @@ try:
 ========================================================================
 """)
 except Exception:
-    print("RAPTOR v2.2.0 installed successfully! Run: raptor --help")
+    print("RAPTOR v2.2.2 installed successfully! Run: raptor --help")

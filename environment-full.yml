@@ -6,7 +6,7 @@ channels:
 
 dependencies:
   # ==========================================================================
-  # Python - v2.2.1 supports Python 3.8-3.12
+  # Python - v2.2.2 supports Python 3.8-3.12
   # ==========================================================================
   - python>=3.8,<3.13
   
@@ -129,12 +129,24 @@ dependencies:
   - openpyxl>=3.0.0            # Excel file support
   
   # ==========================================================================
+  # MODULE 6b: Data Acquisition (Repository Connectors)
+  # ==========================================================================
+  - requests>=2.25.0           # HTTP client for GDC, EBI, ENA APIs
+  - pyarrow>=8.0.0             # Parquet format for dataset caching
+  - biopython>=1.79            # NCBI Entrez search (GEO, SRA)
+  
+  # ==========================================================================
   # Pip packages and RAPTOR installation
   # ==========================================================================
   - pip
   - pip:
     # Install RAPTOR from PyPI
-    - raptor-rnaseq[all]>=2.2.1
+    - raptor-rnaseq[all]>=2.2.2
+    
+    # Data Acquisition connectors (pip-only packages)
+    - GEOparse>=2.0.0             # GEO dataset parsing
+    - mygene>=3.2.0               # Gene ID mapping via MyGene.info
+    - combat>=0.3.0               # ComBat batch correction for pooling
     
     # Optional advanced features
     - bayesian-optimization>=1.2.0
