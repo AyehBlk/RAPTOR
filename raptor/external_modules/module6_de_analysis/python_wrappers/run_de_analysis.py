@@ -7,7 +7,7 @@ analysis scripts (DESeq2, edgeR, limma-voom).
 
 Author: Ayeh Bolouki
 Email: ayehbolouki1988@gmail.com
-Version: 2.2.0
+Version: 2.2.2
 """
 
 import subprocess
@@ -367,6 +367,7 @@ class DEAnalysisWrapper:
 def main():
     """Command-line interface for DE analysis."""
     import argparse
+    import click
     
     parser = argparse.ArgumentParser(
         description='🦖 RAPTOR Module 6 - Differential Expression Analysis',
@@ -449,21 +450,21 @@ def main():
     
     # Check packages
     if args.check_packages:
-        print("📦 Checking R packages...")
+        click.echo("Checking R packages...")
         packages = DEAnalysisWrapper.check_r_packages()
         
         all_installed = all(packages.values())
         
         for pkg, installed in packages.items():
             status = "✓" if installed else "✗"
-            print(f"  {status} {pkg}")
+            click.echo(f"  {status} {pkg}")
         
         if not all_installed:
-            print("\n❌ Some packages are missing.")
-            print("Run: Rscript install_packages.R")
+            click.echo("Some packages are missing.")
+            click.echo("Run: Rscript install_packages.R")
             return 1
         else:
-            print("\n✅ All packages installed!")
+            click.echo("All packages installed!")
             return 0
     
     # Run analysis
@@ -483,12 +484,12 @@ def main():
             plots=args.plots
         )
         
-        print(f"\n✅ Analysis complete!")
-        print(f"   Method: {result.method.upper()}")
-        print(f"   Significant genes: {result.n_significant}")
-        print(f"   Upregulated: {result.n_upregulated}")
-        print(f"   Downregulated: {result.n_downregulated}")
-        print(f"\n📁 Results: {result.output_dir}")
+        click.echo("Analysis complete!")
+        click.echo(f"  Method: {result.method.upper()}")
+        click.echo(f"  Significant genes: {result.n_significant}")
+        click.echo(f"  Upregulated: {result.n_upregulated}")
+        click.echo(f"  Downregulated: {result.n_downregulated}")
+        click.echo(f"  Results: {result.output_dir}")
         
         return 0
         

@@ -39,3 +39,6 @@ Thumbs.db
 dmypy.json
 
 .venv_test/
+
+# RAPTOR data cache
+.raptor_cache/
