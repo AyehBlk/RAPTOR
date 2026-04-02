@@ -1,132 +1,47 @@
 ---
-
 name: Bug Report
-
-about: Report a bug in RAPTOR
-
-title: '\[BUG] '
-
+about: Something didn't work as expected
+title: "[Bug] "
 labels: bug
-
-assignees: ''
-
+assignees: AyehBlk
 ---
 
+## What happened?
+<!-- A clear description of the bug -->
 
 
-\## Bug Description
+## What did you expect to happen?
+<!-- What should have happened instead -->
 
 
+## Steps to reproduce
+<!-- How can we recreate this issue? -->
+1. Go to '...'
+2. Click on '...'
+3. Enter '...'
+4. See error
 
-A clear and concise description of the bug.
+## Dataset info
+<!-- If applicable, which dataset were you working with? -->
+- Accession: <!-- e.g., GSE306761, SRP555825 -->
+- Repository: <!-- GEO / SRA / TCGA / ArrayExpress / User upload -->
+- Organism: <!-- e.g., Homo sapiens, Mus musculus -->
 
-
-
-\## To Reproduce
-
-
-
-Steps to reproduce the behavior:
-
-
-
-1\. Import/run '...'
-
-2\. Use parameters '...'
-
-3\. Execute command '...'
-
-4\. See error
-
-
-
-\## Expected Behavior
-
-
-
-What you expected to happen.
-
-
-
-\## Actual Behavior
-
-
-
-What actually happened.
-
-
-
-\## Error Message
-
-
-
+## Error message
+<!-- Paste the full error message or screenshot here -->
+```
+Paste error message here
 ```
 
-Paste full error message/traceback here
-
-```
-
+## Screenshots
+<!-- If applicable, add screenshots to help explain the problem -->
 
 
-\## Environment
+## Environment
+- OS: <!-- e.g., Windows 11, macOS 14, Ubuntu 24 -->
+- Python version: <!-- e.g., 3.12.9 -->
+- RAPTOR version: <!-- run: python -c "import raptor; print(raptor.__version__)" -->
+- How installed: <!-- pip install raptor-rnaseq / git clone / other -->
 
-
-
-\- \*\*RAPTOR version:\*\* (e.g., 2.2.0)
-
-\- \*\*Python version:\*\* (e.g., 3.10.5)
-
-\- \*\*Operating System:\*\* (e.g., Ubuntu 22.04, Windows 11, macOS 13)
-
-\- \*\*Installation method:\*\* (pip, conda, source)
-
-
-
-```bash
-
-\# Run this and paste output:
-
-python -c "import raptor; print(raptor.\_\_version\_\_)"
-
-python --version
-
-```
-
-
-
-\## Data Information (if applicable)
-
-
-
-\- \*\*Number of samples:\*\*
-
-\- \*\*Number of genes:\*\*
-
-\- \*\*File size:\*\*
-
-\- \*\*Data type:\*\* (counts, FASTQ, etc.)
-
-
-
-\## Additional Context
-
-
-
-Add any other context about the problem here (screenshots, related issues, etc.).
-
-
-
-\## Checklist
-
-
-
-\- \[ ] I have searched existing issues to avoid duplicates
-
-\- \[ ] I have included the full error traceback
-
-\- \[ ] I have provided my environment information
-
-\- \[ ] I can reproduce this bug consistently
-
-
-
+## Additional context
+<!-- Any other information that might help us fix the issue -->
