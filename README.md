@@ -58,7 +58,7 @@ Your analysis starts with data. RAPTOR connects to public repositories so you ca
 |------------|--------|-------------|
 | **GEO** (NCBI) | Ready | Search 200,000+ datasets, download processed count matrices |
 | **SRA** (NCBI) | Ready | Explore run tables, auto-detect linked GEO studies, generate FASTQ download commands |
-| **TCGA** (NCI) | In development | 33 cancer types via GDC API |
+| **TCGA** (NCI) | In development | 33 cancer types via GDC API, multi-omic (gene expression, miRNA, methylation, CNV, RPPA) |
 | **ArrayExpress** (EBI) | In development | European studies via BioStudies API |
 
 You can also upload your own count matrix — from your own experiment or from collaborators at your institute. RAPTOR treats uploaded data the same way as public data.
@@ -127,7 +127,7 @@ The key idea: a biomarker that survives batch correction and remains significant
 
 ## Current Version
 
-**GitHub: v2.2.2** — includes Data Acquisition module, all fixes, and 518 tests passing.
+**GitHub: v2.2.2** — includes Data Acquisition module, all fixes, and 621 tests passing.
 
 **PyPI: v2.2.1** — the PyPI release will be updated after all modules (including TCGA, ArrayExpress, and Biomarker Discovery) are complete and tested.
 
@@ -162,7 +162,7 @@ pip install raptor-rnaseq[dashboard]
 | **Direct streamlit** | `python -m streamlit run raptor/dashboard/app.py` |
 | **Inside a virtual environment** | Activate venv first, then any command above |
 
-The dashboard opens at **http://localhost:8501**. Upload data → Profile → Get recommendation → Run ensemble → Done!
+The dashboard opens at **http://localhost:8501**. Search & download data → Profile → Get recommendation → Run ensemble → Done!
 
 **Detailed instructions by setup:**
 
@@ -256,7 +256,9 @@ from raptor import (
     profile_data_quick,
     recommend_pipeline,
     optimize_with_fdr_control,
-    ensemble_brown
+    ensemble_brown,
+    GEOConnector,        # Data Acquisition
+    GeneIDMapper,        # Gene ID conversion
 )
 
 # 1. Quality check
@@ -337,8 +339,11 @@ cd RAPTOR
 # Install in editable mode
 pip install -e .
 
-# Or with development tools
-pip install -e .[dev]
+# Or with all features (dashboard + acquisition + dev tools)
+pip install -e .[all]
+
+# Or install acquisition connectors separately
+pip install GEOparse biopython mygene
 
 # Verify installation
 raptor --version
@@ -519,7 +524,7 @@ RAPTOR/
 │   ├── 08_Parameter_Optimization.py            ⭐ NEW
 │   └── 09_Ensemble_Analysis.py                 ⭐ NEW
 │
-├── tests/                          # Test suite (518 tests passing)
+├── tests/                          # Test suite (621 tests passing)
 │   ├── test_acquisition.py                        (105 tests, NEW)
 │   ├── test_profiler.py
 │   ├── test_quality_assessment.py
@@ -543,7 +548,7 @@ RAPTOR/
 ├── requirements.txt                # Python dependencies
 ├── environment.yml                 # Conda environment (core)
 ├── environment-full.yml            # Conda environment (complete)
-├── check_raptor.py                 # Diagnostic suite (15 checks)
+├── check_raptor.py                 # Diagnostic suite (16 checks)
 ├── BETA_TESTING_GUIDE.md           # Beta testing scenarios
 ├── CITATION.cff                    # Citation metadata
 ├── CHANGELOG.md                    # Version history
@@ -712,6 +717,40 @@ raptor ensemble-compare \
 echo "✅ Complete! Check ensemble_results/ for consensus genes."
 ```
 
+### Example 4: Data Acquisition (Python API)
+
+```python
+from raptor.external_modules.acquisition import (
+    GEOConnector, SRAConnector, GeneIDMapper, PoolingEngine
+)
+
+# Search GEO for datasets
+geo = GEOConnector()
+results = geo.search("pancreatic cancer RNA-seq human", max_results=10)
+for r in results:
+    print(f"{r.accession}: {r.title} ({r.n_samples} samples)")
+
+# Download a dataset
+dataset = geo.download("GSE12345")
+print(f"Downloaded: {dataset.n_genes} genes x {dataset.n_samples} samples")
+
+# Search SRA and find linked GEO studies
+sra = SRAConnector()
+sra_results = sra.search("PS19 tauopathy mouse RNA-seq")
+run_table = sra.get_run_table(sra_results[0].accession)
+linked_gse = sra.find_linked_gse(run_table)
+
+# Convert gene IDs between systems
+mapper = GeneIDMapper("Homo sapiens")
+id_type = mapper.detect_id_type(dataset.counts_df.index.tolist())
+converted = mapper.convert_index(dataset.counts_df, from_type=id_type, to_type="symbol")
+
+# Pool multiple datasets with batch correction
+engine = PoolingEngine(target_gene_id="symbol", species="Homo sapiens")
+pooled = engine.merge([dataset1, dataset2], method="inner")
+print(f"Pooled: {pooled.n_genes} genes, {pooled.n_samples} samples, {pooled.n_studies} studies")
+```
+
 ---
 
 ## Performance
@@ -720,6 +759,7 @@ echo "✅ Complete! Check ensemble_results/ for consensus genes."
 
 | Module | Time | Memory | Key Output |
 |--------|------|--------|------------|
+| **Module 6b: Data Acquisition** | Varies | 4 GB | Downloaded datasets, pooled counts |
 | **Module 2: QC** | 1-5 min | 4 GB | 6 methods consensus |
 | **Module 3: Profiler** | 1-2 min | 4 GB | 32 features + BCV |
 | **Module 4: Recommender** | <10 sec | <1 GB | ML recommendation |
@@ -906,9 +946,10 @@ python -c "import raptor; print(raptor.__version__)"
 
 The dashboard requires data to be uploaded or loaded into session state before most pages will work. Start by:
 
-1. Go to the **Quality Assessment** page and upload a count matrix CSV and metadata CSV
-2. Or go to **Import DE** and upload DESeq2/edgeR/limma result files
-3. Pages will populate once data is available in the session
+1. Go to **Data Acquisition** to search and download datasets from GEO or SRA
+2. Or go to the **Quality Assessment** page and upload a count matrix CSV and metadata CSV
+3. Or go to **Import DE** and upload DESeq2/edgeR/limma result files
+4. Pages will populate once data is available in the session
 </details>
 
 <details>
