@@ -872,15 +872,18 @@ Copyright (c) 2026 Ayeh Bolouki
 
 | Issue | Status | Workaround |
 |-------|--------|------------|
-| `raptor dashboard` CLI command fails with `ModuleNotFoundError` | Fix planned | Use `python -m streamlit run raptor/dashboard/app.py` |
-| TCGA connector incomplete | In development | Use GEO for processed counts |
-| ArrayExpress connector incomplete | In development | Use GEO as alternative |
-| PyPI version is still 2.2.1 | By design | Install from GitHub for v2.2.2 (see below) |
+| `raptor dashboard` CLI command fails with `ModuleNotFoundError` | Fix planned | Use `python -m raptor.launch_dashboard` or `python -m streamlit run raptor/dashboard/app.py` |
+| TCGA connector partially implemented | In development | Multi-omic downloads work (gene expression, miRNA, methylation, CNV, RPPA) but search/filtering is limited. Use GEO for most use cases |
+| ArrayExpress connector partially implemented | In development | Use GEO as alternative |
+| GEO/SRA connectors require optional packages | By design | `pip install GEOparse biopython` — connectors fail gracefully without them |
+| Gene ID conversion requires `mygene` | By design | `pip install mygene` — needed only for ID conversion feature |
+| ComBat batch correction requires `combat` | By design | `pip install combat` — falls back to median-centering without it |
+| PyPI version is still 2.2.1 | By design | Install from GitHub for v2.2.2. PyPI will update with v2.3.0 after Module 10 is complete |
 | ML Recommender requires pre-trained model file | By design | Use rule-based recommender (`--method rule`) |
 
 ### Install v2.2.2 from GitHub
 
-PyPI will be updated after all modules are complete and tested. For now:
+PyPI will be updated to v2.3.0 after Module 10 (Biomarker Discovery) is complete. For now:
 
 ```bash
 git clone https://github.com/AyehBlk/RAPTOR.git
