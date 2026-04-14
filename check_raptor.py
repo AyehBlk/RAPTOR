@@ -6,8 +6,8 @@ something breaks. Covers structure, imports, dependencies, tests, CLI,
 dashboard, code quality, git status, and more.
 
 Usage:
-    python check_raptor.py                  # Full diagnostic (all 15 checks)
-    python check_raptor.py --quick          # Skip slow checks (tests, CLI, dashboard)
+    python check_raptor.py                  # Full diagnostic (all 16 checks)
+    python check_raptor.py --quick          # Skip slow checks (tests, CLI)
     python check_raptor.py --fix            # Show fix suggestions for every failure
     python check_raptor.py --section 3      # Run only section 3 (imports)
     python check_raptor.py --section 3,5,7  # Run sections 3, 5, and 7
@@ -16,11 +16,21 @@ Usage:
 
 How to add a new module:
     1. Add the package path to EXPECTED_PACKAGES
-    2. Add module paths to the relevant EXPECTED_*_MODULES list
-    3. Add expected exports to the relevant EXPECTED_*_EXPORTS list
+    2. Add module paths to EXPECTED_CORE_MODULES or EXPECTED_ACQUISITION_MODULES
+    3. Add expected exports to EXPECTED_RAPTOR_EXPORTS or EXPECTED_ACQUISITION_EXPORTS
     4. Add any new required/optional deps to REQUIRED_DEPS or OPTIONAL_DEPS
     5. Update EXPECTED_TEST_COUNT
     6. Run: python check_raptor.py
+
+Sections:
+     1. Project Structure        9.  Test Suite
+     2. setup.py Discovery      10.  CLI Entry Point
+     3. Core Module Imports      11.  Requirements & Environments
+     4. Acquisition Imports      12.  Code Quality
+     5. Class Methods            13.  Git Repository
+     6. Dependencies             14.  Cache & Data Directories
+     7. Version Consistency      15.  .gitignore
+     8. Dashboard                16.  Smoke Tests
 
 Author: Ayeh Bolouki
 Version: 2.2.2
@@ -40,18 +50,37 @@ from io import StringIO
 # Configuration — UPDATE WHEN ADDING NEW MODULES
 # ─────────────────────────────────────────────────────────────────────
 
-# -- Packages that must be discoverable by find_packages() or listed in setup.py --
+# -- Packages that must be discoverable by find_packages() --
 EXPECTED_PACKAGES = [
     'raptor',
     'raptor.utils',
+    'raptor.pipelines',
     'raptor.external_modules',
+    'raptor.external_modules.module6_de_analysis',
     'raptor.external_modules.acquisition',
     'raptor.dashboard',
     'raptor.dashboard.components',
     'raptor.dashboard.pages',
 ]
 
-# -- Individual module files that must exist and import --
+# -- Core RAPTOR module files (non-optional, must import) --
+EXPECTED_CORE_MODULES = [
+    'raptor.simulation',
+    'raptor.profiler',
+    'raptor.quality_assessment',
+    'raptor.recommender',
+    'raptor.ml_recommender',
+    'raptor.synthetic_benchmarks',
+]
+
+# -- Optional RAPTOR module files (may fail if deps missing) --
+EXPECTED_OPTIONAL_MODULES = [
+    ('raptor.de_import',              'Module 7: DE Import'),
+    ('raptor.parameter_optimization', 'Module 8: Parameter Optimization'),
+    ('raptor.ensemble',               'Module 9: Ensemble Analysis'),
+]
+
+# -- Acquisition subpackage modules --
 EXPECTED_ACQUISITION_MODULES = [
     'raptor.external_modules.acquisition.base',
     'raptor.external_modules.acquisition.datasets',
@@ -65,7 +94,35 @@ EXPECTED_ACQUISITION_MODULES = [
     'raptor.external_modules.acquisition.pooling',
 ]
 
-# -- Classes/functions that must be importable from the subpackage __init__ --
+# -- Utils module files --
+EXPECTED_UTILS_MODULES = [
+    'raptor.utils.validation',
+    'raptor.utils.errors',
+    'raptor.utils.sample_sheet',
+]
+
+# -- Key exports from raptor/__init__.py (critical subset) --
+EXPECTED_RAPTOR_EXPORTS = [
+    # Core (always available)
+    'SimulationConfig', 'RNAseqSimulator', 'simulate_rnaseq',
+    'DataProfile', 'RNAseqDataProfiler', 'profile_data_quick',
+    'DataQualityAssessor', 'quick_quality_check',
+    'PipelineRecommender', 'recommend_pipeline',
+    'MLPipelineRecommender', 'train_ml_recommender',
+    'SyntheticBenchmarkGenerator', 'generate_training_data',
+    # Utils
+    'RAPTORError', 'ValidationError',
+    # Optional (may be None but must exist as attributes)
+    'DEResult', 'import_de_results',
+    'ParameterOptimizer', 'optimize_with_ground_truth', 'optimize_with_fdr_control',
+    'EnsembleResult', 'ensemble_fisher', 'ensemble_brown',
+    # Acquisition (may be None)
+    'AcquiredDataset', 'GEOConnector', 'SRAConnector', 'GeneIDMapper',
+    # Helper functions
+    'get_version', 'get_info', 'get_available_modules', 'validate_installation',
+]
+
+# -- Acquisition subpackage exports --
 EXPECTED_ACQUISITION_EXPORTS = [
     'AcquiredDataset', 'PooledDataset', 'CacheManager', 'DataCatalog',
     'GEOConnector', 'TCGAConnector', 'ArrayExpConnector', 'SRAConnector',
@@ -82,16 +139,25 @@ EXPECTED_CLASS_METHODS = {
     'GEOConnector': [
         'search', 'download', 'get_study_info', '_detect_gene_id_type',
     ],
+    'TCGAConnector': [
+        'search', 'download',
+    ],
     'GeneIDMapper': [
         'convert', 'convert_index', 'detect_id_type', 'harmonize_to_common',
     ],
     'PoolingEngine': [
         'merge',
     ],
+    'DataQualityAssessor': [],   # discovered at runtime
+    'RNAseqDataProfiler': [],    # discovered at runtime
 }
 
 # -- Dependencies --
-REQUIRED_DEPS = ['numpy', 'pandas', 'click', 'scipy']
+REQUIRED_DEPS = [
+    'numpy', 'pandas', 'scipy', 'click', 'sklearn', 'statsmodels',
+    'matplotlib', 'seaborn', 'plotly', 'yaml', 'tqdm', 'joblib',
+    'toml', 'colorama',
+]
 
 OPTIONAL_DEPS = {
     'pyarrow':    ('Parquet caching (acquisition)', 'pyarrow'),
@@ -100,8 +166,7 @@ OPTIONAL_DEPS = {
     'Bio':        ('SRA/GEO Entrez search', 'biopython'),
     'mygene':     ('Gene ID mapping (MyGene.info)', 'mygene'),
     'streamlit':  ('Dashboard', 'streamlit'),
-    'plotly':     ('Dashboard visualizations', 'plotly'),
-    'sklearn':    ('PCA and normalization', 'scikit-learn'),
+    'combat':     ('ComBat batch correction (pooling)', 'combat'),
 }
 
 # -- Dashboard --
@@ -112,11 +177,12 @@ EXPECTED_DASHBOARD_PAGES = [
 
 # -- Tests --
 EXPECTED_TEST_COUNT = 105
+EXPECTED_TEST_DIR = 'tests'
 
 # -- Version files --
 VERSION_LOCATIONS = [
-    ('raptor/__init__.py', r'__version__\s*=\s*["\']([^"\']+)["\']'),
-    ('setup.py', r'version\s*=\s*["\']([^"\']+)["\']'),
+    ('raptor/__init__.py', r'__version__\s*=\s*["\x27]([^"\x27]+)["\x27]'),
+    ('setup.py',           r'VERSION\s*=\s*["\x27]([^"\x27]+)["\x27]'),
 ]
 
 # -- Code directories to scan --
@@ -130,6 +196,35 @@ HARDCODED_VERSION_PATTERNS = [
     (r'Version:\s*2\.\d+\.\d+', 'docstring version'),
     (r"version='2\.\d+\.\d+'", 'hardcoded version string'),
 ]
+
+# -- Core files that must exist --
+EXPECTED_ROOT_FILES = [
+    'setup.py', 'requirements.txt', 'README.md', 'CHANGELOG.md',
+    '.gitignore',
+]
+
+EXPECTED_CORE_FILES = [
+    'raptor/__init__.py',
+    'raptor/cli.py',
+    'raptor/simulation.py',
+    'raptor/profiler.py',
+    'raptor/quality_assessment.py',
+    'raptor/recommender.py',
+    'raptor/ml_recommender.py',
+    'raptor/synthetic_benchmarks.py',
+    'raptor/de_import.py',
+    'raptor/parameter_optimization.py',
+    'raptor/ensemble.py',
+    'raptor/utils/__init__.py',
+    'raptor/utils/validation.py',
+    'raptor/utils/errors.py',
+    'raptor/utils/sample_sheet.py',
+    'raptor/external_modules/__init__.py',
+    'raptor/external_modules/acquisition/__init__.py',
+    'raptor/dashboard/app.py',
+    'raptor/dashboard/components/sidebar.py',
+]
+
 
 # ─────────────────────────────────────────────────────────────────────
 # Display Helpers
@@ -200,30 +295,36 @@ def check_project_structure():
     section(1, "Project Structure")
     root = Path('.')
 
-    check((root / 'setup.py').exists(), "setup.py exists",
-          "You must be in the RAPTOR project root")
-    check((root / 'raptor' / '__init__.py').exists(), "raptor/__init__.py exists")
-    check((root / 'raptor' / 'external_modules' / 'acquisition' / '__init__.py').exists(),
-          "acquisition subpackage __init__.py exists",
-          "Create raptor/external_modules/acquisition/__init__.py")
-    check((root / 'tests' / 'test_acquisition.py').exists(), "test_acquisition.py exists")
+    for f in EXPECTED_ROOT_FILES:
+        check((root / f).exists(), f"{f} exists",
+              f"Missing root file: {f}")
+
+    for f in EXPECTED_CORE_FILES:
+        check((root / f).exists(), f"{f}",
+              f"Missing: {f}")
 
     acq_dir = root / 'raptor' / 'external_modules' / 'acquisition'
-    expected_files = [
+    expected_acq = [
         'base.py', 'datasets.py', 'cache.py', 'catalog.py',
         'geo.py', 'tcga.py', 'arrayexpress.py', 'sra.py',
         'gene_mapping.py', 'pooling.py',
     ]
-    for f in expected_files:
-        check((acq_dir / f).exists(), f"acquisition/{f} exists",
-              f"Missing file: raptor/external_modules/acquisition/{f}")
+    for f in expected_acq:
+        check((acq_dir / f).exists(), f"acquisition/{f}",
+              f"Missing: raptor/external_modules/acquisition/{f}")
 
-    check(
-        (root / 'raptor' / 'dashboard' / 'app.py').exists()
-        or (root / 'raptor' / 'launch_dashboard.py').exists()
-        or (root / 'launch_dashboard.py').exists(),
-        "Dashboard entry point exists"
-    )
+    tests_dir = root / 'tests'
+    if tests_dir.exists():
+        test_files = list(tests_dir.glob('test_*.py'))
+        log(f"  [{INFO}] Found {len(test_files)} test files")
+        check((tests_dir / 'test_acquisition.py').exists(), "test_acquisition.py exists")
+    else:
+        check(False, "tests/ directory exists", "mkdir tests")
+
+    r_scripts = root / 'raptor' / 'external_modules' / 'module6_de_analysis' / 'r_scripts'
+    if r_scripts.exists():
+        r_files = list(r_scripts.glob('*.R'))
+        log(f"  [{INFO}] {len(r_files)} R scripts in module6_de_analysis")
 
 
 # ─────────────────────────────────────────────────────────────────────
@@ -246,7 +347,7 @@ def check_setup_py():
         log(f"  [{INFO}] setup.py uses explicit package list")
         for pkg in EXPECTED_PACKAGES:
             check(pkg in setup_text, f"setup.py lists '{pkg}'",
-                  f"Add '{pkg}' to the packages list in setup.py")
+                  f"Add '{pkg}' to packages list in setup.py")
 
     if 'entry_points' in setup_text or 'console_scripts' in setup_text:
         check(True, "CLI entry point configured")
@@ -254,13 +355,21 @@ def check_setup_py():
         check(False, "CLI entry point (console_scripts) configured",
               "Add entry_points to setup.py", warn_only=True)
 
+    for extra in ['dashboard', 'acquisition', 'dev', 'all']:
+        check(f'"{extra}"' in setup_text or f"'{extra}'" in setup_text,
+              f"extras_require['{extra}'] defined",
+              f"Add '{extra}' extras to setup.py", warn_only=True)
+
+    for dep in ['requests', 'pyarrow', 'click', 'numpy', 'pandas']:
+        check(dep in setup_text, f"setup.py includes {dep}")
+
 
 # ─────────────────────────────────────────────────────────────────────
-# 3. Module Imports
+# 3. Core Module Imports
 # ─────────────────────────────────────────────────────────────────────
 
 def check_imports():
-    section(3, "Module Imports")
+    section(3, "Core Module Imports")
 
     try:
         import raptor
@@ -269,6 +378,69 @@ def check_imports():
     except Exception as e:
         check(False, f"import raptor — {e}")
         return
+
+    for mod_path in EXPECTED_CORE_MODULES:
+        mod_name = mod_path.split('.')[-1]
+        try:
+            importlib.import_module(mod_path)
+            check(True, f"import {mod_name}")
+        except Exception as e:
+            check(False, f"import {mod_name} — {e}")
+
+    for mod_path, description in EXPECTED_OPTIONAL_MODULES:
+        mod_name = mod_path.split('.')[-1]
+        try:
+            importlib.import_module(mod_path)
+            check(True, f"import {mod_name} ({description})")
+        except Exception as e:
+            check(False, f"import {mod_name} — {e}", warn_only=True)
+
+    for mod_path in EXPECTED_UTILS_MODULES:
+        mod_name = mod_path.split('.')[-1]
+        try:
+            importlib.import_module(mod_path)
+            check(True, f"import utils.{mod_name}")
+        except Exception as e:
+            check(False, f"import utils.{mod_name} — {e}")
+
+    # raptor.__init__ exports
+    missing_exports = []
+    for name in EXPECTED_RAPTOR_EXPORTS:
+        if not hasattr(raptor, name):
+            missing_exports.append(name)
+
+    check(len(missing_exports) == 0,
+          f"All {len(EXPECTED_RAPTOR_EXPORTS)} key raptor exports available",
+          f"Missing from raptor/__init__.py: {missing_exports}")
+
+    # get_available_modules()
+    try:
+        modules = raptor.get_available_modules()
+        available = [k for k, v in modules.items() if v]
+        unavailable = [k for k, v in modules.items() if not v]
+        log(f"  [{INFO}] get_available_modules(): {len(available)} available, "
+            f"{len(unavailable)} unavailable")
+        if unavailable:
+            log(f"  [{INFO}] Unavailable: {', '.join(unavailable)}")
+    except Exception as e:
+        check(False, f"get_available_modules() — {e}", warn_only=True)
+
+    # validate_installation()
+    try:
+        report = raptor.validate_installation()
+        check(report['exports_valid'],
+              "validate_installation(): all exports valid",
+              f"Missing exports: {report.get('missing_exports', [])[:5]}")
+    except Exception as e:
+        check(False, f"validate_installation() — {e}", warn_only=True)
+
+
+# ─────────────────────────────────────────────────────────────────────
+# 4. Acquisition Module Imports
+# ─────────────────────────────────────────────────────────────────────
+
+def check_acquisition_imports():
+    section(4, "Acquisition Module Imports")
 
     try:
         from raptor.external_modules import acquisition
@@ -279,11 +451,12 @@ def check_imports():
         return
 
     for mod_path in EXPECTED_ACQUISITION_MODULES:
+        mod_name = mod_path.split('.')[-1]
         try:
             importlib.import_module(mod_path)
-            check(True, f"import {mod_path.split('.')[-1]}")
+            check(True, f"import {mod_name}")
         except Exception as e:
-            check(False, f"import {mod_path.split('.')[-1]} — {e}")
+            check(False, f"import {mod_name} — {e}")
 
     missing_exports = []
     for name in EXPECTED_ACQUISITION_EXPORTS:
@@ -295,44 +468,63 @@ def check_imports():
             missing_exports.append(name)
 
     check(len(missing_exports) == 0,
-          f"All {len(EXPECTED_ACQUISITION_EXPORTS)} expected classes/functions exported",
-          f"Missing exports: {missing_exports}" if missing_exports else "")
+          f"All {len(EXPECTED_ACQUISITION_EXPORTS)} acquisition exports available",
+          f"Missing: {missing_exports}" if missing_exports else "")
 
-    # Circular import check
     try:
         for mod_path in EXPECTED_ACQUISITION_MODULES:
             importlib.reload(importlib.import_module(mod_path))
-        check(True, "No circular import issues (all modules reloadable)")
+        check(True, "No circular imports (all acquisition modules reloadable)")
     except Exception as e:
         check(False, f"Circular import detected: {e}", warn_only=True)
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 4. Class Methods Verification
+# 5. Class Methods Verification
 # ─────────────────────────────────────────────────────────────────────
 
 def check_class_methods():
-    section(4, "Class Methods & Signatures")
+    section(5, "Class Methods & Signatures")
+
+    class_map = {}
 
     try:
         from raptor.external_modules.acquisition import (
-            SRAConnector, GEOConnector, GeneIDMapper, PoolingEngine,
+            SRAConnector, GEOConnector, TCGAConnector,
+            GeneIDMapper, PoolingEngine,
         )
+        class_map.update({
+            'SRAConnector': SRAConnector,
+            'GEOConnector': GEOConnector,
+            'TCGAConnector': TCGAConnector,
+            'GeneIDMapper': GeneIDMapper,
+            'PoolingEngine': PoolingEngine,
+        })
     except ImportError as e:
-        check(False, f"Cannot import classes for method check: {e}")
-        return
+        log(f"  [{WARN}] Cannot import acquisition classes: {e}")
 
-    class_map = {
-        'SRAConnector': SRAConnector,
-        'GEOConnector': GEOConnector,
-        'GeneIDMapper': GeneIDMapper,
-        'PoolingEngine': PoolingEngine,
-    }
+    try:
+        from raptor import DataQualityAssessor, RNAseqDataProfiler
+        class_map.update({
+            'DataQualityAssessor': DataQualityAssessor,
+            'RNAseqDataProfiler': RNAseqDataProfiler,
+        })
+    except ImportError as e:
+        log(f"  [{WARN}] Cannot import core classes: {e}")
 
     for cls_name, expected_methods in EXPECTED_CLASS_METHODS.items():
         cls = class_map.get(cls_name)
         if cls is None:
             check(False, f"{cls_name} class not available")
+            continue
+
+        if not expected_methods:
+            # Discovery mode: list public methods for classes we haven't verified yet
+            public_methods = [m for m in dir(cls)
+                              if not m.startswith('_') and callable(getattr(cls, m, None))]
+            log(f"  [{INFO}] {cls_name} has {len(public_methods)} public methods: "
+                f"{', '.join(public_methods[:8])}{'...' if len(public_methods) > 8 else ''}")
+            check(len(public_methods) > 0, f"{cls_name} has public methods")
             continue
 
         for method_name in expected_methods:
@@ -350,19 +542,25 @@ def check_class_methods():
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 5. Dependencies
+# 6. Dependencies
 # ─────────────────────────────────────────────────────────────────────
 
 def check_dependencies():
-    section(5, "Dependencies")
+    section(6, "Dependencies")
 
+    installed = 0
+    missing_count = 0
     for dep in REQUIRED_DEPS:
         try:
             mod = importlib.import_module(dep)
             version = getattr(mod, '__version__', '?')
-            check(True, f"{dep} {version} (required)")
+            check(True, f"{dep} {version}")
+            installed += 1
         except ImportError:
-            check(False, f"{dep} (required) — NOT INSTALLED", f"pip install {dep}")
+            check(False, f"{dep} — NOT INSTALLED", f"pip install {dep}")
+            missing_count += 1
+
+    log(f"  [{INFO}] Required: {installed} installed, {missing_count} missing")
 
     for dep, (purpose, pip_name) in OPTIONAL_DEPS.items():
         try:
@@ -375,11 +573,11 @@ def check_dependencies():
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 6. Version Consistency
+# 7. Version Consistency
 # ─────────────────────────────────────────────────────────────────────
 
 def check_versions():
-    section(6, "Version Consistency")
+    section(7, "Version Consistency")
     versions = {}
 
     for filepath, pattern in VERSION_LOCATIONS:
@@ -390,7 +588,7 @@ def check_versions():
                 versions[filepath] = match.group(1)
                 log(f"  [{INFO}] {filepath}: {match.group(1)}")
             elif filepath == 'setup.py' and '__version__' in text:
-                log(f"  [{INFO}] {filepath}: reads version dynamically from __version__ (good practice)")
+                log(f"  [{INFO}] {filepath}: reads version dynamically (good practice)")
             else:
                 log(f"  [{WARN}] {filepath}: version pattern not found")
         except FileNotFoundError:
@@ -404,6 +602,20 @@ def check_versions():
     except Exception:
         pass
 
+    try:
+        from raptor.external_modules import acquisition
+        if hasattr(acquisition, '__version__'):
+            acq_ver = acquisition.__version__
+            log(f"  [{INFO}] acquisition/__init__.py: {acq_ver}")
+            import raptor
+            if acq_ver != raptor.__version__:
+                check(False,
+                      f"Acquisition version ({acq_ver}) != raptor ({raptor.__version__})",
+                      "Update __version__ in acquisition/__init__.py",
+                      warn_only=True)
+    except Exception:
+        pass
+
     unique_versions = set(versions.values())
     if len(unique_versions) == 1:
         check(True, f"All versions match: {unique_versions.pop()}")
@@ -413,7 +625,6 @@ def check_versions():
     else:
         check(False, "Could not determine any version")
 
-    # Count hardcoded version references
     hardcoded_count = 0
     for dirpath in CODE_DIRECTORIES:
         for pyfile in Path(dirpath).rglob('*.py'):
@@ -424,15 +635,15 @@ def check_versions():
             except Exception:
                 pass
     if hardcoded_count > 0:
-        log(f"  [{INFO}] {hardcoded_count} hardcoded version references found in codebase")
+        log(f"  [{INFO}] {hardcoded_count} hardcoded version references in codebase")
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 7. Dashboard Pages
+# 8. Dashboard
 # ─────────────────────────────────────────────────────────────────────
 
 def check_dashboard():
-    section(7, "Dashboard Pages")
+    section(8, "Dashboard")
     pages_dir = Path('raptor/dashboard/pages')
     if not pages_dir.exists():
         check(False, "Dashboard pages directory exists")
@@ -454,7 +665,6 @@ def check_dashboard():
     check(len(duplicates) == 0, "No duplicate page numbers",
           f"Duplicate prefixes: {duplicates}")
 
-    # Syntax check all pages
     syntax_errors = []
     for f in page_files:
         try:
@@ -467,22 +677,40 @@ def check_dashboard():
           f"All {len(page_files)} pages have valid syntax",
           f"Syntax errors: {syntax_errors}")
 
+    app_file = Path('raptor/dashboard/app.py')
+    if app_file.exists():
+        app_text = app_file.read_text(encoding='utf-8')
+        check('set_page_config' in app_text, "app.py has st.set_page_config()")
+        check('Data Acquisition' in app_text or 'acquisition' in app_text.lower(),
+              "app.py references Data Acquisition",
+              "Update app.py sidebar to include Data Acquisition", warn_only=True)
+
+    sidebar_file = Path('raptor/dashboard/components/sidebar.py')
+    check(sidebar_file.exists(), "components/sidebar.py exists")
+
 
 # ─────────────────────────────────────────────────────────────────────
-# 8. Test Suite
+# 9. Test Suite
 # ─────────────────────────────────────────────────────────────────────
 
 def check_tests():
-    section(8, "Test Suite")
+    section(9, "Test Suite")
     if is_quick():
         log(f"  [{SKIP}] Skipped (--quick mode)")
         results['skip'] += 1
         return
 
-    # Collect
+    tests_dir = Path(EXPECTED_TEST_DIR)
+    if not tests_dir.exists():
+        check(False, "tests/ directory exists")
+        return
+
+    test_files = sorted(tests_dir.glob('test_*.py'))
+    log(f"  [{INFO}] Test files: {', '.join(f.name for f in test_files)}")
+
     try:
         result = subprocess.run(
-            [sys.executable, '-m', 'pytest', 'tests/test_acquisition.py',
+            [sys.executable, '-m', 'pytest', str(tests_dir),
              '--collect-only', '-q'],
             capture_output=True, text=True, timeout=30,
         )
@@ -492,27 +720,30 @@ def check_tests():
             check(n >= EXPECTED_TEST_COUNT,
                   f"Collected {n} tests (expected >= {EXPECTED_TEST_COUNT})")
         else:
-            check(False, f"Could not parse test count")
+            check(False, "Could not parse test count")
+            if verbose:
+                log(f"          stdout: {result.stdout[:200]}")
     except Exception as e:
         check(False, f"Test collection failed: {e}")
 
-    # Run
     log(f"  [{INFO}] Running full test suite...")
     try:
         result = subprocess.run(
-            [sys.executable, '-m', 'pytest', 'tests/test_acquisition.py',
+            [sys.executable, '-m', 'pytest', str(tests_dir),
              '-v', '--tb=short', '-q'],
-            capture_output=True, text=True, timeout=120,
+            capture_output=True, text=True, timeout=600,
         )
         passed = int(m.group(1)) if (m := re.search(r'(\d+) passed', result.stdout)) else 0
         failed = int(m.group(1)) if (m := re.search(r'(\d+) failed', result.stdout)) else 0
+        errors = int(m.group(1)) if (m := re.search(r'(\d+) error', result.stdout)) else 0
 
-        check(failed == 0, f"All tests pass ({passed} passed, {failed} failed)",
-              "Run: pytest tests/test_acquisition.py -v --tb=long")
+        check(failed == 0 and errors == 0,
+              f"All tests pass ({passed} passed, {failed} failed, {errors} errors)",
+              "Run: pytest tests/ -v --tb=long")
 
-        if failed > 0 and verbose:
+        if (failed > 0 or errors > 0) and verbose:
             for line in result.stdout.split('\n'):
-                if 'FAILED' in line:
+                if 'FAILED' in line or 'ERROR' in line:
                     log(f"          {line.strip()}")
 
         time_match = re.search(r'in ([\d.]+)s', result.stdout)
@@ -520,17 +751,17 @@ def check_tests():
             log(f"  [{INFO}] Completed in {time_match.group(1)}s")
 
     except subprocess.TimeoutExpired:
-        check(False, "Test run timed out (>120s)")
+        check(False, "Test run timed out (>600s)")
     except Exception as e:
         check(False, f"Test run failed: {e}")
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 9. CLI Entry Point
+# 10. CLI Entry Point
 # ─────────────────────────────────────────────────────────────────────
 
 def check_cli():
-    section(9, "CLI Entry Point")
+    section(10, "CLI Entry Point")
     if is_quick():
         log(f"  [{SKIP}] Skipped (--quick mode)")
         results['skip'] += 1
@@ -545,20 +776,21 @@ def check_cli():
             cli_output = result.stdout.strip()
             check(True, f"raptor --version: {cli_output}")
 
-            # Compare CLI version to __init__ version
             try:
                 import raptor
                 init_ver = raptor.__version__
                 if init_ver not in cli_output:
                     check(False,
-                          f"CLI version mismatch: CLI says '{cli_output}' but __init__ is '{init_ver}'",
-                          "Update cli.py to use: @click.version_option(version=raptor.__version__)",
+                          f"CLI version mismatch: CLI='{cli_output}', __init__='{init_ver}'",
+                          "Use: @click.version_option(version=raptor.__version__)",
                           warn_only=True)
             except Exception:
                 pass
         else:
             check(False, "raptor --version failed",
                   "Check CLI entry point in setup.py", warn_only=True)
+            if verbose:
+                log(f"          stderr: {result.stderr[:200]}")
     except Exception as e:
         check(False, f"CLI check failed: {e}", warn_only=True)
 
@@ -577,37 +809,40 @@ def check_cli():
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 10. Requirements & Environment Files
+# 11. Requirements & Environment Files
 # ─────────────────────────────────────────────────────────────────────
 
 def check_requirements():
-    section(10, "Requirements & Environment Files")
+    section(11, "Requirements & Environment Files")
     req_file = Path('requirements.txt')
     if not req_file.exists():
         check(False, "requirements.txt exists")
         return
 
     req_text = req_file.read_text(encoding='utf-8').lower()
-    for dep in ['numpy', 'pandas', 'click', 'scipy']:
+    for dep in ['numpy', 'pandas', 'click', 'scipy', 'scikit-learn',
+                'statsmodels', 'matplotlib', 'plotly', 'pyyaml']:
         check(dep in req_text, f"requirements.txt includes {dep}")
 
     for dep in ['requests', 'pyarrow']:
-        check(dep in req_text, f"requirements.txt includes {dep} (acquisition)",
-              f"Add {dep} to requirements.txt", warn_only=True)
+        check(dep in req_text, f"requirements.txt includes {dep} (acquisition)")
 
     for env_file in ['environment.yml', 'environment-full.yml']:
-        if Path(env_file).exists():
-            log(f"  [{INFO}] {env_file} exists ({Path(env_file).stat().st_size:,} bytes)")
+        path = Path(env_file)
+        if path.exists():
+            env_text = path.read_text(encoding='utf-8').lower()
+            has_acq = 'acquisition' in env_text or 'requests' in env_text
+            log(f"  [{INFO}] {env_file} ({path.stat().st_size:,} bytes)"
+                f"{' — has acquisition deps' if has_acq else ''}")
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 11. Code Quality
+# 12. Code Quality
 # ─────────────────────────────────────────────────────────────────────
 
 def check_code_quality():
-    section(11, "Code Quality")
+    section(12, "Code Quality")
 
-    # UTF-8 encoding check
     encoding_issues = []
     total_files = 0
     for dirpath in CODE_DIRECTORIES:
@@ -621,20 +856,31 @@ def check_code_quality():
     check(len(encoding_issues) == 0, f"All {total_files} Python files are valid UTF-8",
           f"Encoding issues in: {encoding_issues}")
 
-    # print() in library code
+    # print() in library code (skip dashboard pages)
     print_locs = []
-    for pyfile in Path('raptor/external_modules').rglob('*.py'):
+    for pyfile in Path('raptor').rglob('*.py'):
+        if 'dashboard' in str(pyfile):
+            continue
         try:
-            for i, line in enumerate(pyfile.read_text(encoding='utf-8').split('\n'), 1):
-                if line.strip().startswith('print(') and not line.strip().startswith('#'):
-                    print_locs.append(f"{pyfile.name}:{i}")
+            lines = pyfile.read_text(encoding='utf-8').split('\n')
+            in_main_guard = False
+            for i, line in enumerate(lines, 1):
+                stripped = line.strip()
+                if "if __name__" in stripped:
+                    in_main_guard = True
+                if in_main_guard:
+                    continue
+                if stripped.startswith('print(') and not stripped.startswith('#'):
+                    print_locs.append(f"{pyfile.relative_to('.')}:{i}")
         except Exception:
             pass
 
-    check(len(print_locs) == 0, "No print() in library code (use logging instead)",
-          f"Found in: {print_locs[:5]}", warn_only=True)
+    if print_locs:
+        check(False, f"print() in library code ({len(print_locs)} locations)",
+              f"Use logging instead. Found in: {print_locs[:5]}", warn_only=True)
+    else:
+        check(True, "No print() in library code (uses logging)")
 
-    # Syntax check all files
     syntax_errors = []
     for dirpath in CODE_DIRECTORIES:
         for pyfile in Path(dirpath).rglob('*.py'):
@@ -647,31 +893,30 @@ def check_code_quality():
     check(len(syntax_errors) == 0, f"All {total_files} Python files have valid syntax",
           f"Syntax errors: {syntax_errors}")
 
-    # Missing encoding='utf-8' in file writes
     missing_enc = []
-    for pyfile in Path('raptor/external_modules').rglob('*.py'):
+    for pyfile in Path('raptor').rglob('*.py'):
         try:
             content = pyfile.read_text(encoding='utf-8')
             for i, line in enumerate(content.split('\n'), 1):
                 if ('open(' in line and ("'w'" in line or '"w"' in line)
                         and 'encoding' not in line and not line.strip().startswith('#')):
-                    missing_enc.append(f"{pyfile.name}:{i}")
+                    missing_enc.append(f"{pyfile.relative_to('.')}:{i}")
         except Exception:
             pass
 
     if missing_enc:
-        check(False, "All file writes use encoding='utf-8'",
-              f"Missing in: {missing_enc[:5]}", warn_only=True)
+        check(False, f"Missing encoding='utf-8' in {len(missing_enc)} file writes",
+              f"Found in: {missing_enc[:5]}", warn_only=True)
     else:
-        check(True, "No obvious missing encoding='utf-8' in write operations")
+        check(True, "All file writes use encoding='utf-8'")
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 12. Git Repository
+# 13. Git Repository
 # ─────────────────────────────────────────────────────────────────────
 
 def check_git():
-    section(12, "Git Repository")
+    section(13, "Git Repository")
     try:
         result = subprocess.run(['git', 'status', '--porcelain'],
                                 capture_output=True, text=True, timeout=15)
@@ -716,11 +961,11 @@ def check_git():
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 13. Cache & Data Directories
+# 14. Cache & Data Directories
 # ─────────────────────────────────────────────────────────────────────
 
 def check_cache():
-    section(13, "Cache & Data Directories")
+    section(14, "Cache & Data Directories")
     cache_dir = Path.home() / '.raptor_cache'
     if cache_dir.exists():
         n_files = sum(1 for _ in cache_dir.rglob('*') if _.is_file())
@@ -729,17 +974,22 @@ def check_cache():
     else:
         log(f"  [{INFO}] No cache directory yet (created on first download)")
 
+    parquet_dir = Path.home() / '.raptor' / 'parquet_cache'
+    if parquet_dir.exists():
+        n_pq = sum(1 for _ in parquet_dir.rglob('*.parquet'))
+        log(f"  [{INFO}] Parquet cache: {n_pq} files in {parquet_dir}")
+
     pycache_dirs = list(Path('raptor').rglob('__pycache__'))
     log(f"  [{INFO}] {len(pycache_dirs)} __pycache__ directories")
     check(True, "Cache check complete")
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 14. .gitignore
+# 15. .gitignore
 # ─────────────────────────────────────────────────────────────────────
 
 def check_gitignore():
-    section(14, ".gitignore")
+    section(15, ".gitignore")
     gi_file = Path('.gitignore')
     if not gi_file.exists():
         check(False, ".gitignore exists")
@@ -768,11 +1018,11 @@ def check_gitignore():
 
 
 # ─────────────────────────────────────────────────────────────────────
-# 15. Smoke Test (offline functionality)
+# 16. Smoke Tests (offline functionality)
 # ─────────────────────────────────────────────────────────────────────
 
 def check_smoke_test():
-    section(15, "Smoke Test (offline functionality)")
+    section(16, "Smoke Tests (offline functionality)")
     if is_quick():
         log(f"  [{SKIP}] Skipped (--quick mode)")
         results['skip'] += 1
@@ -781,50 +1031,124 @@ def check_smoke_test():
     try:
         import numpy as np
         import pandas as pd
+
+        # ── Core module smoke tests ──
+        log(f"  [{INFO}] Testing core modules...")
+
+        np.random.seed(42)
+        counts = pd.DataFrame(
+            np.random.negative_binomial(5, 0.3, (500, 6)),
+            index=[f'GENE_{i}' for i in range(500)],
+            columns=['ctrl_1', 'ctrl_2', 'ctrl_3', 'treat_1', 'treat_2', 'treat_3'],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame(
+            {'condition': ['ctrl', 'ctrl', 'ctrl', 'treat', 'treat', 'treat']},
+            index=counts.columns,
+        )
+        meta.index.name = 'sample_id'
+
+        # Simulation
+        try:
+            from raptor import simulate_rnaseq
+            sim_result = simulate_rnaseq()
+            check(sim_result is not None and hasattr(sim_result, 'counts'),
+                  "simulate_rnaseq() produces output")
+        except Exception as e:
+            check(False, f"simulate_rnaseq() — {e}")
+
+        # Profiler
+        try:
+            from raptor import profile_data_quick
+            # profile_data_quick may expect sample_id as column, not index
+            meta_col = meta.copy()
+            if 'sample_id' not in meta_col.columns:
+                meta_col = meta_col.reset_index()
+            profile = profile_data_quick(counts, meta_col)
+            check(profile is not None,
+                  f"profile_data_quick() — BCV={getattr(profile, 'bcv', '?')}")
+        except Exception as e:
+            check(False, f"profile_data_quick() — {e}")
+
+        # Quality Assessment
+        try:
+            from raptor import DataQualityAssessor
+            import inspect
+            sig = inspect.signature(DataQualityAssessor.__init__)
+            params = list(sig.parameters.keys())
+            log(f"  [{INFO}] DataQualityAssessor.__init__ params: {params[1:]}")
+            # Try constructing with detected signature
+            meta_col = meta.copy()
+            if 'sample_id' not in meta_col.columns:
+                meta_col = meta_col.reset_index()
+            if 'group_column' in params:
+                assessor = DataQualityAssessor(counts, meta_col, group_column='condition')
+            elif 'metadata' in params:
+                assessor = DataQualityAssessor(counts, meta_col)
+            else:
+                assessor = DataQualityAssessor(counts)
+            check(assessor is not None, "DataQualityAssessor created successfully")
+        except Exception as e:
+            check(False, f"DataQualityAssessor — {e}")
+
+        # Recommender
+        try:
+            from raptor import recommend_pipeline
+            import inspect
+            sig = inspect.signature(recommend_pipeline)
+            n_params = len([p for p in sig.parameters.values()
+                           if p.default is inspect.Parameter.empty])
+            if n_params >= 2:
+                rec = recommend_pipeline(counts, meta)
+            else:
+                rec = recommend_pipeline(counts)
+            check(rec is not None,
+                  f"recommend_pipeline() — primary: {getattr(rec, 'primary_pipeline', '?')}")
+        except Exception as e:
+            check(False, f"recommend_pipeline() — {e}")
+
+        # ── Acquisition smoke tests ──
+        log(f"  [{INFO}] Testing acquisition modules...")
+
         from raptor.external_modules.acquisition import (
-            AcquiredDataset, PooledDataset, CacheManager, GeneIDMapper,
+            AcquiredDataset, PooledDataset, GeneIDMapper,
             PoolingEngine, SRAConnector,
         )
 
-        # Create a mini dataset (200 genes — above PoolingEngine min threshold)
-        counts = pd.DataFrame(
+        acq_counts = pd.DataFrame(
             np.random.randint(0, 100, (200, 4)),
             index=[f'GENE_{i}' for i in range(200)],
             columns=['S1', 'S2', 'S3', 'S4'],
         )
-        counts.index.name = 'gene_id'
-        meta = pd.DataFrame(
+        acq_counts.index.name = 'gene_id'
+        acq_meta = pd.DataFrame(
             {'condition': ['ctrl', 'ctrl', 'treat', 'treat']},
             index=['S1', 'S2', 'S3', 'S4'],
         )
-        meta.index.name = 'sample_id'
+        acq_meta.index.name = 'sample_id'
 
         ds = AcquiredDataset(
-            counts_df=counts, metadata=meta,
+            counts_df=acq_counts, metadata=acq_meta,
             source_info={'repository': 'test', 'accession': 'TEST001'},
             gene_id_type='symbol',
         )
         check(ds.n_genes == 200 and ds.n_samples == 4, "AcquiredDataset creation")
 
-        # Integrity validation
         integrity = ds.validate_integrity()
         check(integrity['valid'], "AcquiredDataset.validate_integrity()")
 
-        # GeneIDMapper detection
         mapper = GeneIDMapper('Homo sapiens')
         check(mapper.detect_id_type(['TP53', 'BRCA1', 'EGFR']) == 'symbol',
-              "GeneIDMapper.detect_id_type()")
+              "GeneIDMapper detects symbol IDs")
         check(mapper.detect_id_type(['ENSG00000141510']) == 'ensembl',
               "GeneIDMapper detects Ensembl IDs")
         check(mapper.detect_id_type(['7157', '672']) == 'entrez',
               "GeneIDMapper detects Entrez IDs")
 
-        # Same-type conversion (no API needed)
         result = mapper.convert(['TP53', 'BRCA1'], 'symbol', 'symbol')
         check(result == {'TP53': 'TP53', 'BRCA1': 'BRCA1'},
               "GeneIDMapper same-type conversion (no API)")
 
-        # SRA GSM extraction
         sra_table = pd.DataFrame({
             'sample_alias': ['GSM100001', 'GSM100002', 'SAMN99999'],
             'run_accession': ['SRR1', 'SRR2', 'SRR3'],
@@ -833,10 +1157,9 @@ def check_smoke_test():
         check(len(gsm_ids) == 2 and 'GSM100001' in gsm_ids,
               "SRAConnector._extract_gsm_ids()")
 
-        # Pooling two datasets
         ds2 = AcquiredDataset(
-            counts_df=counts.rename(columns={c: f'X{c}' for c in counts.columns}),
-            metadata=meta.rename(index={c: f'X{c}' for c in meta.index}),
+            counts_df=acq_counts.rename(columns={c: f'X{c}' for c in acq_counts.columns}),
+            metadata=acq_meta.rename(index={c: f'X{c}' for c in acq_meta.index}),
             source_info={'repository': 'test', 'accession': 'TEST002'},
             gene_id_type='symbol',
         )
@@ -845,13 +1168,10 @@ def check_smoke_test():
         check(pool.n_studies == 2 and pool.n_genes == 200,
               f"PoolingEngine.merge() — {pool.n_genes} genes, {pool.n_samples} samples")
 
-        # Leave-one-study-out
         subset = pool.leave_one_study_out(pool.studies[0])
-        # May return PooledDataset or tuple — handle both
         if isinstance(subset, tuple):
             subset = subset[0]
-        check(subset is not None,
-              "PooledDataset.leave_one_study_out()")
+        check(subset is not None, "PooledDataset.leave_one_study_out()")
 
         log(f"  [{INFO}] All smoke tests passed")
 
@@ -869,7 +1189,7 @@ def main():
     start_time = time.time()
 
     log("\n" + "=" * 65)
-    log("  RAPTOR Diagnostic Suite")
+    log("  RAPTOR Diagnostic Suite v2.2.2")
     log(f"  Python {sys.version.split()[0]} | {sys.platform}")
     log(f"  Working directory: {Path('.').resolve()}")
     log("=" * 65)
@@ -881,14 +1201,22 @@ def main():
     sys.path.insert(0, str(Path('.').resolve()))
 
     all_checks = [
-        (1, check_project_structure),   (2, check_setup_py),
-        (3, check_imports),             (4, check_class_methods),
-        (5, check_dependencies),        (6, check_versions),
-        (7, check_dashboard),           (8, check_tests),
-        (9, check_cli),                 (10, check_requirements),
-        (11, check_code_quality),       (12, check_git),
-        (13, check_cache),              (14, check_gitignore),
-        (15, check_smoke_test),
+        (1,  check_project_structure),
+        (2,  check_setup_py),
+        (3,  check_imports),
+        (4,  check_acquisition_imports),
+        (5,  check_class_methods),
+        (6,  check_dependencies),
+        (7,  check_versions),
+        (8,  check_dashboard),
+        (9,  check_tests),
+        (10, check_cli),
+        (11, check_requirements),
+        (12, check_code_quality),
+        (13, check_git),
+        (14, check_cache),
+        (15, check_gitignore),
+        (16, check_smoke_test),
     ]
 
     for num, func in all_checks:

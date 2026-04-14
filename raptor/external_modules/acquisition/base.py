@@ -233,6 +233,7 @@ class BaseConnector(ABC):
         accession: str,
         data_type: str = 'raw_counts',
         force: bool = False,
+        **kwargs,
     ) -> AcquiredDataset:
         """
         Download a dataset from the repository.
@@ -276,6 +277,7 @@ class BaseConnector(ABC):
             dataset = self._download_api(
                 accession=accession,
                 data_type=data_type,
+                **kwargs,
             )
         except Exception as e:
             logger.error(f"Download failed for {accession}: {e}")

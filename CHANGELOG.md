@@ -347,13 +347,9 @@ See [MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE_v2.1_to_v2.2.md) for details.
 
 ## [Unreleased]
 
-### Planned for v2.2.2
-- Fix `raptor dashboard` CLI command
-- Read version from `raptor.__version__` in `cli.py` (eliminate hardcoded strings)
-- Update CITATION.cff DOI after Zenodo release
-
 ### Planned for v2.3.0
 - Module 10: Biomarker Discovery
+- Batch confounding propagation in recommender
 - Sphinx documentation website
 - ReadTheDocs hosting
 - GitHub Actions CI/CD
@@ -362,6 +358,57 @@ See [MIGRATION_GUIDE.md](docs/MIGRATION_GUIDE_v2.1_to_v2.2.md) for details.
 
 ---
 
+## [2.2.2] - 2026-04-14
+
+### Module 6b: Data Acquisition (New)
+
+Complete data acquisition subpackage for searching, downloading, and pooling
+datasets from public genomics repositories. Accessible via the dashboard
+(Data Acquisition page) — no CLI commands needed.
+
+### Added
+- **GEO Connector** — search GEO via NCBI Entrez, download expression matrices, extract processing metadata (aligner, assembly, quantification, library selection), fuzzy sample alignment with greedy optimal assignment
+- **SRA Connector** — search SRA via ENA `read_run` endpoint, study-level grouping, rich run tables, cross-platform FASTQ download scripts (PowerShell `.ps1` / Bash `.sh`), `find_linked_gse` method for GSM→GSE lookup
+- **TCGA Connector** — GDC API integration with multi-omic support (gene expression, miRNA, methylation, CNV, RPPA), data-type-aware dashboard labels, `tar.gz` recovery for truncated downloads
+- **ArrayExpress Connector** — BioStudies API integration (in development)
+- **Gene ID Mapper** — detect ID type (Ensembl/Symbol/Entrez), convert via MyGene.info, mean aggregation for duplicates, failed gene download
+- **Pooling Engine** — inner/outer gene merging, batch correction (ComBat, quantile normalization, median ratio), study-label tracking
+- **Data Library** — repository-aware display separating GEO expression datasets from SRA run tables, gene ID conversion UI, sample metadata editor with batch auto-population
+- **Quality Check tab** — library size distributions, PCA, sample correlations, expression distributions, RLE plots for pooled data
+- **Cache Manager** — parquet-based caching for fast dataset reload
+- **Data Catalog** — track downloaded/uploaded datasets across sessions
+- `raptor/external_modules/acquisition/` — 10 source files: `__init__.py`, `base.py`, `datasets.py`, `cache.py`, `catalog.py`, `geo.py`, `tcga.py`, `arrayexpress.py`, `sra.py`, `gene_mapping.py`, `pooling.py`
+- `raptor/dashboard/pages/01___Data_Acquisition.py` — full dashboard page (~5200 lines) with 7 tabs
+- `tests/test_acquisition.py` — 105 tests including 17 mocked Entrez tests
+- `BETA_TESTING_GUIDE.md` — testing scenarios for beta testers
+
+### Changed
+- `raptor/external_modules/__init__.py` — imports acquisition subpackage
+- `raptor/dashboard/app.py` — sidebar navigation includes Data Acquisition, version bumped to 2.2.2, workflow diagram updated
+- `raptor/launch_dashboard.py` — version bumped to 2.2.2, acquisition module check added
+- `setup.py` — `requests` and `pyarrow` added to core deps, `acquisition` extras group (GEOparse, biopython, mygene, combat)
+- `requirements.txt` — acquisition dependency section added
+- `environment.yml` / `environment-full.yml` — acquisition dependencies added
+- `check_raptor.py` — acquisition checks across all 15 diagnostic sections, smoke tests for offline functionality
+
+### Fixed
+- **TCGA multi-omic downloads** — miRNA, methylation, CNV, and RPPA data types now supported with expanded `gene_id_type` validation, consistent `_sample_label()`, data-type-aware labels, and `EOFError` catch for truncated `tar.gz` files
+- `raptor dashboard` CLI command remains broken (workaround: `python -m raptor.launch_dashboard`)
+
+### Known Issues
+- TCGA and ArrayExpress connectors are partially implemented (GEO and SRA are production-ready)
+- Gene ID conversion requires optional `mygene` package
+- ComBat batch correction requires optional `combat` package (falls back to median-centering)
+- GEO download can be slow for very large datasets (>100 samples)
+- `raptor dashboard` CLI command still broken (use `python -m raptor.launch_dashboard`)
+
+### Test Suite
+- **105 tests**, 0 failures, 5 expected optional-dependency warnings
+- Diagnostic suite (`check_raptor.py`) scores 105/110
+
+---
+
+**[2.2.2]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.2  
 **[2.2.1]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.1  
 **[2.2.0]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.2.0  
 **[2.1.2]:** https://github.com/AyehBlk/RAPTOR/releases/tag/v2.1.2

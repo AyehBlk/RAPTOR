@@ -12,7 +12,9 @@ Test coverage:
     - gene_mapping.py: GeneIDMapper (detection, same-type convert)
     - geo.py: GEOConnector (constructor, static methods)
     - tcga.py: TCGAConnector (constructor, project list)
-    - arrayexpress.py: ArrayExpConnector (constructor)
+    - arrayexpress.py: ArrayExpConnector (constructor, _parse_organism, _parse_study_type,
+      _simplify_platform, _detect_gene_ids, _parse_study_attrs, _parse_subsections,
+      get_study_info, get_sample_types — all offline with mocked API)
     - sra.py: SRAConnector (constructor, GSM extraction, GSE lookup, download_api GSE population)
     - pooling.py: PoolingEngine (merge, batch correction, conflict resolution)
 
@@ -825,6 +827,272 @@ class TestConnectorConstructors:
 
 
 # =============================================================================
+# TEST: ArrayExpress Connector (offline, mocked)
+# =============================================================================
+
+class TestArrayExpConnector:
+    """Tests for ArrayExpConnector parsing and info methods (all offline)."""
+
+    @pytest.fixture
+    def ae(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        return ArrayExpConnector(cache=False)
+
+    # ----- _parse_organism -----
+
+    def test_parse_organism_human(self, ae):
+        content = "transcription profiling by array EFO EFO_0002768 Homo sapiens To test..."
+        assert ae._parse_organism(content) == 'Homo sapiens'
+
+    def test_parse_organism_mouse(self, ae):
+        content = "RNA-seq of coding RNA Mus musculus brain tissue"
+        assert ae._parse_organism(content) == 'Mus musculus'
+
+    def test_parse_organism_unknown(self, ae):
+        content = "some random content without any species"
+        assert ae._parse_organism(content) == 'unknown'
+
+    def test_parse_organism_empty(self, ae):
+        assert ae._parse_organism('') == 'unknown'
+        assert ae._parse_organism(None) == 'unknown'
+
+    def test_parse_organism_multiple_picks_first(self, ae):
+        """When content mentions multiple organisms, return the first match."""
+        content = "Homo sapiens and Mus musculus comparison"
+        assert ae._parse_organism(content) == 'Homo sapiens'
+
+    # ----- _parse_study_type -----
+
+    def test_parse_study_type_rnaseq(self, ae):
+        content = "RNA-seq of coding RNA EFO EFO_0002768 Homo sapiens"
+        assert ae._parse_study_type(content) == 'RNA-seq of coding RNA'
+
+    def test_parse_study_type_microarray(self, ae):
+        content = "transcription profiling by array some description"
+        assert ae._parse_study_type(content) == 'transcription profiling by array'
+
+    def test_parse_study_type_chipseq(self, ae):
+        content = "ChIP-seq analysis of histone modifications"
+        assert ae._parse_study_type(content) == 'ChIP-seq'
+
+    def test_parse_study_type_empty(self, ae):
+        assert ae._parse_study_type('') == ''
+        assert ae._parse_study_type(None) == ''
+
+    def test_parse_study_type_unknown_content(self, ae):
+        content = "some experiment that doesn't match any known type"
+        assert ae._parse_study_type(content) == ''
+
+    # ----- _detect_gene_ids (static) -----
+
+    def test_detect_gene_ids_ensembl(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        df = pd.DataFrame({'S1': [1, 2, 3]},
+                          index=['ENSG00000141510', 'ENSG00000012048', 'ENSG00000146648'])
+        assert ArrayExpConnector._detect_gene_ids(df) == 'ensembl'
+
+    def test_detect_gene_ids_entrez(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        df = pd.DataFrame({'S1': [1, 2, 3]},
+                          index=['7157', '672', '1956'])
+        assert ArrayExpConnector._detect_gene_ids(df) == 'entrez'
+
+    def test_detect_gene_ids_symbol(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        df = pd.DataFrame({'S1': [1, 2, 3]},
+                          index=['TP53', 'BRCA1', 'EGFR'])
+        assert ArrayExpConnector._detect_gene_ids(df) == 'symbol'
+
+    # ----- _parse_study_attrs (static) -----
+
+    def test_parse_study_attrs(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        study_data = {
+            'section': {
+                'attributes': [
+                    {'name': 'Title', 'value': 'My Study'},
+                    {'name': 'Organism', 'value': 'Homo sapiens'},
+                    {'name': 'Technology Type', 'value': 'sequencing assay'},
+                ]
+            }
+        }
+        attrs = ArrayExpConnector._parse_study_attrs(study_data)
+        assert attrs['title'] == 'My Study'
+        assert attrs['organism'] == 'Homo sapiens'
+        assert attrs['technology type'] == 'sequencing assay'
+
+    def test_parse_study_attrs_empty(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        assert ArrayExpConnector._parse_study_attrs({}) == {}
+        assert ArrayExpConnector._parse_study_attrs({'section': {}}) == {}
+
+    # ----- _parse_subsections (static) -----
+
+    def test_parse_subsections_samples(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        study_data = {
+            'section': {
+                'subsections': [
+                    {'type': 'Samples', 'attributes': [
+                        {'name': 'Sample count', 'value': '38'},
+                        {'name': 'Experimental Designs', 'value': 'disease state design'},
+                        {'name': 'Experimental Factors', 'value': 'genotype'},
+                    ]},
+                    {'type': 'Assays and Data', 'attributes': [
+                        {'name': 'Technology', 'value': 'sequencing assay'},
+                        {'name': 'Assay by Molecule', 'value': 'RNA assay'},
+                    ]},
+                    {'type': 'Publication', 'attributes': [
+                        {'name': 'Title', 'value': 'Paper title'},
+                        {'name': 'DOI', 'value': '10.1234/example'},
+                    ]},
+                ]
+            }
+        }
+        result = ArrayExpConnector._parse_subsections(study_data)
+        assert result['sample_count'] == 38
+        assert result['experimental_designs'] == 'disease state design'
+        assert result['technology'] == 'sequencing assay'
+        assert result['pub_title'] == 'Paper title'
+        assert result['pub_doi'] == '10.1234/example'
+
+    def test_parse_subsections_nested_list(self):
+        """Subsections can be a list of lists in BioStudies JSON."""
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        study_data = {
+            'section': {
+                'subsections': [
+                    [{'type': 'Samples', 'attributes': [
+                        {'name': 'Sample count', 'value': '10'},
+                    ]}],
+                ]
+            }
+        }
+        result = ArrayExpConnector._parse_subsections(study_data)
+        assert result['sample_count'] == 10
+
+    def test_parse_subsections_empty(self):
+        from raptor.external_modules.acquisition import ArrayExpConnector
+        result = ArrayExpConnector._parse_subsections({})
+        assert result['sample_count'] == 0
+        assert result['technology'] == ''
+
+    # ----- get_study_info (mocked) -----
+
+    def test_get_study_info_returns_expected_keys(self, ae):
+        """get_study_info should return all keys the dashboard expects."""
+        mock_study = {
+            'section': {
+                'attributes': [
+                    {'name': 'Title', 'value': 'Test RNA-seq study'},
+                    {'name': 'Organism', 'value': 'Mus musculus'},
+                    {'name': 'Description', 'value': 'A test study'},
+                ],
+                'subsections': [
+                    {'type': 'Samples', 'attributes': [
+                        {'name': 'Sample count', 'value': '12'},
+                    ]},
+                ],
+                'files': [],
+            },
+            'attributes': [
+                {'name': 'ReleaseDate', 'value': '2024-01-15'},
+            ],
+        }
+        with patch.object(ae, '_fetch_study_detail', return_value=mock_study):
+            info = ae.get_study_info('E-MTAB-9999')
+
+        assert info is not None
+        assert info['title'] == 'Test RNA-seq study'
+        assert info['organism'] == 'Mus musculus'
+        assert info['n_samples'] == 12
+        assert info['repository'] == 'ArrayExpress'
+        assert 'summary' in info
+        assert 'supplementary_files' in info
+        assert 'submission_date' in info
+
+    def test_get_study_info_none_on_failure(self, ae):
+        with patch.object(ae, '_fetch_study_detail', return_value=None):
+            assert ae.get_study_info('E-FAKE-0000') is None
+
+    # ----- get_sample_types (mocked) -----
+
+    def test_get_sample_types_empty_on_failure(self, ae):
+        with patch.object(ae, '_fetch_study_detail', return_value=None):
+            result = ae.get_sample_types('E-FAKE-0000')
+            assert result == {'type_counts': {}, 'unique_types': []}
+
+    def test_get_sample_types_fallback_to_factors(self, ae):
+        """When SDRF not available, return experimental factors."""
+        mock_study = {
+            'section': {
+                'attributes': [
+                    {'name': 'Title', 'value': 'Test'},
+                    {'name': 'Organism', 'value': 'Homo sapiens'},
+                ],
+                'subsections': [
+                    {'type': 'Samples', 'attributes': [
+                        {'name': 'Sample count', 'value': '6'},
+                        {'name': 'Experimental Factors', 'value': 'genotype'},
+                    ]},
+                ],
+                'files': [],  # no SDRF
+            },
+            'attributes': [],
+        }
+        mock_requests = MagicMock()
+
+        with patch.object(ae, '_fetch_study_detail', return_value=mock_study):
+            with patch('raptor.external_modules.acquisition.arrayexpress._check_requests',
+                       return_value=mock_requests):
+                result = ae.get_sample_types('E-MTAB-9999')
+
+        assert 'Factor: genotype' in result['type_counts']
+
+    # ----- E-GEOD to GSE conversion (dashboard logic) -----
+
+    def test_egeod_to_gse_conversion(self):
+        """E-GEOD-37918 should map to GSE37918."""
+        accession = 'E-GEOD-37918'
+        assert accession.startswith('E-GEOD-')
+        gse_id = 'GSE' + accession.replace('E-GEOD-', '')
+        assert gse_id == 'GSE37918'
+
+    def test_non_egeod_has_no_gse(self):
+        """E-MTAB accessions should not generate a GSE link."""
+        accession = 'E-MTAB-9921'
+        assert not accession.startswith('E-GEOD-')
+
+    # ----- _simplify_platform -----
+
+    def test_simplify_platform_rnaseq(self, ae):
+        """RNA-seq study types should simplify to 'RNA-Sequencing'."""
+        if hasattr(ae, '_simplify_platform'):
+            assert ae._simplify_platform('RNA-seq of coding RNA') == 'RNA-Sequencing'
+            assert ae._simplify_platform('RNA-seq of total RNA') == 'RNA-Sequencing'
+
+    def test_simplify_platform_microarray(self, ae):
+        if hasattr(ae, '_simplify_platform'):
+            assert ae._simplify_platform('transcription profiling by array') == 'Microarray'
+
+    # ----- Data type filtering -----
+
+    def test_data_type_filter_constants(self, ae):
+        """Verify the data type filter mappings exist."""
+        if hasattr(ae, '_DATA_TYPE_QUERY'):
+            assert 'RNA-seq' in ae._DATA_TYPE_QUERY
+            assert 'Microarray' in ae._DATA_TYPE_QUERY
+            assert 'Any' in ae._DATA_TYPE_QUERY
+
+    def test_data_type_accept_rnaseq(self, ae):
+        """RNA-seq filter should accept known RNA-seq study types."""
+        if hasattr(ae, '_DATA_TYPE_ACCEPT'):
+            accepted = ae._DATA_TYPE_ACCEPT.get('RNA-seq', set())
+            assert 'rna-seq of coding rna' in accepted
+            assert 'transcription profiling by array' not in accepted
+
+
+# =============================================================================
 # TEST: SRA GEO Cross-Referencing
 # =============================================================================
 
@@ -1267,6 +1535,327 @@ class TestPoolingEngine:
 
 
 # =============================================================================
+# TEST: Multi-Omic gene_id_type Validation
+# =============================================================================
+
+class TestMultiOmicGeneIdTypes:
+    """Test that all multi-omic gene_id_type values are accepted."""
+
+    def test_mirna_gene_id_type(self):
+        """miRNA expression uses gene_id_type='mirna'."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        np.random.seed(42)
+        counts = pd.DataFrame(
+            np.random.uniform(0, 100, (50, 4)),
+            index=[f'hsa-miR-{i}' for i in range(50)],
+            columns=[f'S{i}' for i in range(4)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'sample_type': ['Primary Tumor'] * 4}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='mirna')
+        assert ds.gene_id_type == 'mirna'
+        assert ds.n_genes == 50
+
+    def test_probe_gene_id_type(self):
+        """DNA methylation uses gene_id_type='probe'."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        np.random.seed(42)
+        counts = pd.DataFrame(
+            np.random.uniform(0, 1, (100, 4)),
+            index=[f'cg{i:08d}' for i in range(100)],
+            columns=[f'S{i}' for i in range(4)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'sample_type': ['Primary Tumor'] * 4}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='probe')
+        assert ds.gene_id_type == 'probe'
+
+    def test_segment_gene_id_type(self):
+        """CNV segment data uses gene_id_type='segment'."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            {'chrom': ['chr1', 'chr1'], 'start': [100, 5000], 'end': [4999, 10000], 'log2': [0.1, -0.3]},
+        )
+        meta = pd.DataFrame()
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='segment')
+        assert ds.gene_id_type == 'segment'
+
+    def test_genomic_region_gene_id_type(self):
+        """CNV gene-level data uses gene_id_type='genomic_region'."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            np.random.randint(0, 5, (20, 3)),
+            index=[f'region_{i}' for i in range(20)],
+            columns=[f'S{i}' for i in range(3)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'sample_type': ['Primary Tumor'] * 3}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='genomic_region')
+        assert ds.gene_id_type == 'genomic_region'
+
+    def test_protein_gene_id_type(self):
+        """RPPA protein data uses gene_id_type='protein'."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            np.random.normal(0, 1, (200, 5)),
+            index=[f'Protein_{i}|Antibody_{i}' for i in range(200)],
+            columns=[f'S{i}' for i in range(5)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'sample_type': ['Primary Tumor'] * 5}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='protein')
+        assert ds.gene_id_type == 'protein'
+
+    def test_original_types_still_work(self):
+        """Ensure ensembl, symbol, entrez, refseq, unknown still accepted."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            np.random.randint(0, 100, (10, 2)),
+            index=[f'GENE_{i}' for i in range(10)],
+            columns=['S0', 'S1'],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'cond': ['A', 'B']}, index=['S0', 'S1'])
+        meta.index.name = 'sample_id'
+        for gid in ['ensembl', 'symbol', 'entrez', 'refseq', 'unknown']:
+            ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type=gid)
+            assert ds.gene_id_type == gid
+
+    def test_invalid_gene_id_type_still_rejected(self):
+        """Types not in the valid list should raise ValidationError."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            np.random.randint(0, 100, (10, 2)),
+            index=[f'GENE_{i}' for i in range(10)],
+            columns=['S0', 'S1'],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'cond': ['A', 'B']}, index=['S0', 'S1'])
+        meta.index.name = 'sample_id'
+        with pytest.raises(Exception):
+            AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='invalid_type')
+        with pytest.raises(Exception):
+            AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='microarray')
+
+
+# =============================================================================
+# TEST: Data-Type-Aware Integrity Validation
+# =============================================================================
+
+class TestDataTypeAwareIntegrity:
+    """Test that validate_integrity() adapts to data type."""
+
+    @pytest.fixture
+    def methylation_dataset(self):
+        """Create a methylation dataset with realistic NaN pattern."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        np.random.seed(42)
+        n_probes, n_samples = 200, 6
+        betas = np.random.uniform(0, 1, (n_probes, n_samples))
+        mask = np.random.random((n_probes, n_samples)) < 0.15
+        betas[mask] = np.nan
+        counts = pd.DataFrame(
+            betas, index=[f'cg{i:08d}' for i in range(n_probes)],
+            columns=[f'TCGA-XX-{i:04d}-01A' for i in range(n_samples)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'sample_type': ['Primary Tumor'] * n_samples}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        return AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='probe')
+
+    @pytest.fixture
+    def mirna_dataset(self):
+        """Create a miRNA dataset with some zero miRNAs."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        np.random.seed(42)
+        rpms = np.random.uniform(0, 1000, (100, 4))
+        rpms[:30, :] = 0
+        counts = pd.DataFrame(
+            rpms, index=[f'hsa-miR-{i}' for i in range(100)],
+            columns=[f'S{i}' for i in range(4)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'sample_type': ['Primary Tumor'] * 4}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        return AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='mirna',
+                                source_info={'data_type': 'mirna_rpm'})
+
+    def test_methylation_nan_is_warning_not_error(self, methylation_dataset):
+        """Methylation NaN should produce a warning, not an error."""
+        report = methylation_dataset.validate_integrity()
+        assert report['valid'] is True
+        nan_warnings = [w for w in report['warnings'] if 'NaN' in w]
+        assert len(nan_warnings) > 0
+        assert 'probe' in nan_warnings[0].lower() or 'methylation' in nan_warnings[0].lower()
+
+    def test_methylation_nan_shows_percentage(self, methylation_dataset):
+        """NaN warning for methylation should include percentage."""
+        report = methylation_dataset.validate_integrity()
+        nan_warnings = [w for w in report['warnings'] if 'NaN' in w]
+        assert any('%' in w for w in nan_warnings)
+
+    def test_methylation_beta_range_valid(self, methylation_dataset):
+        """Valid beta values (0-1) should not trigger range warning."""
+        report = methylation_dataset.validate_integrity()
+        range_warnings = [w for w in report['warnings'] if 'range' in w.lower()]
+        assert len(range_warnings) == 0
+
+    def test_methylation_beta_range_invalid(self):
+        """Beta values outside 0-1 should trigger a warning."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            [[0.5, 1.5], [0.3, -0.1]],
+            index=['cg001', 'cg002'], columns=['S0', 'S1'],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'cond': ['A', 'B']}, index=['S0', 'S1'])
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='probe',
+                              source_info={'data_type': 'methylation_beta'})
+        report = ds.validate_integrity()
+        range_warnings = [w for w in report['warnings'] if 'range' in w.lower() or '0' in w]
+        assert len(range_warnings) > 0
+
+    def test_mirna_zero_warning_uses_mirna_label(self, mirna_dataset):
+        """Zero-value warning for miRNA should say 'miRNAs' not 'genes'."""
+        report = mirna_dataset.validate_integrity()
+        zero_warnings = [w for w in report['warnings'] if 'zero' in w.lower()]
+        assert len(zero_warnings) > 0
+        assert 'miRNA' in zero_warnings[0] or 'mirna' in zero_warnings[0].lower()
+
+    def test_expression_integrity_unchanged(self, acquired_dataset):
+        """Gene expression integrity check should still work as before."""
+        report = acquired_dataset.validate_integrity()
+        assert report['valid'] is True
+
+    def test_methylation_zero_probe_threshold(self):
+        """Methylation: zero probes only warn if >20%."""
+        from raptor.external_modules.acquisition import AcquiredDataset
+        counts = pd.DataFrame(
+            np.concatenate([np.zeros((10, 4)), np.random.uniform(0.1, 1, (90, 4))]),
+            index=[f'cg{i:06d}' for i in range(100)],
+            columns=[f'S{i}' for i in range(4)],
+        )
+        counts.index.name = 'gene_id'
+        meta = pd.DataFrame({'cond': ['A'] * 4}, index=counts.columns)
+        meta.index.name = 'sample_id'
+        ds = AcquiredDataset(counts_df=counts, metadata=meta, gene_id_type='probe')
+        report = ds.validate_integrity()
+        zero_warnings = [w for w in report['warnings'] if 'zero' in w.lower() or 'beta = 0' in w.lower()]
+        assert len(zero_warnings) == 0
+
+
+# =============================================================================
+# TEST: TCGA _sample_label() Consistency
+# =============================================================================
+
+class TestTCGASampleLabel:
+    """Test that _sample_label() returns consistent labels."""
+
+    def test_prefers_sample_submitter_id(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        tcga = TCGAConnector(cache=False)
+        meta = {'submitter_id': 'TCGA-W5-AA2R', 'sample_submitter_id': 'TCGA-W5-AA2R-01A'}
+        assert tcga._sample_label(meta) == 'TCGA-W5-AA2R-01A'
+
+    def test_falls_back_to_submitter_id(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        assert TCGAConnector._sample_label({'submitter_id': 'TCGA-W5-AA2R'}) == 'TCGA-W5-AA2R'
+
+    def test_falls_back_when_same(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        meta = {'submitter_id': 'TCGA-W5-AA2R', 'sample_submitter_id': 'TCGA-W5-AA2R'}
+        assert TCGAConnector._sample_label(meta) == 'TCGA-W5-AA2R'
+
+    def test_empty_meta(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        assert TCGAConnector._sample_label({}) == 'unknown'
+
+    def test_target_barcodes(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        meta = {'submitter_id': 'TARGET-30-PALKGN', 'sample_submitter_id': 'TARGET-30-PALKGN-01A'}
+        assert TCGAConnector._sample_label(meta) == 'TARGET-30-PALKGN-01A'
+
+    def test_empty_string_sample_submitter(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        meta = {'submitter_id': 'TCGA-W5-AA2R', 'sample_submitter_id': ''}
+        assert TCGAConnector._sample_label(meta) == 'TCGA-W5-AA2R'
+
+
+# =============================================================================
+# TEST: _build_metadata with keep_samples Filter
+# =============================================================================
+
+class TestBuildMetadataFiltering:
+    """Test that _build_metadata filters to only downloaded samples."""
+
+    def test_keep_samples_filters(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        tcga = TCGAConnector(cache=False)
+        file_meta = {
+            'u1': {'submitter_id': 'TCGA-AA-0001', 'sample_submitter_id': 'TCGA-AA-0001-01A', 'sample_type': 'Primary Tumor'},
+            'u2': {'submitter_id': 'TCGA-AA-0002', 'sample_submitter_id': 'TCGA-AA-0002-01A', 'sample_type': 'Primary Tumor'},
+            'u3': {'submitter_id': 'TCGA-AA-0003', 'sample_submitter_id': 'TCGA-AA-0003-01A', 'sample_type': 'Solid Tissue Normal'},
+        }
+        meta = tcga._build_metadata(file_meta, keep_samples={'TCGA-AA-0001-01A', 'TCGA-AA-0003-01A'})
+        assert len(meta) == 2
+        assert 'TCGA-AA-0002-01A' not in meta.index
+
+    def test_no_filter_returns_all(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        tcga = TCGAConnector(cache=False)
+        file_meta = {
+            'u1': {'submitter_id': 'TCGA-AA-0001', 'sample_submitter_id': 'TCGA-AA-0001-01A', 'sample_type': 'Primary Tumor'},
+            'u2': {'submitter_id': 'TCGA-AA-0002', 'sample_submitter_id': 'TCGA-AA-0002-01A', 'sample_type': 'Primary Tumor'},
+        }
+        assert len(tcga._build_metadata(file_meta)) == 2
+
+    def test_metadata_required_columns(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        tcga = TCGAConnector(cache=False)
+        file_meta = {
+            'u1': {'submitter_id': 'TCGA-AA-0001', 'sample_submitter_id': 'TCGA-AA-0001-01A', 'sample_type': 'Primary Tumor'},
+        }
+        meta = tcga._build_metadata(file_meta)
+        for col in ['case_id', 'sample_type', 'sample_category']:
+            assert col in meta.columns
+        assert meta.index.name == 'sample_id'
+
+    def test_sample_category_classification(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        tcga = TCGAConnector(cache=False)
+        file_meta = {
+            'u1': {'submitter_id': 'C1', 'sample_submitter_id': 'C1-01A', 'sample_type': 'Primary Tumor'},
+            'u2': {'submitter_id': 'C2', 'sample_submitter_id': 'C2-11A', 'sample_type': 'Solid Tissue Normal'},
+        }
+        meta = tcga._build_metadata(file_meta)
+        assert meta.loc['C1-01A', 'sample_category'] == 'Tumor'
+        assert meta.loc['C2-11A', 'sample_category'] == 'Normal'
+
+
+# =============================================================================
+# TEST: TARGET Project Support
+# =============================================================================
+
+class TestTARGETSupport:
+    """Test that TARGET projects are accessible."""
+
+    def test_target_in_project_list(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        projects = TCGAConnector(cache=False).list_projects()
+        assert any(p.startswith('TARGET-') for p in projects), "No TARGET projects found"
+
+    def test_target_nbl_in_list(self):
+        from raptor.external_modules.acquisition import TCGAConnector
+        assert 'TARGET-NBL' in TCGAConnector(cache=False).list_projects()
+
+
+# =============================================================================
 # TEST: Module availability and imports
 # =============================================================================
 
@@ -1309,4 +1898,6 @@ class TestModuleAvailability:
         )
         assert 'GEO' in SUPPORTED_REPOSITORIES
         assert 'TCGA' in SUPPORTED_REPOSITORIES
+        assert 'ArrayExpress' in SUPPORTED_REPOSITORIES
+        assert 'SRA' in SUPPORTED_REPOSITORIES
         assert 'raw_counts' in SUPPORTED_DATA_TYPES

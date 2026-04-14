@@ -97,7 +97,7 @@ The Module 8 test suite covers:
 
 Module 6b (Data Acquisition) Tests:
 ====================================
-The Module 6b test suite covers (88 tests):
+The Module 6b test suite covers (159 tests):
 
 1. Data Containers (test_acquisition.py):
    - AcquiredDataset: creation, validation, integrity, filtering,
@@ -111,6 +111,10 @@ The Module 6b test suite covers (88 tests):
 3. Connectors:
    - BaseConnector via MockConnector: search, download, auto-cache
    - GEO, TCGA, ArrayExpress, SRA constructors (offline)
+   - ArrayExpConnector: _parse_organism, _parse_study_type,
+     _simplify_platform, _detect_gene_ids, _parse_study_attrs,
+     _parse_subsections, get_study_info, get_sample_types (28 tests)
+   - SRAConnector: GSM extraction, GSE lookup, download_api (17 tests)
    - SearchResult formatting
 
 4. Utilities:

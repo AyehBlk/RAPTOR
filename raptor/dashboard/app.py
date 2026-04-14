@@ -1,11 +1,11 @@
 """
-RAPTOR Dashboard v2.2.0
+RAPTOR Dashboard v2.2.2
 Main Entry Point (Using Style Loader Helpers)
 
 This version uses the style_loader.py helper functions for cleaner code.
 
 Author: Ayeh Bolouki
-Date: January 2026
+Date: 14 April 2026
 """
 
 import streamlit as st
@@ -59,13 +59,19 @@ with st.sidebar:
         st.image(logo_path, use_container_width=True)
         st.markdown("---")
     else:
-        st.markdown("## 🦖 RAPTOR v2.2.0")
+        st.markdown("## 🦖 RAPTOR v2.2.2")
         st.markdown("---")
     
     # Navigation info
     st.markdown("### 📋 Navigation")
     st.info("""
     **Dashboard Features:**
+    
+    📡 **Data Acquisition (Module 6b):**
+    • Search GEO, SRA, TCGA, ArrayExpress
+    • Download & upload datasets
+    • Pool datasets with batch correction
+    • Gene ID conversion
     
     📊 **Data Assessment (Modules 2-4):**
     • Quality Assessment - QC & outlier detection
@@ -91,7 +97,7 @@ with st.sidebar:
 # ============================================================================
 
 # Header
-st.title("🦖 RAPTOR Dashboard v2.2.0")
+st.title("🦖 RAPTOR Dashboard v2.2.2")
 st.markdown("**RNA-seq Analysis Pipeline - Professional Interface**")
 st.markdown("---")
 
@@ -100,6 +106,7 @@ st.info("""
 👈 **Select a page from the sidebar to begin!**
 
 This dashboard provides a user-friendly interface for RAPTOR modules:
+- 📡 Search & download from GEO, SRA, TCGA, ArrayExpress
 - 📊 Quality assessment and data profiling
 - 📥 Import differential expression results
 - 🔬 Run ensemble analysis  
@@ -113,15 +120,15 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(
         label="🦖 Version",
-        value="2.2.0",
+        value="2.2.2",
         help="Current RAPTOR version"
     )
 
 with col2:
     st.metric(
         label="📦 Dashboard Modules",
-        value="7",
-        help="Active modules in dashboard (M2-M4, M7-M9 + extras)"
+        value="8",
+        help="Active modules in dashboard (M2-M4, M6b, M7-M9 + extras)"
     )
 
 with col3:
@@ -138,10 +145,18 @@ with st.expander("📚 Getting Started Guide", expanded=False):
     st.markdown("""
     ### For New Users:
     
-    **Starting Point:** You should have count matrices from Salmon/Kallisto
-    (run via CLI using Modules 1 & 5)
+    **Starting Point:** You can either search & download datasets from
+    public repositories (GEO, SRA, TCGA) using Data Acquisition, or
+    start with count matrices from Salmon/Kallisto (run via CLI using
+    Modules 1 & 5).
     
     **Dashboard Workflow:**
+    
+    0. **Data Acquisition** (Module 6b) [Optional]
+       - Search GEO, SRA, TCGA, ArrayExpress
+       - Download datasets or upload your own
+       - Pool multiple datasets with batch correction
+       - Gene ID conversion
     
     1. **Quality Assessment** (Module 2)
        - Upload count matrix
@@ -182,9 +197,17 @@ with st.expander("📚 Getting Started Guide", expanded=False):
 # Feature cards
 st.markdown("### 🎯 Key Features")
 
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
+    with st.container():
+        st.markdown("#### 📡 Data Acquisition")
+        st.write("""
+        Search GEO, SRA, TCGA, and ArrayExpress. 
+        Download, pool, and prepare datasets for analysis.
+        """)
+
+with col2:
     with st.container():
         st.markdown("#### 📊 Quality Control")
         st.write("""
@@ -192,7 +215,7 @@ with col1:
         batch effect analysis, and quality scoring.
         """)
 
-with col2:
+with col3:
     with st.container():
         st.markdown("#### 🧬 Ensemble Analysis")
         st.write("""
@@ -200,7 +223,7 @@ with col2:
         Fisher's method, Brown's method, or RRA.
         """)
 
-with col3:
+with col4:
     with st.container():
         st.markdown("#### ⚙️ Optimization")
         st.write("""
@@ -219,6 +242,14 @@ with st.expander("🔄 Complete Workflow"):
     ### RAPTOR Analysis Workflow
     
     ```
+    STAGE 0: Data Acquisition (Dashboard) [Optional]
+    ──────────────────────────────────────────────────
+    Step 0: Get Data (Module 6b)
+       - Search GEO, SRA, TCGA, ArrayExpress
+       - Download datasets or upload your own
+       - Pool multiple studies with batch correction
+       - Gene ID conversion
+    
     STAGE 1: Quantification (CLI)
     ──────────────────────────────
     Step 1: Run Salmon/Kallisto

@@ -139,7 +139,11 @@ class AcquiredDataset:
             self.metadata.index.name = 'sample_id'
 
         # Validate gene_id_type
-        valid_id_types = ['ensembl', 'symbol', 'entrez', 'refseq', 'unknown']
+        valid_id_types = [
+            'ensembl', 'symbol', 'entrez', 'refseq', 'unknown',
+            # Multi-omic types (TCGA miRNA, methylation, CNV, protein)
+            'mirna', 'probe', 'segment', 'genomic_region', 'protein',
+        ]
         if self.gene_id_type not in valid_id_types:
             raise ValidationError('gene_id_type', f"Invalid gene_id_type: {self.gene_id_type}", f"Must be one of: {valid_id_types}"
             )
@@ -215,6 +219,9 @@ class AcquiredDataset:
         """
         Check dataset integrity and return a report.
 
+        Adapts terminology and thresholds based on data type:
+        methylation (probes, beta values), miRNA, CNV, protein, etc.
+
         Returns
         -------
         dict
@@ -222,48 +229,86 @@ class AcquiredDataset:
         """
         report = {'valid': True, 'warnings': [], 'errors': []}
 
-        # Check sample overlap between counts and metadata
+        # Data-type-aware labels
+        _labels = {
+            'mirna': ('miRNAs', 'expression matrix'),
+            'probe': ('probes', 'beta value matrix'),
+            'segment': ('segments', 'segment matrix'),
+            'genomic_region': ('regions', 'CNV matrix'),
+            'protein': ('proteins', 'protein expression matrix'),
+        }
+        feat_name, mat_name = _labels.get(
+            self.gene_id_type, ('genes', 'count matrix')
+        )
+
+        # Check sample overlap between data and metadata
         count_samples = set(self.counts_df.columns)
         meta_samples = set(self.metadata.index)
 
         if not count_samples & meta_samples:
             report['valid'] = False
             report['errors'].append(
-                "No overlap between count matrix columns and metadata index"
+                f"No overlap between {mat_name} columns and metadata index"
             )
         elif count_samples != meta_samples:
             missing_meta = count_samples - meta_samples
             missing_counts = meta_samples - count_samples
             if missing_meta:
                 report['warnings'].append(
-                    f"{len(missing_meta)} samples in counts lack metadata"
+                    f"{len(missing_meta)} samples in {mat_name} lack metadata"
                 )
             if missing_counts:
                 report['warnings'].append(
-                    f"{len(missing_counts)} samples in metadata lack count data"
+                    f"{len(missing_counts)} samples in metadata lack data"
                 )
 
-        # Check for all-zero genes
-        zero_genes = (self.counts_df.sum(axis=1) == 0).sum()
-        if zero_genes > 0:
-            pct = 100 * zero_genes / self.n_genes
-            report['warnings'].append(
-                f"{zero_genes} genes ({pct:.1f}%) have zero counts across all samples"
-            )
+        # Check for all-zero features
+        zero_feats = (self.counts_df.sum(axis=1) == 0).sum()
+        if zero_feats > 0:
+            pct = 100 * zero_feats / self.n_genes
+            if self.gene_id_type == 'probe':
+                # Methylation: zero beta = fully unmethylated, only warn if many
+                if pct > 20:
+                    report['warnings'].append(
+                        f"{zero_feats} probes ({pct:.1f}%) have beta = 0 across all samples "
+                        f"(may indicate failed probes or fully unmethylated CpGs)"
+                    )
+            else:
+                report['warnings'].append(
+                    f"{zero_feats} {feat_name} ({pct:.1f}%) have zero values across all samples"
+                )
 
         # Check for NaN values
         nan_count = self.counts_df.isna().sum().sum()
         if nan_count > 0:
-            report['warnings'].append(
-                f"{nan_count} NaN values found in count matrix"
-            )
+            if self.gene_id_type == 'probe':
+                # Methylation NaN = failed probe detection, expected behavior
+                total_cells = self.counts_df.shape[0] * self.counts_df.shape[1]
+                nan_pct = 100 * nan_count / total_cells
+                report['warnings'].append(
+                    f"{nan_count:,} NaN values ({nan_pct:.1f}%) in {mat_name} "
+                    f"(probes that failed detection — expected for methylation arrays)"
+                )
+            else:
+                report['warnings'].append(
+                    f"{nan_count:,} NaN values found in {mat_name}"
+                )
 
-        # Check for negative values (shouldn't exist in counts)
+        # Data-type-specific validation
         if self.data_type == 'raw_counts':
+            # Integer counts should not be negative
             neg_count = (self.counts_df < 0).sum().sum()
             if neg_count > 0:
                 report['warnings'].append(
-                    f"{neg_count} negative values in raw count matrix"
+                    f"{neg_count} negative values in raw {mat_name}"
+                )
+        elif self.gene_id_type == 'probe':
+            # Methylation beta values should be 0–1
+            df_clean = self.counts_df.dropna(how='all')
+            out_of_range = ((df_clean < 0) | (df_clean > 1)).sum().sum()
+            if out_of_range > 0:
+                report['warnings'].append(
+                    f"{out_of_range} values outside expected 0–1 beta range"
                 )
 
         return report

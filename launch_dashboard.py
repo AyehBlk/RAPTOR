@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-RAPTOR Dashboard Launcher v2.2.1
+RAPTOR Dashboard Launcher v2.2.2
 
 Quick launcher for the interactive web dashboard.
 
 Author: Ayeh Bolouki
-Version: 2.2.1
-Date: March 2026
+Version: 2.2.2
+Date: 14 April 2026
 """
 
 import subprocess
@@ -37,6 +37,7 @@ def check_raptor_modules():
         ('quality_assessment', 'Module 2: Quality Assessment'),
         ('profiler', 'Module 3: Data Profiler'),
         ('recommender', 'Module 4: ML Recommender'),
+        ('external_modules.acquisition', 'Module 6b: Data Acquisition'),
         ('de_import', 'Module 7: DE Import'),
         ('parameter_optimization', 'Module 8: Parameter Optimization'),
         ('ensemble', 'Module 9: Ensemble Analysis'),
@@ -117,24 +118,26 @@ def main():
     # Display launch information
     print(f"""
     ╔═══════════════════════════════════════════════════════════════╗
-    ║          🦖 Launching RAPTOR v2.2.1 Dashboard                 ║
+    ║          🦖 Launching RAPTOR v2.2.2 Dashboard                 ║
     ║            Professional RNA-seq Analysis Interface            ║
     ╚═══════════════════════════════════════════════════════════════╝
     
     Dashboard Location: {dashboard_path.parent}
     Core Modules: {core_status}
     
-    NEW in v2.2.1:
+    NEW in v2.2.2:
     ────────────────────────────────────────────────────────────────
-    - All 9 dashboard pages verified with real data
-    - Quality Assessment: 7 visualization tabs (PCA 2D/3D, RLE, BCV)
-    - Optimization: 4 scientific methods integrated
-    - Visualization: 12 plot types, 7 gene expression styles
-    - Professional styling, 16 bugs fixed
+    - Data Acquisition: Search & download from GEO, SRA, TCGA
+    - Pool datasets with batch correction (ComBat, quantile)
+    - Gene ID conversion (Ensembl/Symbol/Entrez via MyGene.info)
+    - Quality checks on pooled data (PCA, correlations, RLE)
+    - SRA run tables with FASTQ download scripts
+    - TCGA multi-omic support (miRNA, methylation, CNV, RPPA)
     
     📋 Available Features:
     ────────────────────────────────────────────────────────────────
     • 🏠 Home - Overview & quick start
+    • 📡 Data Acquisition - GEO/SRA/TCGA search & download (Module 6b)
     • ✅ Quality Assessment - QC metrics (Module 2)
     • 📊 Data Profiler - Comprehensive profiling (Module 3)
     • 🤖 ML Recommender - Pipeline recommendations (Module 4)
