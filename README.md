@@ -37,7 +37,7 @@ It's built for researchers who want to spend time on biology, not on figuring ou
 
 **What you get:**
 
-- Search and download RNA-seq datasets from GEO, SRA, TCGA, and ArrayExpress directly from a visual dashboard — no coding required. GEO and SRA are fully functional; TCGA and ArrayExpress are under active development.
+- Search and download RNA-seq datasets from GEO, SRA, and TCGA directly from a visual dashboard — no coding required. GEO and SRA are production-ready; TCGA is functional with multi-omic support (tested with 5 cancer cohorts); ArrayExpress is under active development.
 - Upload your own count matrices and work interactively with sample metadata — add columns, rename groups, exclude samples, assign batches. Then pool multiple studies into one dataset with automatic gene ID harmonization and batch correction. RAPTOR checks whether your datasets are actually poolable and flags problems like library size differences, low gene overlap, or batch effects before you proceed.
 - Profile your data across 32 features (BCV, dispersion, sparsity, sample balance, and more) and get pipeline recommendations. RAPTOR offers two recommendation modes: an ML-based approach using a Random Forest classifier, and a rule-based approach for simpler guidance.
 - Run differential expression with DESeq2, edgeR, and limma, then combine results into a consensus through ensemble analysis. Five combination methods (Fisher's, Brown's, RRA, Voting, Weighted) reduce false positives by about 33% compared to any single method.
@@ -58,7 +58,7 @@ Your analysis starts with data. RAPTOR connects to public repositories so you ca
 |------------|--------|-------------|
 | **GEO** (NCBI) | Ready | Search 200,000+ datasets, download processed count matrices |
 | **SRA** (NCBI) | Ready | Explore run tables, auto-detect linked GEO studies, generate FASTQ download commands |
-| **TCGA** (NCI) | In development | 33 cancer types via GDC API, multi-omic (gene expression, miRNA, methylation, CNV, RPPA) |
+| **TCGA** (NCI) | Functional | 33 cancer types via GDC API, multi-omic (gene expression, miRNA, methylation, CNV, RPPA, mutations). Tested with 5 cancer cohorts |
 | **ArrayExpress** (EBI) | In development | European studies via BioStudies API |
 
 You can also upload your own count matrix — from your own experiment or from collaborators at your institute. RAPTOR treats uploaded data the same way as public data.
@@ -140,7 +140,7 @@ pip install -e .
 pip install streamlit GEOparse biopython mygene
 ```
 
-We are actively testing the Data Acquisition module with researchers. If you want to help, see the [Beta Testing Guide](BETA_TESTING_GUIDE.md) and report issues at [GitHub Issues](https://github.com/AyehBlk/RAPTOR/issues).
+We are actively testing the Data Acquisition module with researchers. If you want to help, see the [Beta Testing Guide](BETA_TESTING_GUIDE.md) and report issues at [GitHub Issues](https://github.com/AyehBlk/RAPTOR/issues). Testing covers GEO, SRA, and TCGA — 12 scenarios from simple search to cross-repository pooling.
 
 ---
 
@@ -809,9 +809,9 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ### Beta Testing (Active)
 
-We are actively testing the Data Acquisition module (GEO and SRA search, dataset pooling, quality check). Your feedback on real-world datasets directly improves the tool.
+We are actively testing the Data Acquisition module (GEO, SRA, and TCGA search, dataset pooling, quality check). Your feedback on real-world datasets directly improves the tool.
 
-- [Beta Testing Guide](BETA_TESTING_GUIDE.md) — 9 scenarios to try
+- [Beta Testing Guide](BETA_TESTING_GUIDE.md) — 12 scenarios to try
 - [Report an Issue](https://github.com/AyehBlk/RAPTOR/issues) — bug reports and feature requests
 - [Project Board](https://github.com/users/AyehBlk/projects/5) — track progress on reported issues
 
@@ -873,7 +873,7 @@ Copyright (c) 2026 Ayeh Bolouki
 | Issue | Status | Workaround |
 |-------|--------|------------|
 | `raptor dashboard` CLI command fails with `ModuleNotFoundError` | Fix planned | Use `python -m raptor.launch_dashboard` or `python -m streamlit run raptor/dashboard/app.py` |
-| TCGA connector partially implemented | In development | Multi-omic downloads work (gene expression, miRNA, methylation, CNV, RPPA) but search/filtering is limited. Use GEO for most use cases |
+| TCGA search/filtering is basic | By design | Project + data type selection works; advanced filtering planned for v2.3.0 |
 | ArrayExpress connector partially implemented | In development | Use GEO as alternative |
 | GEO/SRA connectors require optional packages | By design | `pip install GEOparse biopython` — connectors fail gracefully without them |
 | Gene ID conversion requires `mygene` | By design | `pip install mygene` — needed only for ID conversion feature |
