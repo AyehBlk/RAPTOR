@@ -238,6 +238,44 @@ except ImportError:
     calculate_meta_lfc = None
     _ENSEMBLE_AVAILABLE = False
 
+# Module 10: Biomarker Discovery
+try:
+    from .biomarker_discovery import (
+        BiomarkerResult,
+        FeatureSelectionResult,
+        ClassificationResult,
+        PanelOptimizationResult,
+        SurvivalResult,
+        AnnotationResult,
+        FeatureSelector,
+        ClassifierEvaluator,
+        PanelOptimizer,
+        SurvivalAnalyzer,
+        BiologicalAnnotator,
+        discover_biomarkers,
+        discover_survival_biomarkers,
+        validate_biomarkers,
+        get_dependencies_status,
+    )
+    _BIOMARKER_AVAILABLE = True
+except ImportError:
+    BiomarkerResult = None
+    FeatureSelectionResult = None
+    ClassificationResult = None
+    PanelOptimizationResult = None
+    SurvivalResult = None
+    AnnotationResult = None
+    FeatureSelector = None
+    ClassifierEvaluator = None
+    PanelOptimizer = None
+    SurvivalAnalyzer = None
+    BiologicalAnnotator = None
+    discover_biomarkers = None
+    discover_survival_biomarkers = None
+    validate_biomarkers = None
+    get_dependencies_status = None
+    _BIOMARKER_AVAILABLE = False
+
 # Module 6b: Data Acquisition
 try:
     from .external_modules.acquisition import (
@@ -391,6 +429,23 @@ __all__ = [
     'combine_pvalues_across_methods',
     'calculate_meta_lfc',
     
+    # Module 10: Biomarker Discovery (optional)
+    'BiomarkerResult',
+    'FeatureSelectionResult',
+    'ClassificationResult',
+    'PanelOptimizationResult',
+    'SurvivalResult',
+    'AnnotationResult',
+    'FeatureSelector',
+    'ClassifierEvaluator',
+    'PanelOptimizer',
+    'SurvivalAnalyzer',
+    'BiologicalAnnotator',
+    'discover_biomarkers',
+    'discover_survival_biomarkers',
+    'validate_biomarkers',
+    'get_dependencies_status',
+    
     # Module 6b: Data Acquisition (optional)
     'AcquiredDataset',
     'PooledDataset',
@@ -439,6 +494,7 @@ def get_available_modules():
         'de_import': _DE_IMPORT_AVAILABLE,
         'parameter_optimization': _PARAM_OPTIMIZATION_AVAILABLE,
         'ensemble': _ENSEMBLE_AVAILABLE,
+        'biomarker_discovery': _BIOMARKER_AVAILABLE,
         'acquisition': _ACQUISITION_AVAILABLE,
     }
 

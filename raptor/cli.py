@@ -125,6 +125,12 @@ def main(verbose, quiet):
     raptor optimize       → M8: Parameter optimization
     raptor ensemble       → M9: Ensemble analysis
     
+    STAGE 4: Biomarker Discovery (M10)
+    ─────────────────────────────────
+    raptor biomarker          → M10: Discover biomarker panel
+    raptor biomarker-survival → M10D: Survival biomarkers
+    raptor biomarker-validate → M10: Validate on independent cohort
+    
     ══════════════════════════════════════════════════════════════
     
     \b
@@ -137,6 +143,7 @@ def main(verbose, quiet):
         raptor import-de --input de_results/ --method deseq2
         raptor optimize --de-result de_result.pkl --ground-truth truth.csv
         raptor ensemble --methods fisher --deseq2 d.pkl --edger e.pkl
+        raptor biomarker -c counts.csv -m metadata.csv -g condition
     
     For more information: https://github.com/AyehBlk/RAPTOR
     """
@@ -2749,6 +2756,437 @@ def ensemble_compare(deseq2, edger, limma, output, threshold):
         click.echo(f"   - Exploratory → Fisher/Brown")
         click.echo(f"   - Validation → Voting (min_methods=3)")
         click.echo(f"   - Best of both → RRA or Weighted")
+        
+    except Exception as e:
+        click.echo(f"❌ Error: {e}", err=True)
+        if logger.isEnabledFor(logging.DEBUG):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+
+
+# =============================================================================
+# MODULE 10: BIOMARKER DISCOVERY
+# =============================================================================
+
+@main.command('biomarker')
+@click.option('--counts', '-c', type=click.Path(exists=True), required=True,
+              help='Count matrix CSV (genes x samples)')
+@click.option('--metadata', '-m', type=click.Path(exists=True), required=True,
+              help='Sample metadata CSV')
+@click.option('--group-column', '-g', default='condition',
+              help='Column in metadata defining groups')
+@click.option('--de-result', '-d', type=click.Path(exists=True),
+              help='DE result pickle from M7 (.pkl)')
+@click.option('--ensemble-result', '-e', type=click.Path(exists=True),
+              help='Ensemble result pickle from M9 (.pkl)')
+@click.option('--methods', type=str, multiple=True,
+              help='Feature selection methods (elastic_net, boruta, mrmr, rfe, shap, wgcna)')
+@click.option('--panel-size', type=int, default=None,
+              help='Target panel size (auto if not specified)')
+@click.option('--species', default='human',
+              help='Species for annotation (human, mouse, rat)')
+@click.option('--disease-term', default=None,
+              help='Disease context for literature search')
+@click.option('--no-annotate', is_flag=True,
+              help='Skip biological annotation')
+@click.option('--no-literature', is_flag=True,
+              help='Skip literature mining')
+@click.option('--no-ppi', is_flag=True,
+              help='Skip STRING PPI query')
+@click.option('--output', '-o', type=click.Path(), default='results/biomarkers',
+              help='Output directory')
+def biomarker(counts, metadata, group_column, de_result, ensemble_result,
+              methods, panel_size, species, disease_term,
+              no_annotate, no_literature, no_ppi, output):
+    """
+    Discover biomarker gene panel (Module 10).
+    
+    \b
+    PIPELINE STAGES:
+        1. Multi-method feature selection (LASSO, Boruta, mRMR, RFE, SHAP, WGCNA)
+        2. Panel size optimization (forward selection + elbow detection)
+        3. Classification evaluation (nested CV with RF, SVM, XGBoost, LogReg)
+        4. Biological annotation (MyGene, pathways, literature, PPI)
+        5. Publication-ready report generation
+    
+    \b
+    OUTPUT:
+        results/biomarkers/
+        ├── biomarker_panel.csv
+        ├── ranked_genes.csv
+        ├── classification_performance.csv
+        ├── panel_curve.csv
+        ├── biomarker_report.md
+        ├── biomarker_result.pkl
+        └── annotations/
+    
+    \b
+    EXAMPLES:
+        # Basic discovery
+        raptor biomarker -c counts.csv -m metadata.csv -g condition
+        
+        # With M9 ensemble result
+        raptor biomarker -c counts.csv -m metadata.csv -g condition \\
+            -e ensemble_result.pkl --panel-size 10
+        
+        # Mouse data with disease context
+        raptor biomarker -c counts.csv -m metadata.csv -g genotype \\
+            --species mouse --disease-term "tauopathy"
+        
+        # Fast run (no annotation, no network queries)
+        raptor biomarker -c counts.csv -m metadata.csv -g condition --no-annotate
+    """
+    try:
+        click.echo("🦖 RAPTOR v2.2.2 - Module 10: Biomarker Discovery")
+        click.echo()
+        
+        # Validate inputs
+        counts_path = validate_cli_file(counts, "Count matrix")
+        meta_path = validate_cli_file(metadata, "Metadata")
+        output_path = validate_cli_directory(output, create=True)
+        
+        click.echo(f"📋 Configuration:")
+        click.echo(f"   Counts: {counts_path}")
+        click.echo(f"   Metadata: {meta_path}")
+        click.echo(f"   Group column: {group_column}")
+        if de_result:
+            click.echo(f"   DE result: {de_result}")
+        if ensemble_result:
+            click.echo(f"   Ensemble result: {ensemble_result}")
+        if panel_size:
+            click.echo(f"   Target panel size: {panel_size}")
+        click.echo(f"   Species: {species}")
+        if disease_term:
+            click.echo(f"   Disease term: {disease_term}")
+        click.echo(f"   Annotation: {'off' if no_annotate else 'on'}")
+        click.echo(f"   Output: {output_path}")
+        click.echo()
+        
+        # Import M10
+        try:
+            from raptor.biomarker_discovery import discover_biomarkers
+            import pickle
+        except ImportError as e:
+            click.echo(f"❌ Module 10 not available: {e}", err=True)
+            click.echo("   Install dependencies: pip install scikit-learn", err=True)
+            sys.exit(1)
+        
+        # Load optional upstream results
+        de_res = None
+        if de_result:
+            de_path = validate_cli_file(de_result, "DE result")
+            click.echo("📂 Loading DE result...")
+            with open(de_path, 'rb') as f:
+                de_res = pickle.load(f)
+            click.echo(f"   ✓ Loaded {de_res.n_genes} genes")
+        
+        ens_res = None
+        if ensemble_result:
+            ens_path = validate_cli_file(ensemble_result, "Ensemble result")
+            click.echo("📂 Loading ensemble result...")
+            with open(ens_path, 'rb') as f:
+                ens_res = pickle.load(f)
+            click.echo(f"   ✓ Loaded ensemble result")
+        
+        click.echo()
+        
+        # Run biomarker discovery
+        methods_list = list(methods) if methods else None
+        
+        result = discover_biomarkers(
+            counts=str(counts_path),
+            metadata=str(meta_path),
+            group_column=group_column,
+            de_result=de_res,
+            ensemble_result=ens_res,
+            methods=methods_list,
+            target_panel_size=panel_size,
+            species=species,
+            disease_term=disease_term,
+            annotate=not no_annotate,
+            run_literature=not no_literature,
+            run_ppi=not no_ppi,
+            output_dir=str(output_path),
+        )
+        
+        # Display summary
+        click.echo()
+        click.echo("📊 Results:")
+        click.echo("=" * 60)
+        click.echo(f"Panel size: {result.panel_size} genes")
+        click.echo(f"Best classifier: {result.best_classifier}")
+        
+        best_res = result.classification_results.get(result.best_classifier)
+        if best_res:
+            click.echo(f"AUC: {best_res.auc:.3f}")
+            click.echo(f"F1:  {best_res.f1:.3f}")
+        
+        if result.panel_optimization:
+            click.echo(f"Panel AUC: {result.panel_optimization.optimal_auc:.3f}")
+        
+        click.echo()
+        click.echo(f"Panel genes: {', '.join(result.panel[:10])}")
+        if len(result.panel) > 10:
+            click.echo(f"   ... and {len(result.panel) - 10} more")
+        
+        click.echo()
+        click.echo("✅ Results saved:")
+        click.echo(f"   {output_path}/biomarker_panel.csv")
+        click.echo(f"   {output_path}/ranked_genes.csv")
+        click.echo(f"   {output_path}/classification_performance.csv")
+        click.echo(f"   {output_path}/biomarker_result.pkl")
+        if not no_annotate:
+            click.echo(f"   {output_path}/biomarker_report.md")
+            click.echo(f"   {output_path}/annotations/")
+        
+        click.echo()
+        click.echo("📝 Next steps:")
+        click.echo(f"   1. Review panel: {output_path}/biomarker_panel.csv")
+        click.echo(f"   2. Read report: {output_path}/biomarker_report.md")
+        click.echo(f"   3. Validate on independent cohort:")
+        click.echo(f"      raptor biomarker-validate \\")
+        click.echo(f"          --panel {output_path}/biomarker_panel.csv \\")
+        click.echo(f"          --counts validation_counts.csv \\")
+        click.echo(f"          --metadata validation_metadata.csv")
+        
+    except ValidationError as e:
+        click.echo(f"❌ Validation Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        click.echo(f"❌ Error: {e}", err=True)
+        if logger.isEnabledFor(logging.DEBUG):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+
+
+@main.command('biomarker-survival')
+@click.option('--counts', '-c', type=click.Path(exists=True), required=True,
+              help='Count matrix CSV (genes x samples)')
+@click.option('--clinical', type=click.Path(exists=True), required=True,
+              help='Clinical data CSV with survival columns')
+@click.option('--time-column', default='os_time',
+              help='Survival time column name')
+@click.option('--event-column', default='os_event',
+              help='Event indicator column (1=event, 0=censored)')
+@click.option('--de-result', '-d', type=click.Path(exists=True),
+              help='DE result pickle to restrict candidates')
+@click.option('--fdr-threshold', type=float, default=0.05,
+              help='FDR threshold for Cox univariate screen')
+@click.option('--output', '-o', type=click.Path(), default='results/survival_biomarkers',
+              help='Output directory')
+def biomarker_survival(counts, clinical, time_column, event_column,
+                       de_result, fdr_threshold, output):
+    """
+    Discover prognostic biomarkers via survival analysis (Module 10D).
+    
+    \b
+    WORKFLOW:
+        1. Cox univariate screen (per-gene hazard ratios)
+        2. FDR correction
+        3. CoxNet panel selection (L1-penalized Cox regression)
+        4. C-index evaluation
+    
+    \b
+    REQUIRES: pip install lifelines
+    
+    \b
+    OUTPUT:
+        results/survival_biomarkers/
+        ├── cox_univariate_screen.csv
+        ├── survival_panel.csv
+        └── survival_summary.json
+    
+    \b
+    EXAMPLES:
+        raptor biomarker-survival -c tcga_counts.csv \\
+            --clinical tcga_clinical.csv \\
+            --time-column OS.time --event-column OS
+        
+        raptor biomarker-survival -c counts.csv \\
+            --clinical clinical.csv \\
+            -d de_result.pkl --fdr-threshold 0.01
+    """
+    try:
+        click.echo("🦖 RAPTOR v2.2.2 - Module 10D: Survival Biomarkers")
+        click.echo()
+        
+        counts_path = validate_cli_file(counts, "Count matrix")
+        clinical_path = validate_cli_file(clinical, "Clinical data")
+        output_path = validate_cli_directory(output, create=True)
+        
+        click.echo(f"📋 Configuration:")
+        click.echo(f"   Counts: {counts_path}")
+        click.echo(f"   Clinical: {clinical_path}")
+        click.echo(f"   Time column: {time_column}")
+        click.echo(f"   Event column: {event_column}")
+        click.echo(f"   FDR threshold: {fdr_threshold}")
+        click.echo(f"   Output: {output_path}")
+        click.echo()
+        
+        try:
+            from raptor.biomarker_discovery import discover_survival_biomarkers
+            import pickle
+        except ImportError as e:
+            click.echo(f"❌ Module 10 not available: {e}", err=True)
+            click.echo("   Install: pip install scikit-learn lifelines", err=True)
+            sys.exit(1)
+        
+        # Load optional DE genes
+        de_genes = None
+        if de_result:
+            de_path = validate_cli_file(de_result, "DE result")
+            with open(de_path, 'rb') as f:
+                de_res = pickle.load(f)
+            de_genes = de_res.significant_genes
+            click.echo(f"   Using {len(de_genes)} DE genes as candidates")
+        
+        click.echo("🔬 Running survival analysis...")
+        click.echo()
+        
+        result = discover_survival_biomarkers(
+            counts=str(counts_path),
+            clinical=str(clinical_path),
+            time_column=time_column,
+            event_column=event_column,
+            de_genes=de_genes,
+            fdr_threshold=fdr_threshold,
+            output_dir=str(output_path),
+        )
+        
+        click.echo()
+        click.echo("📊 Results:")
+        click.echo("=" * 60)
+        click.echo(f"Significant prognostic genes: {len(result.significant_genes)}")
+        click.echo(f"Panel genes: {len(result.panel_genes)}")
+        click.echo(f"C-index: {result.c_index:.3f}")
+        
+        if result.panel_genes:
+            click.echo(f"\nPanel: {', '.join(result.panel_genes[:10])}")
+            if len(result.panel_genes) > 10:
+                click.echo(f"   ... and {len(result.panel_genes) - 10} more")
+        
+        click.echo()
+        click.echo("✅ Results saved:")
+        click.echo(f"   {output_path}/cox_univariate_screen.csv")
+        click.echo(f"   {output_path}/survival_panel.csv")
+        click.echo(f"   {output_path}/survival_summary.json")
+        
+    except Exception as e:
+        click.echo(f"❌ Error: {e}", err=True)
+        if logger.isEnabledFor(logging.DEBUG):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+
+
+@main.command('biomarker-validate')
+@click.option('--panel', '-p', type=click.Path(exists=True), required=True,
+              help='Biomarker panel CSV (from raptor biomarker)')
+@click.option('--counts', '-c', type=click.Path(exists=True), required=True,
+              help='Validation cohort count matrix CSV')
+@click.option('--metadata', '-m', type=click.Path(exists=True), required=True,
+              help='Validation cohort metadata CSV')
+@click.option('--group-column', '-g', default='condition',
+              help='Group column in metadata')
+@click.option('--n-folds', type=int, default=5,
+              help='Number of CV folds')
+@click.option('--output', '-o', type=click.Path(), default='results/biomarker_validation',
+              help='Output directory')
+def biomarker_validate(panel, counts, metadata, group_column, n_folds, output):
+    """
+    Validate biomarker panel on independent cohort (Module 10).
+    
+    \b
+    Tests a previously discovered panel on new data to assess
+    whether the biomarkers replicate in an independent dataset.
+    
+    \b
+    OUTPUT:
+        results/biomarker_validation/
+        ├── validation_performance.csv
+        └── validation_summary.txt
+    
+    \b
+    EXAMPLES:
+        raptor biomarker-validate \\
+            --panel results/biomarkers/biomarker_panel.csv \\
+            --counts validation_counts.csv \\
+            --metadata validation_metadata.csv \\
+            --group-column condition
+    """
+    try:
+        click.echo("🦖 RAPTOR v2.2.2 - Module 10: Biomarker Validation")
+        click.echo()
+        
+        panel_path = validate_cli_file(panel, "Biomarker panel")
+        counts_path = validate_cli_file(counts, "Validation counts")
+        meta_path = validate_cli_file(metadata, "Validation metadata")
+        output_path = validate_cli_directory(output, create=True)
+        
+        try:
+            from raptor.biomarker_discovery import validate_biomarkers
+            import pandas as pd
+        except ImportError as e:
+            click.echo(f"❌ Module 10 not available: {e}", err=True)
+            sys.exit(1)
+        
+        # Load panel
+        panel_df = pd.read_csv(panel_path)
+        if 'gene_id' in panel_df.columns:
+            panel_genes = panel_df['gene_id'].tolist()
+        else:
+            panel_genes = panel_df.iloc[:, 0].tolist()
+        
+        click.echo(f"📋 Panel: {len(panel_genes)} genes")
+        click.echo(f"   Validation data: {counts_path}")
+        click.echo(f"   Group column: {group_column}")
+        click.echo()
+        
+        click.echo("🔬 Validating panel...")
+        click.echo()
+        
+        results = validate_biomarkers(
+            panel_genes=panel_genes,
+            counts=str(counts_path),
+            metadata=str(meta_path),
+            group_column=group_column,
+            n_folds=n_folds,
+        )
+        
+        click.echo("📊 Validation Performance:")
+        click.echo("=" * 60)
+        
+        rows = []
+        for name, res in results.items():
+            click.echo(f"   {name}: AUC={res.auc:.3f}, F1={res.f1:.3f}")
+            rows.append({
+                'classifier': name,
+                'auc': res.auc,
+                'accuracy': res.accuracy,
+                'f1': res.f1,
+                'sensitivity': res.sensitivity,
+                'specificity': res.specificity,
+            })
+        
+        import pandas as pd
+        perf_df = pd.DataFrame(rows)
+        perf_df.to_csv(output_path / 'validation_performance.csv', index=False)
+        
+        # Summary
+        best = max(results.keys(), key=lambda k: results[k].auc)
+        summary = (
+            f"Validation of {len(panel_genes)}-gene panel\n"
+            f"Best classifier: {best} (AUC={results[best].auc:.3f})\n"
+        )
+        with open(output_path / 'validation_summary.txt', 'w') as f:
+            f.write(summary)
+        
+        click.echo()
+        click.echo("✅ Results saved:")
+        click.echo(f"   {output_path}/validation_performance.csv")
+        click.echo(f"   {output_path}/validation_summary.txt")
         
     except Exception as e:
         click.echo(f"❌ Error: {e}", err=True)
