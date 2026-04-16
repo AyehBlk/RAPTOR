@@ -48,5 +48,5 @@ folder_structure.txt
 # Generated output folders from examples and tests
 results/
 
-# Personal engineering notes (local only, not published)
-DEV_LOG.md
+# Personal local files
+.private/
