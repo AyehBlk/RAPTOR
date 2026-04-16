@@ -30,5 +30,7 @@ from raptor.biomarker_discovery.intent import (
     VALID_INTENTS,
 )  # noqa: F401
 
-# When signature_score.py is added, we'll append:
-# from raptor.biomarker_discovery.signature_score import SignatureScore
+from raptor.biomarker_discovery.signature_score import (
+    SignatureScore,
+    build_signature_score,
+)  # noqa: F401
