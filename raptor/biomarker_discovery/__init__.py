@@ -3,8 +3,8 @@ Biomarker Discovery subpackage (Module 10).
 
 Layout:
     core.py              -- original biomarker_discovery module (all existing logic)
-    intent.py            -- intent classification (v2.3)
-    signature_score.py   -- weighted risk score engine (v2.3, coming next)
+    intent.py            -- intent classification
+    signature_score.py   -- weighted risk score engine (coming next)
 
 Backward compatibility: every public name from the old
 `raptor/biomarker_discovery.py` file is re-exported here, so every existing
@@ -24,7 +24,7 @@ from raptor.biomarker_discovery.core import (
     _SHAP_AVAILABLE,
 )  # noqa: F401
 
-# New M10 enhancement modules (v2.3)
+# New M10 enhancement modules
 from raptor.biomarker_discovery.intent import (
     BiomarkerIntent,
     VALID_INTENTS,
