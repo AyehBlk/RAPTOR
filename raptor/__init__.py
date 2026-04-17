@@ -256,6 +256,25 @@ try:
         discover_survival_biomarkers,
         validate_biomarkers,
         get_dependencies_status,
+        # M10 enhancement modules
+        BiomarkerIntent,
+        VALID_INTENTS,
+        SignatureScore,
+        build_signature_score,
+        DirectionPattern,
+        build_direction_pattern,
+        ppv_npv_at_prevalence,
+        bootstrap_ci,
+        youdens_optimal_threshold,
+        decision_curve_analysis,
+        net_reclassification_improvement,
+        RatioBiomarkerSearcher,
+        RatioPair,
+        RatioSearchResult,
+        apply_ratios,
+        build_ratio_features,
+        EnhancedBiomarkerResult,
+        enhance_biomarker_result,
     )
     _BIOMARKER_AVAILABLE = True
 except ImportError:
@@ -274,6 +293,24 @@ except ImportError:
     discover_survival_biomarkers = None
     validate_biomarkers = None
     get_dependencies_status = None
+    BiomarkerIntent = None
+    VALID_INTENTS = None
+    SignatureScore = None
+    build_signature_score = None
+    DirectionPattern = None
+    build_direction_pattern = None
+    ppv_npv_at_prevalence = None
+    bootstrap_ci = None
+    youdens_optimal_threshold = None
+    decision_curve_analysis = None
+    net_reclassification_improvement = None
+    RatioBiomarkerSearcher = None
+    RatioPair = None
+    RatioSearchResult = None
+    apply_ratios = None
+    build_ratio_features = None
+    EnhancedBiomarkerResult = None
+    enhance_biomarker_result = None
     _BIOMARKER_AVAILABLE = False
 
 # Module 6b: Data Acquisition
@@ -445,6 +482,60 @@ __all__ = [
     'discover_survival_biomarkers',
     'validate_biomarkers',
     'get_dependencies_status',
+    'BiomarkerIntent',
+    'VALID_INTENTS',
+    'SignatureScore',
+    'build_signature_score',
+    'DirectionPattern',
+    'build_direction_pattern',
+    'ppv_npv_at_prevalence',
+    'bootstrap_ci',
+    'youdens_optimal_threshold',
+    'decision_curve_analysis',
+    'net_reclassification_improvement',
+    'RatioBiomarkerSearcher',
+    'RatioPair',
+    'RatioSearchResult',
+    'apply_ratios',
+    'build_ratio_features',
+    'EnhancedBiomarkerResult',
+    'enhance_biomarker_result',
+    'BiomarkerIntent',
+    'VALID_INTENTS',
+    'SignatureScore',
+    'build_signature_score',
+    'DirectionPattern',
+    'build_direction_pattern',
+    'ppv_npv_at_prevalence',
+    'bootstrap_ci',
+    'youdens_optimal_threshold',
+    'decision_curve_analysis',
+    'net_reclassification_improvement',
+    'RatioBiomarkerSearcher',
+    'RatioPair',
+    'RatioSearchResult',
+    'apply_ratios',
+    'build_ratio_features',
+    'EnhancedBiomarkerResult',
+    'enhance_biomarker_result',
+    'BiomarkerIntent',
+    'VALID_INTENTS',
+    'SignatureScore',
+    'build_signature_score',
+    'DirectionPattern',
+    'build_direction_pattern',
+    'ppv_npv_at_prevalence',
+    'bootstrap_ci',
+    'youdens_optimal_threshold',
+    'decision_curve_analysis',
+    'net_reclassification_improvement',
+    'RatioBiomarkerSearcher',
+    'RatioPair',
+    'RatioSearchResult',
+    'apply_ratios',
+    'build_ratio_features',
+    'EnhancedBiomarkerResult',
+    'enhance_biomarker_result',
     
     # Module 6b: Data Acquisition (optional)
     'AcquiredDataset',

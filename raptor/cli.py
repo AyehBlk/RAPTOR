@@ -2797,8 +2797,7 @@ def ensemble_compare(deseq2, edger, limma, output, threshold):
 @click.option('--output', '-o', type=click.Path(), default='results/biomarkers',
               help='Output directory')
 @click.option('--intent', type=click.Choice(
-              ['diagnostic', 'prognostic', 'predictive', 'monitoring',
-               'exploratory', 'translational'], case_sensitive=False),
+              ['diagnostic', 'exploratory'], case_sensitive=False),
               default=None,
               help='Biomarker intent — auto-configures enhanced analyses '
                    '(signature score, direction patterns, clinical metrics, '
