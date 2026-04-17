@@ -2796,9 +2796,18 @@ def ensemble_compare(deseq2, edger, limma, output, threshold):
               help='Skip STRING PPI query')
 @click.option('--output', '-o', type=click.Path(), default='results/biomarkers',
               help='Output directory')
+@click.option('--intent', type=click.Choice(
+              ['diagnostic', 'prognostic', 'predictive', 'monitoring',
+               'exploratory', 'translational'], case_sensitive=False),
+              default=None,
+              help='Biomarker intent — auto-configures enhanced analyses '
+                   '(signature score, direction patterns, clinical metrics, '
+                   'ratio biomarkers)')
+@click.option('--prevalence', type=float, default=0.05,
+              help='Disease prevalence for PPV/NPV calculation (default: 0.05)')
 def biomarker(counts, metadata, group_column, de_result, ensemble_result,
               methods, panel_size, species, disease_term,
-              no_annotate, no_literature, no_ppi, output):
+              no_annotate, no_literature, no_ppi, output, intent, prevalence):
     """
     Discover biomarker gene panel (Module 10).
     
@@ -2860,6 +2869,9 @@ def biomarker(counts, metadata, group_column, de_result, ensemble_result,
         if disease_term:
             click.echo(f"   Disease term: {disease_term}")
         click.echo(f"   Annotation: {'off' if no_annotate else 'on'}")
+        if intent:
+            click.echo(f"   Intent: {intent}")
+            click.echo(f"   Prevalence: {prevalence}")
         click.echo(f"   Output: {output_path}")
         click.echo()
         
@@ -2908,6 +2920,8 @@ def biomarker(counts, metadata, group_column, de_result, ensemble_result,
             run_literature=not no_literature,
             run_ppi=not no_ppi,
             output_dir=str(output_path),
+            intent=intent,
+            prevalence=prevalence,
         )
         
         # Display summary
@@ -2924,6 +2938,26 @@ def biomarker(counts, metadata, group_column, de_result, ensemble_result,
         
         if result.panel_optimization:
             click.echo(f"Panel AUC: {result.panel_optimization.optimal_auc:.3f}")
+        
+        # Enhanced analysis results (if intent was set)
+        if intent and hasattr(result, 'clinical_metrics') and result.clinical_metrics:
+            cm = result.clinical_metrics
+            click.echo()
+            click.echo(f"Enhanced Analysis ({intent}):")
+            if 'youdens' in cm:
+                click.echo(f"  Youden's J: {cm['youdens']['youdens_j']:.3f} "
+                           f"(threshold={cm['youdens']['threshold']:.3f})")
+            if 'bootstrap_ci' in cm:
+                b = cm['bootstrap_ci']
+                click.echo(f"  AUC 95% CI: [{b['ci_lower']:.3f}, {b['ci_upper']:.3f}]")
+            if 'ppv_npv' in cm:
+                p = cm['ppv_npv']
+                click.echo(f"  PPV at {p['prevalence']:.1%} prevalence: {p['ppv']:.3f}")
+                click.echo(f"  NPV at {p['prevalence']:.1%} prevalence: {p['npv']:.3f}")
+        if intent and hasattr(result, 'ratio_result') and result.ratio_result:
+            rr = result.ratio_result
+            if rr.best_pair:
+                click.echo(f"  Top ratio: {rr.best_pair.name} (AUC={rr.best_pair.auc:.3f})")
         
         click.echo()
         click.echo(f"Panel genes: {', '.join(result.panel[:10])}")

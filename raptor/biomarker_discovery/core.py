@@ -3583,6 +3583,10 @@ def main():
     parser.add_argument('--output', '-o', default='results/biomarkers',
                         help='Output directory')
     parser.add_argument('--verbose', '-v', action='store_true')
+    parser.add_argument('--intent', choices=['diagnostic', 'exploratory'],
+                        default=None, help='Biomarker intent for enhanced analyses')
+    parser.add_argument('--prevalence', type=float, default=0.05,
+                        help='Disease prevalence for PPV/NPV (default: 0.05)')
 
     args = parser.parse_args()
 
@@ -3617,6 +3621,8 @@ def main():
         run_ppi=not args.no_ppi,
         output_dir=args.output,
         verbose=args.verbose,
+        intent=args.intent,
+        prevalence=args.prevalence,
     )
 
     return 0
