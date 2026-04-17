@@ -34,3 +34,11 @@ from raptor.biomarker_discovery.signature_score import (
     SignatureScore,
     build_signature_score,
 )  # noqa: F401
+
+from raptor.biomarker_discovery.direction_patterns import (
+    DirectionPattern,
+    build_direction_pattern,
+    VALID_DIRECTIONS,
+    DIRECTION_UP,
+    DIRECTION_DOWN,
+)  # noqa: F401
