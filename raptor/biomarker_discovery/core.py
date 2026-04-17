@@ -3026,8 +3026,10 @@ def discover_biomarkers(
     run_ppi: bool = True,
     output_dir: Union[str, Path] = 'results/biomarkers',
     random_state: int = DEFAULT_RANDOM_STATE,
-    verbose: bool = True,
-) -> BiomarkerResult:
+     verbose: bool = True,
+    intent: Optional[Union[str, Any]] = None,
+    prevalence: float = 0.05,
+) -> Union[BiomarkerResult, Any]:
     """
     Complete biomarker discovery pipeline.
 
@@ -3320,6 +3322,26 @@ def discover_biomarkers(
         logger.info(f"   annotations/            - Gene info, pathways, literature, PPI")
     logger.info(f"   biomarker_result.pkl    - Complete result (for downstream)")
     logger.info("")
+
+    # --- Enhanced analysis (if intent is set) ---
+    if intent is not None:
+        try:
+            from raptor.biomarker_discovery.enhanced import enhance_biomarker_result
+            unique_groups = sorted(metadata[group_column].dropna().unique())
+            group_names = (unique_groups[0], unique_groups[1])
+            result = enhance_biomarker_result(
+                base_result=result,
+                expression=X,
+                labels=y,
+                group_names=group_names,
+                intent=intent,
+                prevalence=prevalence,
+                random_state=random_state,
+                verbose=verbose,
+            )
+        except Exception as e:
+            logger.warning(f"Enhanced analysis failed: {e}")
+            logger.warning("Returning base BiomarkerResult.")
 
     return result
 

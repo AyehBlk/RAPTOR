@@ -58,3 +58,8 @@ from raptor.biomarker_discovery.ratio_biomarkers import (
     apply_ratios,
     build_ratio_features,
 )  # noqa: F401
+
+from raptor.biomarker_discovery.enhanced import (
+    EnhancedBiomarkerResult,
+    enhance_biomarker_result,
+)  # noqa: F401
