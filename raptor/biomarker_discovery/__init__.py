@@ -24,7 +24,7 @@ from raptor.biomarker_discovery.core import (
     _SHAP_AVAILABLE,
 )  # noqa: F401
 
-# New M10 enhancement modules
+# M10 enhancement modules
 from raptor.biomarker_discovery.intent import (
     BiomarkerIntent,
     VALID_INTENTS,
@@ -41,4 +41,20 @@ from raptor.biomarker_discovery.direction_patterns import (
     VALID_DIRECTIONS,
     DIRECTION_UP,
     DIRECTION_DOWN,
+)  # noqa: F401
+
+from raptor.biomarker_discovery.clinical_metrics import (
+    ppv_npv_at_prevalence,
+    bootstrap_ci,
+    youdens_optimal_threshold,
+    decision_curve_analysis,
+    net_reclassification_improvement,
+)  # noqa: F401
+
+from raptor.biomarker_discovery.ratio_biomarkers import (
+    RatioBiomarkerSearcher,
+    RatioPair,
+    RatioSearchResult,
+    apply_ratios,
+    build_ratio_features,
 )  # noqa: F401
