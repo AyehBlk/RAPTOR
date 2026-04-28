@@ -55,9 +55,15 @@ with st.expander("ℹ️ How to use this module"):
     - Requires: Module 9 (Ensemble Analysis) complete
     - Contains: Consensus genes, tier breakdown, method comparison
     
-    ### **4. Complete Workflow Report**
+    ### **4. Biomarker Discovery Report**
+    - Requires: Module 10 (Biomarker Discovery) complete
+    - Contains: Panel, classifier performance, signature score, direction
+      pattern, clinical metrics (Youden, bootstrap CI, PPV/NPV, DCA),
+      ratio biomarkers, biological annotation
+    
+    ### **5. Complete Workflow Report**
     - Requires: Multiple modules complete
-    - Contains: Everything from QC to ensemble results
+    - Contains: Everything from QC to biomarker discovery
     
     ## **Export Formats**
     
@@ -98,6 +104,11 @@ if st.session_state.get('m9_complete', False):
 else:
     available_modules.append("⬜ Module 9: Ensemble Analysis")
 
+if st.session_state.get('m10_complete', False):
+    available_modules.append("Module 10: Biomarker Discovery")
+else:
+    available_modules.append("⬜ Module 10: Biomarker Discovery")
+
 for module in available_modules:
     st.markdown(f"- {module}")
 
@@ -112,6 +123,7 @@ report_type = st.radio(
         "Quality Control Report (Module 2)",
         "DE Analysis Summary (Module 7)",
         "Ensemble Analysis Report (Module 9)",
+        "Biomarker Discovery Report (Module 10)",
         "Complete Workflow Report (All Modules)"
     ]
 )
@@ -243,11 +255,172 @@ Methods used in ensemble:
     
     return report
 
+def generate_biomarker_report_markdown(result) -> str:
+    """Generate biomarker discovery report in markdown format.
+
+    ``result`` may be a plain BiomarkerResult or an EnhancedBiomarkerResult.
+    The function handles both transparently.
+    """
+    # Unwrap if this is an EnhancedBiomarkerResult
+    base = result.base_result if hasattr(result, 'base_result') else result
+    is_enhanced = hasattr(result, 'base_result')
+
+    # Best classifier
+    best_clf = base.best_classifier or 'N/A'
+    best_auc = 0.0
+    best_f1 = 0.0
+    if best_clf != 'N/A' and best_clf in base.classification_results:
+        cr = base.classification_results[best_clf]
+        best_auc = getattr(cr, 'auc', 0.0)
+        best_f1 = getattr(cr, 'f1', 0.0)
+
+    report = f"""# RAPTOR Biomarker Discovery Report
+
+**Generated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}  
+**RAPTOR Version:** 2.2.2  
+**Module:** 10 (Biomarker Discovery)
+
+---
+
+## Summary
+
+**Study design:** {base.study_design}  
+**Validation strategy:** {base.validation_strategy}  
+**Samples:** {base.n_samples}  
+**Initial candidates:** {base.n_initial_candidates:,}  
+**Final panel size:** {base.panel_size} genes  
+**Best classifier:** {best_clf}  
+**Best AUC:** {best_auc:.3f}  
+**Best F1:** {best_f1:.3f}
+
+---
+
+## Feature Selection
+
+"""
+    for method, sel_res in base.selection_results.items():
+        n_sel = getattr(sel_res, 'n_selected', 'N/A')
+        report += f"- **{method}:** {n_sel} genes selected\n"
+
+    # ---- Classification performance ----
+    report += "\n---\n\n## Classification Performance\n\n"
+    report += "| Classifier | AUC | F1 | Accuracy |\n"
+    report += "|---|---|---|---|\n"
+    for name, cr in base.classification_results.items():
+        marker = " *" if name == base.best_classifier else ""
+        report += (
+            f"| {name}{marker} | "
+            f"{getattr(cr, 'auc', 0):.3f} | "
+            f"{getattr(cr, 'f1', 0):.3f} | "
+            f"{getattr(cr, 'accuracy', 0):.3f} |\n"
+        )
+
+    # ---- Panel ----
+    report += "\n---\n\n## Recommended Panel\n\n"
+    for i, gene in enumerate(base.panel, 1):
+        report += f"{i}. `{gene}`\n"
+
+    # ---- Panel optimization ----
+    if base.panel_optimization is not None:
+        po = base.panel_optimization
+        opt_size = getattr(po, 'optimal_size', base.panel_size)
+        opt_auc = getattr(po, 'optimal_auc', best_auc)
+        report += (
+            f"\n**Panel optimization:** optimal size = {opt_size}, "
+            f"optimal AUC = {opt_auc:.3f}\n"
+        )
+
+    # ---- Enhanced analysis ----
+    if is_enhanced:
+        report += "\n---\n\n## Enhanced Analysis\n\n"
+        intent = result.intent
+        report += f"**Intent:** {intent.output_label}  \n"
+        report += f"**Study design:** {intent.study_design}  \n"
+
+        # Signature score
+        sig = result.signature
+        if sig is not None:
+            report += f"\n### Signature Score ({sig.mode})\n\n"
+            report += f"- Panel genes: {len(sig.panel_genes)}\n"
+            report += f"- Risk groups: {' / '.join(sig.risk_labels)}\n"
+            if sig.performance:
+                for metric, value in sig.performance.items():
+                    if isinstance(value, float):
+                        report += f"- {metric}: {value:.3f}\n"
+                    else:
+                        report += f"- {metric}: {value}\n"
+
+        # Direction pattern
+        dp = result.direction_pattern
+        if dp is not None:
+            report += "\n### Direction Pattern\n\n"
+            report += f"- UP in reference: {dp.n_up}\n"
+            report += f"- DOWN in reference: {dp.n_down}\n"
+            report += f"- Total genes: {dp.n_genes}\n"
+
+        # Clinical metrics
+        clin = result.clinical_metrics
+        if clin:
+            report += "\n### Clinical Metrics\n\n"
+            if 'youdens' in clin:
+                y = clin['youdens']
+                report += (
+                    f"- **Youden's optimal:** threshold={y['threshold']:.3f}, "
+                    f"sensitivity={y['sensitivity']:.3f}, "
+                    f"specificity={y['specificity']:.3f}, "
+                    f"J={y['youdens_j']:.3f}\n"
+                )
+            if 'bootstrap_ci' in clin:
+                b = clin['bootstrap_ci']
+                report += (
+                    f"- **AUC 95% CI:** "
+                    f"[{b['ci_lower']:.3f}, {b['ci_upper']:.3f}] "
+                    f"(n_bootstrap={b['n_bootstrap']})\n"
+                )
+            if 'ppv_npv' in clin:
+                p = clin['ppv_npv']
+                report += (
+                    f"- **At {p['prevalence']:.1%} prevalence:** "
+                    f"PPV={p['ppv']:.3f}, NPV={p['npv']:.3f}\n"
+                )
+            if 'decision_curve' in clin:
+                report += "- **Decision curve analysis:** computed\n"
+
+        # Ratio biomarkers
+        rr = result.ratio_result
+        if rr is not None and rr.n_found > 0:
+            report += "\n### Ratio Biomarkers\n\n"
+            report += f"- Pairs found: {rr.n_found}\n"
+            report += f"- Pairs tested: {rr.n_pairs_tested:,}\n"
+            if rr.best_pair:
+                report += (
+                    f"- Best pair: `{rr.best_pair.name}` "
+                    f"(AUC={rr.best_pair.auc:.3f}, "
+                    f"direction={rr.best_pair.direction})\n"
+                )
+
+    # ---- Annotation ----
+    if base.annotation_result is not None:
+        ann = base.annotation_result
+        report += "\n---\n\n## Biological Annotation\n\n"
+        report += f"- Annotated genes: {ann.n_annotated}\n"
+        report += f"- Enriched pathways (FDR<0.05): {ann.n_enriched_pathways}\n"
+        if hasattr(ann, 'literature_hits') and ann.literature_hits is not None and not ann.literature_hits.empty:
+            report += f"- Genes with literature hits: {len(ann.literature_hits)}\n"
+        if hasattr(ann, 'ppi_network') and ann.ppi_network is not None:
+            n_edges = len(ann.ppi_network.get('edges', []))
+            report += f"- PPI network edges: {n_edges}\n"
+
+    report += "\n---\n\n*Report generated by RAPTOR v2.2.2*\n"
+    return report
+
+
 def generate_complete_report_markdown(
     qc_data: Optional[Dict],
     de_data: Optional[Dict],
     ensemble_data: Optional[Dict],
-    opt_data: Optional[Dict]
+    opt_data: Optional[Dict],
+    biomarker_result=None,
 ) -> str:
     """Generate complete workflow report."""
     
@@ -297,7 +470,41 @@ This report summarizes the complete RAPTOR RNA-seq analysis workflow.
         report += f"- Tier 1: {ensemble_data.get('tier1_count', 0):,}\n"
         report += f"- Tier 2: {ensemble_data.get('tier2_count', 0):,}\n"
         report += f"- Tier 3: {ensemble_data.get('tier3_count', 0):,}\n"
-    
+
+    # Biomarker Discovery Section
+    if biomarker_result is not None:
+        base_br = (
+            biomarker_result.base_result
+            if hasattr(biomarker_result, 'base_result') else biomarker_result
+        )
+        best_clf = base_br.best_classifier or 'N/A'
+        best_auc = 0.0
+        if best_clf != 'N/A' and best_clf in base_br.classification_results:
+            best_auc = getattr(
+                base_br.classification_results[best_clf], 'auc', 0.0
+            )
+
+        report += "\n## 5. Biomarker Discovery\n\n"
+        report += f"**Panel size:** {base_br.panel_size} genes\n"
+        report += f"**Best classifier:** {best_clf}\n"
+        report += f"**Best AUC:** {best_auc:.3f}\n"
+        report += f"**Panel:** `{', '.join(base_br.panel[:10])}`"
+        if len(base_br.panel) > 10:
+            report += f" (+ {len(base_br.panel) - 10} more)"
+        report += "\n"
+
+        if hasattr(biomarker_result, 'base_result'):
+            # Enhanced result — add intent + clinical metrics summary
+            intent = biomarker_result.intent
+            report += f"**Intent:** {intent.output_label}\n"
+            clin = biomarker_result.clinical_metrics
+            if clin and 'bootstrap_ci' in clin:
+                b = clin['bootstrap_ci']
+                report += (
+                    f"**AUC 95% CI:** "
+                    f"[{b['ci_lower']:.3f}, {b['ci_upper']:.3f}]\n"
+                )
+
     report += "\n---\n\n## Conclusions\n\n"
     report += "This comprehensive analysis identified differentially expressed genes with high confidence.\n\n"
     report += "**Recommended Next Steps:**\n"
@@ -410,6 +617,37 @@ elif "Ensemble" in report_type:
             except:
                 st.info("Navigate manually to Module 9 (Ensemble Analysis)")
 
+elif "Biomarker Discovery" in report_type:
+    st.markdown("## Biomarker Discovery Report")
+
+    if st.session_state.get('m10_complete', False):
+        st.success("Biomarker Discovery data available")
+
+        result = st.session_state.get('m10_result')
+        if result is not None:
+            base = result.base_result if hasattr(result, 'base_result') else result
+            st.info(
+                f"**Panel size:** {base.panel_size} genes | "
+                f"**Best classifier:** {base.best_classifier or 'N/A'} | "
+                f"**Samples:** {base.n_samples}"
+            )
+
+            if st.button("Generate Biomarker Report", type="primary", use_container_width=True):
+                report_content = generate_biomarker_report_markdown(result)
+
+                st.session_state['report_content'] = report_content
+                st.session_state['report_type'] = 'biomarker'
+                st.session_state['report_generated'] = True
+
+                st.rerun()
+    else:
+        st.warning("Biomarker Discovery not complete. Please run Module 10 first.")
+        if st.button("Go to Module 10"):
+            try:
+                st.switch_page("pages/08___Biomarker_Discovery.py")
+            except Exception:
+                st.info("Navigate manually to Module 10 (Biomarker Discovery)")
+
 else:  # Complete Workflow Report
     st.markdown("## Complete Workflow Report")
     
@@ -418,14 +656,16 @@ else:  # Complete Workflow Report
     has_de = st.session_state.get('m7_complete', False)
     has_opt = st.session_state.get('m8_complete', False)
     has_ensemble = st.session_state.get('m9_complete', False)
+    has_biomarker = st.session_state.get('m10_complete', False)
     
     st.markdown("**Available Data:**")
     st.markdown(f"- Quality Control: {'Pass' if has_qc else '⬜'}")
     st.markdown(f"- DE Import: {'Pass' if has_de else '⬜'}")
     st.markdown(f"- Optimization: {'Pass' if has_opt else '⬜'}")
     st.markdown(f"- Ensemble: {'Pass' if has_ensemble else '⬜'}")
+    st.markdown(f"- Biomarker Discovery: {'Pass' if has_biomarker else '⬜'}")
     
-    if has_de or has_ensemble:
+    if has_de or has_ensemble or has_biomarker:
         st.success("Sufficient data for complete report")
         
         if st.button("Generate Complete Report", type="primary", use_container_width=True):
@@ -450,10 +690,12 @@ else:  # Complete Workflow Report
                     }
             
             ensemble_data = st.session_state.get('m9_result') if has_ensemble else None
+            biomarker_result = st.session_state.get('m10_result') if has_biomarker else None
             
             # Generate report
             report_content = generate_complete_report_markdown(
-                qc_data, de_data, ensemble_data, opt_data
+                qc_data, de_data, ensemble_data, opt_data,
+                biomarker_result=biomarker_result,
             )
             
             # Store in session state
@@ -463,7 +705,7 @@ else:  # Complete Workflow Report
             
             st.rerun()
     else:
-        st.warning("Please complete at least Module 7 (DE Import) or Module 9 (Ensemble) first.")
+        st.warning("Please complete at least Module 7 (DE Import), Module 9 (Ensemble), or Module 10 (Biomarker Discovery) first.")
 
 # ============================================================================
 # DISPLAY GENERATED REPORT
