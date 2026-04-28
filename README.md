@@ -59,7 +59,7 @@ Your analysis starts with data. RAPTOR connects to public repositories so you ca
 | **GEO** (NCBI) | Ready | Search 200,000+ datasets, download processed count matrices |
 | **SRA** (NCBI) | Ready | Explore run tables, auto-detect linked GEO studies, generate FASTQ download commands |
 | **TCGA** (NCI) | Functional | 33 cancer types via GDC API, multi-omic (gene expression, miRNA, methylation, CNV, RPPA, mutations). Tested with 5 cancer cohorts |
-| **ArrayExpress** (EBI) | In development | European studies via BioStudies API |
+| **ArrayExpress** (EBI) | Functional | European studies via BioStudies API |
 
 You can also upload your own count matrix — from your own experiment or from collaborators at your institute. RAPTOR treats uploaded data the same way as public data.
 
