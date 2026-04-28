@@ -1,17 +1,27 @@
 #!/usr/bin/env python3
 """
-RAPTOR Dashboard Launcher v2.2.2
+RAPTOR Dashboard Launcher
 
 Quick launcher for the interactive web dashboard.
 
 Author: Ayeh Bolouki
-Version: 2.2.2
-Date: 14 April 2026
 """
 
 import subprocess
 import sys
 from pathlib import Path
+
+
+def _get_raptor_version() -> str:
+    """Read the RAPTOR version from the installed package, falling
+    back gracefully if it can't be imported. Single source of truth
+    is raptor/__init__.py's __version__."""
+    try:
+        from raptor import __version__
+        return __version__
+    except ImportError:
+        return "unknown"
+
 
 def check_dependencies():
     """Check if required packages are installed."""
@@ -116,16 +126,17 @@ def main():
         core_status = "⚠️ No RAPTOR modules found (dashboard will work but with limited functionality)"
     
     # Display launch information
+    raptor_version = _get_raptor_version()
     print(f"""
     ╔═══════════════════════════════════════════════════════════════╗
-    ║          🦖 Launching RAPTOR v2.2.2 Dashboard                 ║
-    ║            Professional RNA-seq Analysis Interface            ║
+    ║   🦖 Launching RAPTOR v{raptor_version} — Dashboard
+    ║      Professional RNA-seq Analysis Interface
     ╚═══════════════════════════════════════════════════════════════╝
     
     Dashboard Location: {dashboard_path.parent}
     Core Modules: {core_status}
     
-    NEW in v2.2.2:
+    NEW in v{raptor_version}:
     ────────────────────────────────────────────────────────────────
     - Data Acquisition: Search & download from GEO, SRA, TCGA
     - Pool datasets with batch correction (ComBat, quantile)
@@ -133,6 +144,8 @@ def main():
     - Quality checks on pooled data (PCA, correlations, RLE)
     - SRA run tables with FASTQ download scripts
     - TCGA multi-omic support (miRNA, methylation, CNV, RPPA)
+    - Biomarker discovery (Module 10) with kneedle panel-size
+      selection and consensus pinning across CV folds
     
     📋 Available Features:
     ────────────────────────────────────────────────────────────────
@@ -144,6 +157,7 @@ def main():
     • 📥 Import DE - Import DE results (Module 7)
     • ⚙️ Parameter Optimization - Threshold optimization (Module 8)
     • 🧬 Ensemble Analysis - Consensus genes (Module 9)
+    • 🧬 Biomarker Discovery - Panel + clinical metrics (Module 10)
     • 📊 Visualizations - Interactive plots
     • 📋 Reports - Publication-ready exports
     • ⚙️ Settings - Dashboard configuration

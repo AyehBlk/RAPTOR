@@ -4848,7 +4848,7 @@ def discover_biomarkers(
     validation : str
         Validation strategy. 'nested_cv' (default) runs pipeline-CV
         with feature selection inside the outer fold, per Ambroise &
-        McLachlan (2002 PNAS). 'loocv' is DEPRECATED as of v2.2.3:
+        McLachlan (2002 PNAS). 'loocv' is DEPRECATED as of v2.2.2:
         Ambroise & McLachlan explicitly recommend k-fold over LOOCV,
         because LOOCV has higher variance with no bias advantage once
         the external-CV leakage fix is applied; using it triggers a
@@ -4928,7 +4928,7 @@ def discover_biomarkers(
     # applied. We honor the user's request but warn once.
     if validation == 'loocv':
         warnings.warn(
-            "validation='loocv' is DEPRECATED as of RAPTOR v2.2.3. "
+            "validation='loocv' is DEPRECATED as of RAPTOR v2.2.2. "
             "Ambroise & McLachlan (2002 PNAS 99:6562) explicitly "
             "recommend k-fold cross-validation over leave-one-out: "
             "LOOCV has high variance and offers no bias advantage once "
