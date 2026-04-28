@@ -151,4 +151,4 @@ global-exclude dmypy.json
 # 6. Unwanted cache and temp files are excluded
 #
 # Test with: python setup.py sdist
-# Check contents with: tar -tzf dist/raptor-2.2.1.tar.gz
+# Check contents with: tar -tzf dist/raptor-2.2.2.tar.gz
