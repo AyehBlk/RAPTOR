@@ -50,3 +50,20 @@ results/
 
 # Personal local files
 .private/
+# =============================================================================
+# Internal session scripts (one-off diagnostics, not part of public package)
+# =============================================================================
+q5_sanity_check_kneedle.py
+q5_sanity_check.py
+seed_stability_investigation.py
+
+# Output from internal sanity-check runs
+q5_sanity_kneedle/
+q5_sanity_output/
+q5_sanity_output_kneedle/
+
+# =============================================================================
+# Test data fixtures (excluded from git; tracked separately for journal submission
+# via Zenodo/figshare or direct sharing with reviewers)
+# =============================================================================
+test_data/
