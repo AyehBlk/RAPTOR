@@ -1,5 +1,5 @@
 """
-RAPTOR CLI Comprehensive Test Suite v2.2.0
+RAPTOR CLI Comprehensive Test Suite v2.2.2
 ==========================================
 
 Tests all 14 CLI commands across 4 tiers:
@@ -208,9 +208,13 @@ class TestTier0_SmokeTests:
             assert cmd in result.output
 
     def test_version(self, runner):
+        """Verify --version prints the package version. Reads
+        raptor.__version__ dynamically so this test survives future
+        version bumps without manual editing."""
+        import raptor
         result = runner.invoke(main, ['--version'])
         assert result.exit_code == 0
-        assert '2.2.0' in result.output
+        assert raptor.__version__ in result.output
 
     def test_validate_installation(self, runner):
         result = runner.invoke(main, ['validate-installation'])

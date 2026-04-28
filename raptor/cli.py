@@ -2804,16 +2804,40 @@ def ensemble_compare(deseq2, edger, limma, output, threshold):
                    'ratio biomarkers)')
 @click.option('--prevalence', type=float, default=0.05,
               help='Disease prevalence for PPV/NPV calculation (default: 0.05)')
+@click.option('--auto-panel-strategy',
+              type=click.Choice(['kneedle', 'argmax', 'first_drop'],
+                                case_sensitive=False),
+              default='kneedle',
+              help='Panel-size auto-detection strategy when --panel-size '
+                   'is not specified. kneedle (default): Satopaa et al. '
+                   '2011 with argmax fallback for saturated curves. '
+                   'argmax: smallest size at maximum CV AUC. first_drop: '
+                   'legacy pre-2.2.2 heuristic, retained for backward '
+                   'compatibility.')
+@click.option('--panel-sensitivity', type=float, default=1.0,
+              help='Kneedle sensitivity parameter S (default: 1.0). Lower '
+                   'values pick earlier knees, higher values pick later. '
+                   'Ignored unless --auto-panel-strategy=kneedle.')
+@click.option('--panel-size-strategy',
+              type=click.Choice(['per_fold', 'consensus'],
+                                case_sensitive=False),
+              default='consensus',
+              help='Where panel-size auto-detection runs. consensus '
+                   '(default): detect once on full data, pin all CV folds '
+                   'to that K. per_fold: each outer fold detects '
+                   'independently. Consensus reduces Phi instability at '
+                   'small n (Q5 sanity-check evidence).')
 def biomarker(counts, metadata, group_column, de_result, ensemble_result,
               methods, panel_size, species, disease_term,
-              no_annotate, no_literature, no_ppi, output, intent, prevalence):
+              no_annotate, no_literature, no_ppi, output, intent, prevalence,
+              auto_panel_strategy, panel_sensitivity, panel_size_strategy):
     """
     Discover biomarker gene panel (Module 10).
     
     \b
     PIPELINE STAGES:
         1. Multi-method feature selection (LASSO, Boruta, mRMR, RFE, SHAP, WGCNA)
-        2. Panel size optimization (forward selection + elbow detection)
+        2. Panel size optimization (kneedle algorithm + consensus pinning)
         3. Classification evaluation (nested CV with RF, SVM, XGBoost, LogReg)
         4. Biological annotation (MyGene, pathways, literature, PPI)
         5. Publication-ready report generation
@@ -2868,6 +2892,8 @@ def biomarker(counts, metadata, group_column, de_result, ensemble_result,
         if disease_term:
             click.echo(f"   Disease term: {disease_term}")
         click.echo(f"   Annotation: {'off' if no_annotate else 'on'}")
+        click.echo(f"   Auto panel strategy: {auto_panel_strategy}")
+        click.echo(f"   Panel size strategy: {panel_size_strategy}")
         if intent:
             click.echo(f"   Intent: {intent}")
             click.echo(f"   Prevalence: {prevalence}")
@@ -2921,6 +2947,9 @@ def biomarker(counts, metadata, group_column, de_result, ensemble_result,
             output_dir=str(output_path),
             intent=intent,
             prevalence=prevalence,
+            auto_panel_strategy=auto_panel_strategy,
+            panel_sensitivity=panel_sensitivity,
+            panel_size_strategy=panel_size_strategy,
         )
         
         # Display summary

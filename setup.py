@@ -50,6 +50,7 @@ INSTALL_REQUIRES = [
     # Statistics and Machine Learning
     "scikit-learn>=0.24.0",
     "statsmodels>=0.12.0",
+    "kneed>=0.8.0",         # Panel-size auto-detection (Module 10)
     
     # CLI Framework
     "click>=7.0",
