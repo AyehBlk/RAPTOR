@@ -147,7 +147,14 @@ class EnhancedBiomarkerResult:
                              f"J={y['youdens_j']:.3f}")
             if "bootstrap_ci" in cm:
                 b = cm["bootstrap_ci"]
-                lines.append(f"  AUC bootstrap CI: {b['ci_lower']:.3f} - "
+                # M2: label the bootstrap CI honestly. Under M1's OOF
+                # path (cm["oof_used"] == True) the bootstrap runs on
+                # out-of-fold predictions, so this CI is an OOF AUC CI,
+                # not a training-data CI. Symmetric labeling in the
+                # fallback path makes it explicit that the fallback is
+                # a training-data CI. Reader-friendly and unambiguous.
+                _auc_label = "OOF AUC" if cm.get("oof_used", False) else "Training AUC"
+                lines.append(f"  {_auc_label} bootstrap CI: {b['ci_lower']:.3f} - "
                              f"{b['ci_upper']:.3f} (95%)")
             if "ppv_npv" in cm:
                 p = cm["ppv_npv"]
@@ -322,34 +329,99 @@ def enhance_biomarker_result(
                 logger.warning(f"  Direction pattern failed: {e}")
 
     # -- 3. Clinical Metrics -------------------------------------------------
+    #
+    # M1 (honest reporting): clinical metrics (Youden, PPV/NPV, DCA,
+    # bootstrap CI) are computed from out-of-fold (OOF) predictions when
+    # available, falling back to full-data predictions only if OOF is
+    # unavailable. OOF predictions come from ``evaluate_nested_cv`` or
+    # ``evaluate_loocv`` and represent each sample being predicted by a
+    # model that did not see it during training. Using the full-data
+    # trained_model (which has seen every sample) would produce
+    # apparent/training performance dressed up as generalisation — the
+    # classic "graded my own homework" failure mode.
+    #
+    # The returned dict includes an ``oof_used`` flag and (when
+    # relevant) an ``optimism_gap`` diagnostic so callers / the
+    # dashboard can render appropriate messaging.
     clin = None
     if intent_obj.intent in ("diagnostic", "prognostic", "predictive"):
         try:
             clin = {}
 
-            # Get predicted probabilities from the best classifier
             best_clf_name = base_result.best_classifier
             best_clf_result = base_result.classification_results.get(best_clf_name)
-            y_score = None
 
-            if best_clf_result and best_clf_result.trained_model is not None:
+            # Prefer OOF predictions for honest clinical metrics.
+            # Use getattr with a default so mock objects and old saved
+            # results that lack the oof_* fields fall through gracefully
+            # to the training-prediction fallback rather than raising
+            # AttributeError.
+            y_score: Optional[np.ndarray] = None
+            y_true: Optional[np.ndarray] = None
+            oof_used = False
+            warning_note: Optional[str] = None
+
+            oof_prob_field = (
+                getattr(best_clf_result, 'oof_prob', None)
+                if best_clf_result is not None else None
+            )
+            oof_true_field = (
+                getattr(best_clf_result, 'oof_true', None)
+                if best_clf_result is not None else None
+            )
+
+            if oof_prob_field is not None and oof_true_field is not None:
+                y_score = np.asarray(oof_prob_field, dtype=float)
+                y_true = np.asarray(oof_true_field, dtype=int)
+                oof_used = True
+                if verbose:
+                    logger.info(
+                        f"  Clinical metrics: using out-of-fold predictions "
+                        f"(n={len(y_true)} OOF samples)."
+                    )
+
+            elif (
+                best_clf_result is not None
+                and getattr(best_clf_result, 'trained_model', None) is not None
+            ):
+                # Fall back to full-data predictions, with a visible
+                # warning. This is the honest thing to do: don't
+                # silently skip the metrics, and don't silently pretend
+                # training predictions are OOF predictions.
                 model = best_clf_result.trained_model
                 X_panel = expression[panel_genes]
                 if hasattr(model, "predict_proba"):
                     y_score = model.predict_proba(X_panel)[:, 1]
                 elif hasattr(model, "decision_function"):
                     raw = model.decision_function(X_panel)
-                    # Sigmoid transform for SVM
-                    y_score = 1.0 / (1.0 + np.exp(-raw))
+                    y_score = 1.0 / (1.0 + np.exp(-raw))  # sigmoid
+                if y_score is not None:
+                    y_true = labels.astype(int)
+                    warning_note = (
+                        "Clinical metrics computed from training-data "
+                        "predictions (out-of-fold predictions were not "
+                        "available for this result). These metrics are "
+                        "apparent performance; interpret with caution."
+                    )
+                    if verbose:
+                        logger.warning(
+                            f"  Clinical metrics: OOF predictions not found for "
+                            f"'{best_clf_name}'; falling back to training-data "
+                            f"predictions. Values may be optimistic."
+                        )
 
-            if y_score is not None:
-                y_true = labels.astype(int)
+            clin["oof_used"] = oof_used
+            if warning_note is not None:
+                clin["warning"] = warning_note
 
+            if y_score is not None and y_true is not None:
                 # Youden's optimal threshold
                 clin["youdens"] = youdens_optimal_threshold(y_true, y_score)
                 if verbose:
-                    logger.info(f"  Youden's J: {clin['youdens']['youdens_j']:.3f} "
-                                f"(threshold={clin['youdens']['threshold']:.3f})")
+                    logger.info(
+                        f"  Youden's J: {clin['youdens']['youdens_j']:.3f} "
+                        f"(threshold={clin['youdens']['threshold']:.3f})"
+                    )
 
                 # Bootstrap CI for AUC
                 clin["bootstrap_ci"] = bootstrap_ci(
@@ -357,8 +429,10 @@ def enhance_biomarker_result(
                 )
                 if verbose:
                     b = clin["bootstrap_ci"]
-                    logger.info(f"  AUC 95% CI: [{b['ci_lower']:.3f}, "
-                                f"{b['ci_upper']:.3f}]")
+                    logger.info(
+                        f"  AUC 95% CI: [{b['ci_lower']:.3f}, "
+                        f"{b['ci_upper']:.3f}]"
+                    )
 
                 # PPV/NPV at prevalence
                 sens = clin["youdens"]["sensitivity"]
@@ -371,8 +445,10 @@ def enhance_biomarker_result(
                     )
                     if verbose:
                         p = clin["ppv_npv"]
-                        logger.info(f"  PPV at {prevalence:.1%} prevalence: "
-                                    f"{p['ppv']:.3f}")
+                        logger.info(
+                            f"  PPV at {prevalence:.1%} prevalence: "
+                            f"{p['ppv']:.3f}"
+                        )
 
                 # Decision curve analysis
                 clin["decision_curve"] = decision_curve_analysis(
@@ -381,10 +457,61 @@ def enhance_biomarker_result(
                 if verbose:
                     logger.info("  Decision curve analysis: computed")
 
+                # M1: optimism-gap diagnostic. This pairs an OOF-based
+                # CV AUC (honest) with a training-data AUC (apparent)
+                # so the dashboard can flag overfitting. We only
+                # compute this when OOF predictions were used for the
+                # main clinical metrics, i.e. we are able to compare
+                # OOF and training AUCs on the same panel.
+                if (
+                    oof_used
+                    and getattr(best_clf_result, 'trained_model', None) is not None
+                ):
+                    try:
+                        from sklearn.metrics import roc_auc_score
+
+                        cv_auc_oof = float(roc_auc_score(y_true, y_score))
+
+                        model = best_clf_result.trained_model
+                        X_panel = expression[panel_genes]
+                        if hasattr(model, "predict_proba"):
+                            train_score = model.predict_proba(X_panel)[:, 1]
+                        elif hasattr(model, "decision_function"):
+                            raw = model.decision_function(X_panel)
+                            train_score = 1.0 / (1.0 + np.exp(-raw))
+                        else:
+                            train_score = None
+
+                        if train_score is not None:
+                            y_true_train = labels.astype(int)
+                            train_auc = float(
+                                roc_auc_score(y_true_train, train_score)
+                            )
+                            gap = train_auc - cv_auc_oof
+                            clin["optimism_gap"] = {
+                                "cv_auc_oof": cv_auc_oof,
+                                "training_auc": train_auc,
+                                "gap": gap,
+                            }
+                            if verbose:
+                                logger.info(
+                                    f"  Optimism gap: train AUC {train_auc:.3f} "
+                                    f"- OOF CV AUC {cv_auc_oof:.3f} = "
+                                    f"{gap:+.3f}"
+                                )
+                    except Exception as e:
+                        if verbose:
+                            logger.warning(
+                                f"  Optimism gap diagnostic failed: {e}"
+                            )
+
             else:
                 if verbose:
-                    logger.warning("  Clinical metrics: no trained model with "
-                                   "predict_proba available")
+                    logger.warning(
+                        "  Clinical metrics: neither OOF predictions nor a "
+                        "trained model with predict_proba is available; "
+                        "metrics skipped."
+                    )
 
         except Exception as e:
             if verbose:

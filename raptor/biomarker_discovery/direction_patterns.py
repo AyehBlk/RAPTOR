@@ -320,87 +320,89 @@ def build_direction_pattern(
     test : {'t-test', 'mann-whitney'}, default 't-test'
     min_nonzero : int, default 3
         Genes with fewer nonzero values across both groups are skipped.
+
+    Implementation notes
+    --------------------
+    As of M4 (2026-04), the per-gene DE computation is delegated to
+    ``raptor.biomarker_discovery.univariate_de.compute_per_gene_de``.
+    This function then applies the p_threshold / fc_threshold filter
+    and assembles the surviving genes into a DirectionPattern. Both
+    this function and M4's ``apply_significance_calibration`` consume
+    the same underlying computation, so their p-values always agree
+    to full float precision on the same (expression, labels) input.
+
+    The test name mapping is:
+        't-test'        -> compute_per_gene_de(test='welch')
+        'mann-whitney'  -> compute_per_gene_de(test='mann_whitney')
     """
+    from raptor.biomarker_discovery.univariate_de import compute_per_gene_de
+
     if test not in ("t-test", "mann-whitney"):
         raise ValueError(
             f"test must be 't-test' or 'mann-whitney', got {test!r}."
         )
 
-    labels = pd.Series(labels).reset_index(drop=True)
-    expression = expression.reset_index(drop=True)
+    # Translate direction_patterns test-name convention to univariate_de convention.
+    test_de = "welch" if test == "t-test" else "mann_whitney"
 
-    if len(labels) != len(expression):
+    # Delegate per-gene DE to the shared utility. This returns a row
+    # per gene with p_value, neg_log10p, log2fc, mean_ref, mean_base,
+    # n_ref, n_base, and skipped columns. Skipped genes have p=1.0 so
+    # they're naturally dropped by the p_threshold filter below; the
+    # filter logic therefore doesn't need to special-case them.
+    de_table = compute_per_gene_de(
+        expression=expression,
+        labels=labels,
+        reference_group=reference_group,
+        baseline_group=baseline_group,
+        test=test_de,
+        min_nonzero=min_nonzero,
+    )
+
+    # Need per-gene baseline means/stds for the concordance computation
+    # later. compute_per_gene_de gives us mean_base but not std_base,
+    # so we compute std_base separately. This stays vectorized.
+    labels_s = pd.Series(labels).reset_index(drop=True)
+    expression_rs = expression.reset_index(drop=True)
+    base_mask = (labels_s == baseline_group).to_numpy()
+    X_base = expression_rs.to_numpy(dtype=float)[base_mask, :]
+    std_base_all = np.std(X_base, axis=0, ddof=1)
+
+    # Apply the DirectionPattern filter: p < threshold AND |log2fc| > threshold.
+    # Skipped genes (p=1.0, log2fc=0.0) are dropped automatically by these conditions.
+    keep = (
+        (de_table["p_value"] < p_threshold) &
+        (de_table["log2fc"].abs() >= fc_threshold)
+    )
+    kept_de = de_table.loc[keep]
+
+    if kept_de.empty:
         raise ValueError(
-            f"labels length ({len(labels)}) does not match "
-            f"expression rows ({len(expression)})."
+            f"No genes passed thresholds (p < {p_threshold}, "
+            f"|log2FC| > {fc_threshold}). Loosen thresholds or check input."
         )
 
-    groups_present = set(labels.unique())
-    for g in (reference_group, baseline_group):
-        if g not in groups_present:
-            raise ValueError(
-                f"Group {g!r} not found in labels. "
-                f"Available: {sorted(groups_present)}."
-            )
-
-    ref_mask = labels == reference_group
-    base_mask = labels == baseline_group
-    n_ref = int(ref_mask.sum())
-    n_base = int(base_mask.sum())
-    if n_ref < 2 or n_base < 2:
-        raise ValueError(
-            f"Need at least 2 samples per group; got "
-            f"{n_ref} for {reference_group!r} and {n_base} for {baseline_group!r}."
-        )
-
-    ref_expr = expression[ref_mask]
-    base_expr = expression[base_mask]
-
+    # Build the per-gene dicts expected by the DirectionPattern dataclass.
+    # gene order is preserved from de_table (which preserves expression.columns).
     gene_directions: Dict[str, str] = {}
     fold_changes: Dict[str, float] = {}
     confidence: Dict[str, float] = {}
     baseline_means: Dict[str, float] = {}
     baseline_stds: Dict[str, float] = {}
 
-    for gene in expression.columns:
-        ref_vals = ref_expr[gene].to_numpy(dtype=float)
-        base_vals = base_expr[gene].to_numpy(dtype=float)
+    # Map gene_id -> std_base via positional index (de_table is in expression.columns order)
+    gene_col_idx = {g: i for i, g in enumerate(expression.columns)}
 
-        # drop near-dead genes
-        nonzero_total = int((ref_vals != 0).sum() + (base_vals != 0).sum())
-        if nonzero_total < min_nonzero:
-            continue
-        if np.std(ref_vals) == 0 and np.std(base_vals) == 0:
-            continue
-
-        log2fc = float(np.mean(ref_vals) - np.mean(base_vals))
-        if abs(log2fc) < fc_threshold:
-            continue
-
-        try:
-            if test == "t-test":
-                _, p = stats.ttest_ind(ref_vals, base_vals, equal_var=False)
-            else:
-                _, p = stats.mannwhitneyu(
-                    ref_vals, base_vals, alternative="two-sided"
-                )
-        except Exception:
-            continue
-
-        if not np.isfinite(p) or p > p_threshold:
-            continue
-
+    for gene, row in kept_de.iterrows():
+        log2fc = float(row["log2fc"])
         gene_directions[gene] = DIRECTION_UP if log2fc > 0 else DIRECTION_DOWN
         fold_changes[gene] = log2fc
-        confidence[gene] = float(-np.log10(max(float(p), 1e-300)))
-        baseline_means[gene] = float(np.mean(base_vals))
-        baseline_stds[gene] = float(np.std(base_vals, ddof=1))
+        confidence[gene] = float(row["neg_log10p"])
+        baseline_means[gene] = float(row["mean_base"])
+        baseline_stds[gene] = float(std_base_all[gene_col_idx[gene]])
 
-    if not gene_directions:
-        raise ValueError(
-            f"No genes passed thresholds (p < {p_threshold}, "
-            f"|log2FC| > {fc_threshold}). Loosen thresholds or check input."
-        )
+    # n_samples = n_ref + n_base is constant across rows in de_table.
+    n_total = int(kept_de["n_ref"].iloc[0] + kept_de["n_base"].iloc[0])
 
     return DirectionPattern(
         gene_directions=gene_directions,
@@ -410,6 +412,6 @@ def build_direction_pattern(
         baseline_group=baseline_group,
         baseline_means=baseline_means,
         baseline_stds=baseline_stds,
-        n_samples=n_ref + n_base,
+        n_samples=n_total,
         test_used=test,
     )

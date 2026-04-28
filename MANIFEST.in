@@ -1,4 +1,4 @@
-# MANIFEST.in for RAPTOR v2.2.1
+# MANIFEST.in for RAPTOR v2.2.2
 # =============================================================================
 # This file tells setuptools which non-Python files to include when building
 # the distribution packages (sdist, wheel).

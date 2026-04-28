@@ -15,6 +15,24 @@ continues to work unchanged.
 # Re-export everything public from core.py
 from raptor.biomarker_discovery.core import *  # noqa: F401, F403
 
+# Explicit re-export of M6-new public names so IDE autocomplete and
+# `from raptor.biomarker_discovery import PanelStabilityResult` both work.
+from raptor.biomarker_discovery.core import (
+    PanelStabilityResult,
+)  # noqa: F401
+
+# Explicit re-export of M4-new public name.
+from raptor.biomarker_discovery.core import (
+    apply_significance_calibration,
+)  # noqa: F401
+
+# M4: shared univariate DE utility. Public so PTERO and external scripts
+# can reuse it.
+from raptor.biomarker_discovery.univariate_de import (
+    compute_per_gene_de,
+    VALID_TESTS as UNIVARIATE_DE_VALID_TESTS,
+)  # noqa: F401
+
 # Re-export private helpers and availability flags that tests and internal code need.
 # These are underscore-prefixed, so `import *` above skips them — we must list them explicitly.
 from raptor.biomarker_discovery.core import (
@@ -22,6 +40,18 @@ from raptor.biomarker_discovery.core import (
     _BORUTA_AVAILABLE,
     _MRMR_AVAILABLE,
     _SHAP_AVAILABLE,
+    # M6: pipeline-CV orchestrator and stability helpers
+    _run_pipeline_cv,
+    _run_feature_selection,
+    _resolve_pipeline_cv_methods,
+    _nogueira_stability_from_matrix,
+    _panels_to_selection_matrix,
+    _bootstrap_nogueira_ci,
+    _nogueira_benchmark_label,
+    _compute_panel_stability,
+    _NOGUEIRA_EXCELLENT_THRESHOLD,
+    _NOGUEIRA_POOR_THRESHOLD,
+    _FOLD_SAFE_DEFAULT_METHODS,
 )  # noqa: F401
 
 # M10 enhancement modules
