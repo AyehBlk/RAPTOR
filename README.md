@@ -37,7 +37,7 @@ It's built for researchers who want to spend time on biology, not on figuring ou
 
 **What you get:**
 
-- Search and download RNA-seq datasets from GEO, SRA, and TCGA directly from a visual dashboard — no coding required. GEO and SRA are production-ready; TCGA is functional with multi-omic support (tested with 5 cancer cohorts); ArrayExpress is under active development.
+- Search and download RNA-seq datasets from GEO, SRA, and TCGA directly from a visual dashboard — no coding required. GEO and SRA are production-ready; TCGA is functional with multi-omic support (tested with 5 cancer cohorts); ArrayExpress is fully implemented.
 - Upload your own count matrices and work interactively with sample metadata — add columns, rename groups, exclude samples, assign batches. Then pool multiple studies into one dataset with automatic gene ID harmonization and batch correction. RAPTOR checks whether your datasets are actually poolable and flags problems like library size differences, low gene overlap, or batch effects before you proceed.
 - Profile your data across 32 features (BCV, dispersion, sparsity, sample balance, and more) and get pipeline recommendations. RAPTOR offers two recommendation modes: an ML-based approach using a Random Forest classifier, and a rule-based approach for simpler guidance.
 - Run differential expression with DESeq2, edgeR, and limma, then combine results into a consensus through ensemble analysis. Five combination methods (Fisher's, Brown's, RRA, Voting, Weighted) reduce false positives by about 33% compared to any single method.
@@ -430,7 +430,7 @@ Stage 1: Data Acquisition & Preparation
 |    +-- SRA Connector (production-ready)
 |    +-- TCGA Connector (functional, multi-omic: gene expression,
 |    |                   miRNA, methylation, CNV, RPPA)
-|    +-- ArrayExpress Connector (in development)
+|    +-- ArrayExpress Connector (functional)
 |    +-- Gene ID Mapper (Ensembl/Symbol/Entrez via MyGene.info)
 |    +-- Pooling Engine (ComBat / quantile / median-ratio batch correction)
 |    +-- Data Catalog and Cache Manager
@@ -581,7 +581,7 @@ RAPTOR/
 │   │       ├── geo.py              # GEO connector (production-ready)
 │   │       ├── sra.py              # SRA connector (production-ready)
 │   │       ├── tcga.py             # TCGA connector (functional, multi-omic)
-│   │       ├── arrayexpress.py     # ArrayExpress connector (in development)
+│   │       ├── arrayexpress.py     # ArrayExpress connector (functional)
 │   │       ├── gene_mapping.py     # Gene ID conversion (MyGene.info)
 │   │       ├── pooling.py          # Dataset pooling + batch correction
 │   │       ├── datasets.py         # AcquiredDataset, PooledDataset
@@ -1042,7 +1042,7 @@ Copyright (c) 2026 Ayeh Bolouki
 |-------|--------|------------|
 | `raptor dashboard` CLI command fails with `ModuleNotFoundError` | Fix planned for v2.3.0 | Use `python -m raptor.launch_dashboard` or `python -m streamlit run raptor/dashboard/app.py` |
 | TCGA advanced filtering | Functional with multi-omic support | Project, data type, sample type, and tumor/normal selection work; further filter granularity planned for v2.3.0 |
-| ArrayExpress connector partially implemented | In development | Use GEO as alternative |
+| ArrayExpress connector  implemented | functional | Use GEO as alternative |
 | GEO/SRA connectors require optional packages | By design | `pip install GEOparse biopython` — connectors fail gracefully without them |
 | Gene ID conversion requires `mygene` | By design | `pip install mygene` — needed only for ID conversion feature |
 | ComBat batch correction requires `combat` | By design | `pip install combat` — falls back to median-centering without it |
