@@ -48,47 +48,93 @@ Researchers typically cobble together 5-10 separate tools, each with different
 input formats, programming languages, and statistical assumptions.
 
 **Solution:** Module 10 provides a unified pipeline where:
-- ✅ One function call runs the complete workflow
-- ✅ Six feature selection methods with consensus ranking
-- ✅ Four classifiers with nested cross-validation
-- ✅ Automatic panel size optimization
-- ✅ Clinical utility metrics (PPV/NPV, decision curves, bootstrap CI)
-- ✅ Self-normalizing ratio biomarkers
-- ✅ Direction pattern validation for translational work
-- ✅ Publication-ready Markdown report with annotation
+- One function call runs the complete workflow
+- Eight feature selection methods with consensus ranking
+- Four classifiers with nested cross-validation and feature selection inside the outer fold (Ambroise & McLachlan 2002 leakage fix)
+- Automatic panel size detection (kneedle algorithm) with consensus pinning across CV folds
+- Clinical utility metrics (PPV/NPV at prevalence, Youden's J, decision curves, bootstrap CI)
+- Panel stability index (Nogueira 2018 Phi) reported with bootstrap CI and benchmark labels
+- Self-normalizing ratio biomarkers
+- Direction pattern validation for translational work
+- Tiered small-cohort advisory and multi-seed verification
+- Publication-ready Markdown report with biological annotation
 
 ### Key Features
 
-- 🔬 **Multi-Method Feature Selection**: DE filter, Elastic Net, LASSO, Boruta, mRMR, RFE, SHAP, WGCNA
-- 📊 **Rigorous Validation**: Nested cross-validation, LOOCV, bootstrap confidence intervals
-- 🎯 **Panel Optimization**: Forward selection with elbow detection
-- 🏥 **Clinical Metrics**: PPV/NPV at prevalence, Youden's J, decision curve analysis, NRI
-- 🧬 **Direction Patterns**: UP/DOWN gene patterns with cross-cohort concordance checking
-- 📈 **Ratio Biomarkers**: Self-normalizing gene ratios robust to batch effects
-- 📋 **Biological Annotation**: MyGene.info, pathway enrichment, literature mining, STRING PPI
-- 🎯 **Intent System**: Auto-configures analyses based on study design
+- **Multi-method feature selection**: Univariate filter, Elastic Net, LASSO, Boruta, mRMR, RFE, SHAP, WGCNA
+- **Rigorous validation**: Nested cross-validation with feature selection inside the outer fold (Ambroise & McLachlan 2002 PNAS), bootstrap confidence intervals, optional LOOCV
+- **Panel-size auto-detection**: Kneedle algorithm (Satopaa et al. 2011 ICDCSW) with consensus pinning across CV folds
+- **Panel stability**: Nogueira (2018 JMLR) stability index Phi computed across per-fold panels, with bootstrap CI and benchmark labels
+- **Optimism diagnostic**: Cross-validated AUC vs training-set AUC with the gap surfaced as an overfitting signal
+- **Clinical utility metrics**: Out-of-fold PPV/NPV at user-supplied prevalence, Youden's optimal threshold, sensitivity/specificity, decision curve analysis (Vickers & Elkin 2006), net reclassification improvement
+- **Direction patterns**: UP/DOWN gene patterns with cross-cohort concordance checking
+- **Ratio biomarkers**: Self-normalizing gene-pair ratios robust to batch effects (Geman et al. 2004 TSP)
+- **Biological annotation**: MyGene.info gene info, KEGG/Reactome/GO pathway enrichment, Europe PMC literature mining, STRING protein-protein interactions
+- **Small-cohort tooling**: Tiered advisory at n<20/<50, multi-seed verification button to surface single-seed instability
+- **Intent system**: Six study-design modes (diagnostic, prognostic, predictive, monitoring, exploratory, translational) auto-configure metrics, validation strategy, and required metadata columns
 
 ### Pipeline Stages
 
+The pipeline is organized so that every step which uses the outcome
+labels is restricted to the training data of each outer cross-validation
+fold. This is the **Ambroise & McLachlan (2002) fix**: when feature
+selection sees the labels of samples that will later be evaluated, the
+cross-validated AUC is optimistically biased. The same correction is
+applied in the `nestedcv` R package (Lewis et al. 2023, Bioinformatics
+Advances), Varma & Simon (2006 BMC Bioinformatics 7:91), and Hastie
+Tibshirani & Friedman (Elements of Statistical Learning, section
+7.10.2).
+
 ```
 Input: Count matrix + Metadata
-    ↓
-Stage 1: Multi-method feature selection (6-8 methods)
-    ↓
-Stage 2: Consensus gene ranking
-    ↓
-Stage 3: Panel size optimization (forward selection)
-    ↓
-Stage 4: Classification evaluation (4 classifiers, nested CV)
-    ↓
-Stage 5: Biological annotation & reporting
-    ↓
-Stage 6: Enhanced analyses (if intent is set)
-    ├── Signature score (weighted risk scoring)
-    ├── Direction pattern (UP/DOWN validation)
-    ├── Clinical metrics (PPV, Youden, DCA, bootstrap CI)
-    └── Ratio biomarkers (self-normalizing pairs)
-    ↓
+    |
+    v
+Outer cross-validation loop (5 folds x 1 repeat by default)
+    For each outer fold:
+        |
+        +-- Stage 1: Multi-method feature selection on training data only
+        |       (Welch's t-test filter, Elastic Net, LASSO, Boruta,
+        |        mRMR, RFE, SHAP, WGCNA -- whichever are requested
+        |        and have their dependencies installed)
+        |
+        +-- Stage 2: Consensus gene ranking on training data only
+        |       Average rank across methods + selection frequency
+        |
+        +-- Stage 3: Panel-size auto-detection (kneedle algorithm)
+        |       Either per-fold detection, or consensus pinning across
+        |       all folds (default: consensus). See "Panel-Size
+        |       Auto-Detection" section below for details.
+        |
+        +-- Stage 4: Classifier fit on training data, predict held-out fold
+                Four classifiers: Logistic Regression, Random Forest,
+                SVM, XGBoost (with deterministic tiebreak when AUCs
+                coincide). Held-out predictions accumulate into honest
+                out-of-fold (OOF) arrays.
+    |
+    v
+Final-panel pass: Stages 1-3 re-run on ALL data
+    Produces the deployable single panel that users see as "the panel".
+    The OOF AUC from the loop above estimates how well the procedure
+    generalizes; the final panel is what you would actually use.
+    |
+    v
+Stage 5: Panel stability diagnostic (Nogueira 2018 Phi)
+    Quantifies how much the per-fold panels agree, with bootstrap
+    95% CI and benchmark labels (excellent/intermediate/poor).
+    |
+    v
+Stage 6: Biological annotation
+    MyGene.info gene info, KEGG/Reactome/GO pathway enrichment,
+    Europe PMC literature mining, STRING PPI network query.
+    |
+    v
+Stage 7 (optional, when intent is set): Enhanced analyses
+    +-- Signature score      (weighted risk score per patient)
+    +-- Direction pattern    (UP/DOWN gene direction validation)
+    +-- Clinical metrics     (Youden, OOF PPV/NPV, DCA, bootstrap CI)
+    +-- Ratio biomarkers     (self-normalizing gene-pair search)
+    |
+    v
 Output: BiomarkerResult / EnhancedBiomarkerResult
 ```
 
@@ -103,7 +149,8 @@ is universally best. Each method has different strengths:
 
 | Method | Type | Approach | Strength | Reference |
 |--------|------|----------|----------|-----------|
-| **DE Filter** | Filter | Uses significant genes from M7/M8/M9 | Bridges upstream DE analysis | — |
+| **Univariate filter** | Filter | Per-fold Welch's t-test or Mann-Whitney U | Fold-safe; default replacement for DE filter | Haury et al. 2011 PLOS ONE |
+| **DE filter** | Filter | Significant genes from M7/M8/M9 | Bridges upstream DE analysis (warns about upstream leakage) | — |
 | **Elastic Net** | Embedded | L1+L2 penalized logistic regression | Handles correlated genes | Zou & Hastie, 2005 |
 | **LASSO** | Embedded | L1 penalized logistic regression | Sparse solutions | Tibshirani, 1996 |
 | **Boruta** | Wrapper | Random Forest shadow features | Identifies all relevant features | Kursa & Rudnicki, 2010 |
@@ -112,15 +159,173 @@ is universally best. Each method has different strengths:
 | **SHAP** | Model-agnostic | Shapley value importance | Interpretable rankings | Lundberg & Lee, 2017 |
 | **WGCNA** | Network | Co-expression hub genes | Captures gene modules | Langfelder & Horvath, 2008 |
 
+The default method set is `univariate_filter`, `elastic_net`, `rfe`, with `boruta`,
+`mrmr`, and `shap` added when their optional dependencies are installed.
+
+### Leakage Fix (Ambroise & McLachlan 2002 PNAS)
+
+In a naive nested cross-validation pipeline, feature selection runs
+once on the full dataset and the selected genes are then evaluated by
+CV. Ambroise & McLachlan (2002 PNAS 99:6562) showed this gives
+optimistically biased CV AUC estimates: by the time the validation
+fold is evaluated, the selected genes have already "seen" the
+validation labels indirectly through the selection step.
+
+The fix is to push every step that uses the outcome labels inside the
+training-side of the outer fold:
+
+- Feature selection: training fold only
+- Consensus ranking: training fold only
+- Panel-size detection: training fold only (or pinned via consensus, see below)
+- Classifier fit: training fold only
+- Prediction: held-out fold
+
+The held-out predictions across all folds form an honest out-of-fold
+(OOF) array. AUC, Phi, and clinical metrics computed from OOF
+predictions reflect generalization performance, not in-sample fit.
+
+A separate "final-panel pass" re-runs feature selection and panel
+optimization on **all** data to produce the single panel that gets
+deployed. This is the convention used by the `nestedcv` R package
+(Lewis et al. 2023): the OOF AUC tells you how well the procedure
+generalizes, the final panel tells you what to deploy.
+
+The `de_filter` method is kept as an option for users who supply
+externally-computed DE genes, but it triggers a warning: any DE list
+computed on the same cohort that will later be CV-evaluated has
+already seen the labels and carries upstream selection bias that
+M10's pipeline-CV cannot correct. The fold-safe replacement is
+`univariate_filter`, which recomputes per-fold on training data only.
+
 ### Consensus Ranking
 
 After running multiple methods, Module 10 aggregates results using rank
 aggregation. Each gene receives a consensus score combining:
 - **Normalized mean rank** across methods (70% weight)
-- **Selection frequency** — how many methods selected it (30% weight)
+- **Selection frequency** -- how many methods selected it (30% weight)
 
 This produces a single ranked gene list where the top genes are those
 consistently identified across multiple statistical frameworks.
+
+### Significance Calibration of the Consensus Score
+
+The raw consensus score rewards genes that score well across methods,
+but it does not enforce a significance floor. A gene that scores 4th
+overall but has a univariate p-value of 0.7 contributes noise to the
+panel. To address this, the consensus ranking is post-processed by a
+two-tier multiplicative weighting:
+
+```
+weight = 1.0  if p_value < alpha
+weight = 0.5  otherwise
+consensus_score_calibrated = consensus_score * weight
+```
+
+The default alpha is 0.05. Genes that fail the significance floor are
+not removed, but they are demoted relative to genes that pass; forward
+selection then draws its top candidates from the calibrated ordering.
+The original `consensus_score` column is preserved for auditability.
+This design borrows the spirit of the Robust Rank Aggregation framework
+(Kolde et al. 2012 Bioinformatics) and Empirical-Bayes shrinkage
+(Efron 2004 JASA), with one fixed shrinkage factor instead of a fitted
+mixture model.
+
+### Panel-Size Auto-Detection (Kneedle)
+
+After consensus ranking, the panel is built by walking down the ranked
+gene list and evaluating CV AUC at each candidate panel size. The
+panel-size-vs-AUC curve usually has a knee: small panels miss signal,
+large panels add noise, and somewhere in between is a natural
+inflection point.
+
+Module 10 detects this knee using the **kneedle algorithm** (Satopaa
+et al. 2011 ICDCSW, "Finding a Kneedle in a Haystack"). Kneedle
+detects the maximum-curvature point on a normalized, polynomially
+smoothed version of the curve. Three failure modes of the legacy
+"first-drop" heuristic are handled correctly by kneedle:
+
+- **Non-monotone curves**: a single noisy down-tick early in the
+  curve no longer terminates the walk prematurely.
+- **Saturated curves**: when AUC saturates near 1.0 from the very
+  first panel size, kneedle recognizes there is no inflection and
+  falls back to argmax (smallest panel size at maximum AUC).
+- **Late knees**: real knees past panel size 30 are no longer
+  missed by an early sub-threshold step.
+
+Three strategies are exposed via `auto_panel_strategy`:
+
+- `kneedle` (default): Satopaa et al. 2011 with polynomial smoothing
+  and argmax fallback for saturated curves.
+- `argmax`: smallest panel size at maximum CV AUC.
+- `first_drop`: legacy pre-v2.2.2 heuristic, retained for backward
+  compatibility.
+
+### Consensus Pinning Across CV Folds
+
+When panel-size detection runs independently inside each outer fold
+(`panel_size_strategy='per_fold'`), small fluctuations in the
+training-fold curve can cause some folds to land on a much larger or
+smaller panel size than others. This destabilizes the panel stability
+estimate downstream: a single fold whose argmax tiebreak picks a large
+size can drop Phi by 0.3 or more even when the discovery-level K is
+stable.
+
+The `consensus` strategy (default) addresses this by running a
+discovery-level scout pass on the full data before the CV loop. The
+scout's auto-detected K is then pinned across all outer folds.
+Per-fold detection is still available as an opt-in for users who
+specifically want it. The change to consensus-as-default was driven
+by sanity-check evidence on real fixtures: on a 60-sample cohort
+under a single seed, per-fold detection produced fold sizes
+(3, 3, 3, 12, 3) and dropped Phi by 0.313 vs consensus mode without
+changing the discovery-level K.
+
+### Panel Stability (Nogueira 2018 Phi)
+
+Pipeline-CV produces one gene panel per outer fold, by construction.
+The degree to which these per-fold panels agree is itself a signal:
+stable panels indicate a robust biomarker set; unstable panels
+indicate the chosen genes are sensitive to small data perturbations.
+
+Module 10 quantifies stability using the measure of Nogueira, Sechidis
+& Brown (2018, JMLR 18:174). Nogueira Phi is the only similarity-based
+stability measure that satisfies all five of their axiomatic
+properties: fully defined, strictly monotonic, bounded, maximum
+stability iff deterministic selection, and **corrected for chance**.
+Jaccard, Dice, and POG all fail correction-for-chance and reward
+larger feature sets artificially.
+
+The benchmark scale (used by the `stabm` R package and Nogueira's
+original paper):
+
+- `Phi >= 0.75` -- excellent agreement beyond chance
+- `0.4 <= Phi < 0.75` -- intermediate to good
+- `Phi < 0.4` -- poor agreement
+
+Phi is reported with a bootstrap 95% confidence interval over the fold
+axis. With small M (e.g. 5 folds), the CI is intentionally wide and
+honestly reflects the small-sample uncertainty of the estimate.
+
+### Optimism Diagnostic
+
+A trained classifier almost always achieves higher AUC on its training
+data than on held-out data. The size of the gap tells you whether the
+model is overfitting:
+
+- **Small gap (e.g. < 0.05)**: model generalizes well; CV AUC is a
+  reasonable estimate of deployment performance.
+- **Large gap (e.g. > 0.15)**: model memorized the training data;
+  deployment AUC will be closer to the CV estimate than the training
+  estimate.
+
+Module 10 reports both:
+
+- **Training AUC**: the AUC the final-panel classifier achieves on the
+  data it was fit on. Always optimistic.
+- **CV AUC** (with bootstrap 95% CI): the AUC averaged across outer
+  folds. Honest estimate of deployment performance.
+- **Gap = Training AUC - CV AUC**: if this is large, the dashboard
+  surfaces an amber/red banner.
 
 ### Clinical Utility Metrics
 
@@ -147,6 +352,38 @@ A biomarker signature isn't just "these genes matter" — it's "these genes go
 UP and these go DOWN" in disease. Direction patterns capture per-gene
 direction, fold change, and confidence, enabling cross-cohort validation
 and translational checks.
+
+### Small-Cohort Tooling
+
+At small sample sizes (n < 50, and especially n < 20), single-seed CV AUC
+estimates can be substantially unstable: re-running discovery with a
+different random seed can produce a different gene panel, a different
+classifier, and a noticeably different CV AUC. This is not a bug -- it's
+the honest variance of nested cross-validation at small n. Reporting a
+single-seed result without flagging this gives a misleading picture of
+how reliable the panel is.
+
+Module 10 surfaces this in two places:
+
+- **Tiered advisory at the top of the Clinical Metrics tab**: a
+  strong advisory below n=20, a moderate advisory below n=50, and no
+  advisory at n>=50. The advisory text describes which downstream
+  metrics carry the most run-to-run variance at the current n.
+
+- **Multi-seed verification button on the Panel tab**: re-runs
+  discovery at additional random seeds and produces a side-by-side
+  truth table showing which diagnostics are stable across seeds (the
+  panel banner color, the Phi label, the top-N genes) and which vary
+  (the exact CV AUC, the best classifier, occasional gene swaps in
+  positions 4-5 of a 5-gene panel). Users can trust the stable
+  diagnostics and treat the variable ones with caution.
+
+The multi-seed view is especially relevant for paper figures: a
+single-seed CV AUC reported as a point estimate without a confidence
+interval misleads readers about the precision of the result. The
+verification button makes the run-to-run variance visible, and the
+bootstrap 95% CI on CV AUC (always reported) makes the within-seed
+sampling variance visible.
 
 ---
 
@@ -208,7 +445,7 @@ from raptor.biomarker_discovery import discover_biomarkers, get_dependencies_sta
 # Check optional dependencies
 deps = get_dependencies_status()
 for name, available in deps.items():
-    status = "✅" if available else "❌"
+    status = "available" if available else "missing"
     print(f"  {status} {name}")
 ```
 
@@ -265,13 +502,16 @@ raptor biomarker -c counts.csv -m metadata.csv -g condition \
 
 | Option | Flag | Default | Description |
 |--------|------|---------|-------------|
-| **Counts** | `-c` | Required | Count matrix CSV (genes × samples) |
+| **Counts** | `-c` | Required | Count matrix CSV (genes x samples) |
 | **Metadata** | `-m` | Required | Sample metadata CSV |
 | **Group column** | `-g` | `condition` | Column defining groups |
 | **DE result** | `-d` | None | Module 7 DE result pickle |
 | **Ensemble result** | `-e` | None | Module 9 ensemble pickle |
 | **Methods** | `--methods` | Auto | Feature selection methods |
-| **Panel size** | `--panel-size` | Auto | Target panel size |
+| **Panel size** | `--panel-size` | Auto | Target panel size; overrides auto-detection |
+| **Auto panel strategy** | `--auto-panel-strategy` | `kneedle` | `kneedle`, `argmax`, or `first_drop` (legacy). Used when `--panel-size` is not specified. |
+| **Panel sensitivity** | `--panel-sensitivity` | `1.0` | Kneedle's S parameter; lower picks earlier knees, higher picks later. Ignored unless `--auto-panel-strategy=kneedle`. |
+| **Panel size strategy** | `--panel-size-strategy` | `consensus` | `consensus` (detect once on full data, pin all CV folds to that K) or `per_fold` (each fold detects independently). |
 | **Species** | `--species` | `human` | Species for annotation |
 | **Disease term** | `--disease-term` | None | PubMed search context |
 | **Intent** | `--intent` | None | `diagnostic` or `exploratory` |
@@ -614,12 +854,12 @@ analyses and labels your output appropriately.
 
 | Intent | Study Design | Question | CLI Available |
 |--------|-------------|----------|---------------|
-| `diagnostic` | Case-control | Does the patient have the disease? | ✅ Yes |
-| `exploratory` | Unsupervised | What patterns exist in the data? | ✅ Yes |
-| `prognostic` | Cohort/survival | How will the patient fare over time? | 🔜 Planned |
-| `predictive` | Treatment interaction | Will the patient respond to treatment? | 🔜 Planned |
-| `monitoring` | Longitudinal | Is the disease progressing? | 🔜 Planned |
-| `translational` | Cross-species | Do mouse findings replicate in humans? | 🔜 Planned |
+| `diagnostic` | Case-control | Does the patient have the disease? | Available |
+| `exploratory` | Unsupervised | What patterns exist in the data? | Available |
+| `prognostic` | Cohort/survival | How will the patient fare over time? | Planned for v2.3.0 |
+| `predictive` | Treatment interaction | Will the patient respond to treatment? | Planned |
+| `monitoring` | Longitudinal | Is the disease progressing? | Planned |
+| `translational` | Cross-species | Do mouse findings replicate in humans? | Planned |
 
 ### Intent Configuration Details
 
@@ -640,12 +880,12 @@ print(intent.output_label)          # "Diagnostic Biomarker Candidates"
 
 | Intent | Signature Score | Direction Pattern | Clinical Metrics | Ratio Biomarkers |
 |--------|:-:|:-:|:-:|:-:|
-| diagnostic | ✅ | ✅ | ✅ | ✅ |
-| exploratory | — | ✅ | — | ✅ |
-| prognostic | ✅ (falls back to diagnostic) | ✅ | ✅ | ✅ |
-| predictive | — | ✅ | ✅ | ✅ |
-| monitoring | — | — | ✅ | — |
-| translational | — | ✅ | — | ✅ |
+| diagnostic | Yes | Yes | Yes | Yes |
+| exploratory | — | Yes | — | Yes |
+| prognostic | Yes (falls back to diagnostic) | Yes | Yes | Yes |
+| predictive | — | Yes | Yes | Yes |
+| monitoring | — | — | Yes | — |
+| translational | — | Yes | — | Yes |
 
 ---
 
@@ -907,9 +1147,9 @@ print(f"Direction agreement: {report['agreement_fraction']:.1%}")
 print(f"p-value: {report['binomial_p']:.4f}")
 
 if report['agreement_fraction'] > 0.8 and report['binomial_p'] < 0.05:
-    print("✅ Strong direction consistency across cohorts")
+    print("Strong direction consistency across cohorts")
 else:
-    print("⚠️ Weak direction consistency — investigate disagreements")
+    print("Weak direction consistency -- investigate disagreements")
     for gene, dir1, dir2 in report['disagreements']:
         print(f"  {gene}: cohort1={dir1}, cohort2={dir2}")
 ```
@@ -960,13 +1200,38 @@ selected by AUC:
 
 | Parameter | Default | Guidance |
 |-----------|---------|----------|
-| `target_panel_size` | Auto (elbow) | Set to 5-20 for clinical translation |
+| `target_panel_size` | Auto (kneedle) | Set explicitly to 5-20 for clinical translation; leave as None to use kneedle auto-detection |
+| `auto_panel_strategy` | `kneedle` | Use `argmax` to force smallest-size-at-max-AUC; use `first_drop` only for backward compatibility |
+| `panel_sensitivity` | 1.0 | Lower (e.g. 0.5) picks earlier knees, higher (e.g. 2.0) picks later. Most users should leave at default. |
+| `panel_size_strategy` | `consensus` | Pin all CV folds to one K (default, recommended). `per_fold` lets each fold detect independently. |
 | `min_panel` | 3 | Minimum genes to evaluate |
 | `max_panel` | 50 | Maximum genes to evaluate |
-| `n_folds` | 5 | Increase to 10 for small datasets |
-| `validation` | `nested_cv` | Use `loocv` for n < 20 |
-| `prevalence` | 0.05 | Set to actual disease prevalence |
-| `random_state` | 42 | Change for sensitivity analysis |
+| `n_folds` | 5 | Use 10 for paper-grade results (Ambroise & McLachlan recommendation) |
+| `n_repeats` | 1 | Set to 3-5 for paper-grade results to reduce CV-variance |
+| `validation` | `nested_cv` | LOOCV is deprecated as of v2.2.2 (Ambroise & McLachlan recommend k-fold) |
+| `calibrate_consensus` | True | Multiplies consensus_score by significance weight (1.0 if p<alpha, 0.5 otherwise) |
+| `alpha` | 0.05 | Significance threshold for the calibration weighting |
+| `prevalence` | 0.05 | Set to actual disease prevalence in target population |
+| `random_state` | 42 | Change for sensitivity analysis; use the multi-seed verification button on the dashboard for systematic checks |
+
+### When to Override Kneedle Defaults
+
+The `kneedle` + `consensus` defaults are tuned for the typical case
+(small to medium cohort, moderate signal strength). Override when:
+
+- You have an **a priori panel size** dictated by a clinical
+  constraint (e.g. "panels of 5-10 genes are translatable to
+  qPCR, panels >20 are not"). Set `target_panel_size` explicitly.
+- The kneedle algorithm picks an unreasonably large panel because
+  the curve has a late shallow knee. Try
+  `auto_panel_strategy='argmax'` to force the smallest size at
+  maximum AUC.
+- You specifically want to study fold-to-fold panel-size variance
+  itself. Set `panel_size_strategy='per_fold'` and inspect the
+  `per_fold_panels` attribute on the result.
+- You're comparing v2.2.2 results to a pre-kneedle pipeline. Set
+  `auto_panel_strategy='first_drop'` to recover the legacy
+  behavior.
 
 ### Prevalence Guidelines
 
