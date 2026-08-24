@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="assets/raptor-logo.png" alt="RAPTOR" width="200">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.2.2-brightgreen?style=for-the-badge" alt="RAPTOR v2.2.2"/>
 </p>
 
@@ -37,7 +41,7 @@ It's built for researchers who want to spend time on biology, not on figuring ou
 
 **What you get:**
 
-- Search and download RNA-seq datasets from GEO, SRA, and TCGA directly from a visual dashboard — no coding required. GEO and SRA are production-ready; TCGA is functional with multi-omic support (tested with 5 cancer cohorts); ArrayExpress is fully implemented.
+- Search and download RNA-seq datasets from GEO, SRA, and TCGA directly from a visual dashboard — no coding required. GEO and SRA are production-ready; TCGA is functional with multi-omic support (tested with 5 cancer cohorts); ArrayExpress is under active development.
 - Upload your own count matrices and work interactively with sample metadata — add columns, rename groups, exclude samples, assign batches. Then pool multiple studies into one dataset with automatic gene ID harmonization and batch correction. RAPTOR checks whether your datasets are actually poolable and flags problems like library size differences, low gene overlap, or batch effects before you proceed.
 - Profile your data across 32 features (BCV, dispersion, sparsity, sample balance, and more) and get pipeline recommendations. RAPTOR offers two recommendation modes: an ML-based approach using a Random Forest classifier, and a rule-based approach for simpler guidance.
 - Run differential expression with DESeq2, edgeR, and limma, then combine results into a consensus through ensemble analysis. Five combination methods (Fisher's, Brown's, RRA, Voting, Weighted) reduce false positives by about 33% compared to any single method.
@@ -59,7 +63,7 @@ Your analysis starts with data. RAPTOR connects to public repositories so you ca
 | **GEO** (NCBI) | Ready | Search 200,000+ datasets, download processed count matrices |
 | **SRA** (NCBI) | Ready | Explore run tables, auto-detect linked GEO studies, generate FASTQ download commands |
 | **TCGA** (NCI) | Functional | 33 cancer types via GDC API, multi-omic (gene expression, miRNA, methylation, CNV, RPPA, mutations). Tested with 5 cancer cohorts |
-| **ArrayExpress** (EBI) | Functional | European studies via BioStudies API |
+| **ArrayExpress** (EBI) | In development | European studies via BioStudies API |
 
 You can also upload your own count matrix — from your own experiment or from collaborators at your institute. RAPTOR treats uploaded data the same way as public data.
 
@@ -430,7 +434,7 @@ Stage 1: Data Acquisition & Preparation
 |    +-- SRA Connector (production-ready)
 |    +-- TCGA Connector (functional, multi-omic: gene expression,
 |    |                   miRNA, methylation, CNV, RPPA)
-|    +-- ArrayExpress Connector (functional)
+|    +-- ArrayExpress Connector (in development)
 |    +-- Gene ID Mapper (Ensembl/Symbol/Entrez via MyGene.info)
 |    +-- Pooling Engine (ComBat / quantile / median-ratio batch correction)
 |    +-- Data Catalog and Cache Manager
@@ -581,7 +585,7 @@ RAPTOR/
 │   │       ├── geo.py              # GEO connector (production-ready)
 │   │       ├── sra.py              # SRA connector (production-ready)
 │   │       ├── tcga.py             # TCGA connector (functional, multi-omic)
-│   │       ├── arrayexpress.py     # ArrayExpress connector (functional)
+│   │       ├── arrayexpress.py     # ArrayExpress connector (in development)
 │   │       ├── gene_mapping.py     # Gene ID conversion (MyGene.info)
 │   │       ├── pooling.py          # Dataset pooling + batch correction
 │   │       ├── datasets.py         # AcquiredDataset, PooledDataset
@@ -1042,7 +1046,7 @@ Copyright (c) 2026 Ayeh Bolouki
 |-------|--------|------------|
 | `raptor dashboard` CLI command fails with `ModuleNotFoundError` | Fix planned for v2.3.0 | Use `python -m raptor.launch_dashboard` or `python -m streamlit run raptor/dashboard/app.py` |
 | TCGA advanced filtering | Functional with multi-omic support | Project, data type, sample type, and tumor/normal selection work; further filter granularity planned for v2.3.0 |
-| ArrayExpress connector  implemented | functional | Use GEO as alternative |
+| ArrayExpress connector partially implemented | In development | Use GEO as alternative |
 | GEO/SRA connectors require optional packages | By design | `pip install GEOparse biopython` — connectors fail gracefully without them |
 | Gene ID conversion requires `mygene` | By design | `pip install mygene` — needed only for ID conversion feature |
 | ComBat batch correction requires `combat` | By design | `pip install combat` — falls back to median-centering without it |
