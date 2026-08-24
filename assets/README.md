@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="assets/raptor-logo.png" alt="RAPTOR" width="200">
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/🦖_RAPTOR-v2.2.2-brightgreen?style=for-the-badge" alt="RAPTOR v2.2.2"/>
 </p>
 
