@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/raptor-logo.png" alt="RAPTOR" width="200">
+  <img src="assets/RAPTOR.webp" alt="RAPTOR" width="200">
 </p>
 
 <p align="center">
